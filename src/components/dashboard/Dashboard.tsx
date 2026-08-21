@@ -31,12 +31,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
 
   // In-page upload state
   const [activeUploadTab, setActiveUploadTab] = useState<'upload' | 'record' | 'samples'>('upload');
-  const [presentationTitle, setPresentationTitle] = useState('Q3 Product Strategy Pitch');
-  const [selectedFile, setSelectedFile] = useState<{ name: string; size: string; type: 'video' | 'audio' | 'slides' } | null>({
-    name: 'product_strategy_q3_rehearsal.mp4',
-    size: '48.2 MB',
-    type: 'video'
-  });
+  const [presentationTitle, setPresentationTitle] = useState('');
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size: string; type: 'video' | 'audio' | 'slides' } | null>(null);
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -123,27 +119,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Welcome back, {user?.name || 'John Doe'}!
+            Welcome back, {user?.name || 'User'}!
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
             Upload your presentation audio, video, or slide deck below for instantaneous AI speech delivery, pacing, and visual analysis.
           </p>
-        </div>
-
-        {/* Top Right Profile Button from Sketch */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onOpenSidebar}
-            className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-brand-500 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-bold transition-all shadow-xs"
-          >
-            <img 
-              src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"} 
-              alt="Profile" 
-              className="w-7 h-7 rounded-xl object-cover ring-2 ring-brand-500/30"
-            />
-            <span>Profile Menu</span>
-          </button>
         </div>
       </div>
 

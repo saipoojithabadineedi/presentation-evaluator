@@ -71,7 +71,7 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
           <div className="space-y-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h1 className="text-2xl font-black text-slate-900 dark:text-white">
-                {user?.name || "John Doe"}
+                {user?.name || "User"}
               </h1>
               <span className="px-3 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center gap-1">
                 <Award className="w-3.5 h-3.5" />

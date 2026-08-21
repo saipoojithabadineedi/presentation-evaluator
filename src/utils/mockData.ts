@@ -2,7 +2,7 @@ import { EvaluationData, ReportItem, User, UserSettings } from '../types';
 
 export const initialUser: User = {
   id: 'usr-101',
-  name: 'John Doe',
+  name: 'User',
   email: 'name@example.com',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
   tier: 'Top 5% speaker tier',

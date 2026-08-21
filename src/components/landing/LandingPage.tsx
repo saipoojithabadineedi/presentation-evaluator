@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Sliders, Presentation, Mic, TrendingUp, CheckCircle, Play } from 'lucide-react';
+import { ArrowRight, Sparkles, Sliders, Presentation, Mic, TrendingUp, CheckCircle } from 'lucide-react';
 import { AppView } from '../../types';
 
 interface LandingPageProps {
@@ -48,17 +48,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ setCurrentView, onQuic
             className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-sm shadow-xs transition-all"
           >
             Sign In
-          </button>
-        </div>
-
-        {/* Quick Demo Preview Trigger */}
-        <div className="mt-8 flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <button 
-            onClick={onQuickDemo}
-            className="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-400 font-semibold hover:underline"
-          >
-            <Play className="w-3.5 h-3.5 fill-brand-500 text-brand-500" />
-            <span>Explore live interactive evaluation dashboard</span>
           </button>
         </div>
 

@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const loggedUser: User = {
       ...initialUser,
       email: email || 'name@example.com',
-      name: email.includes('@') ? email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'John Doe'
+      name: email.includes('@') ? email.split('@')[0].replace('.', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'User'
     };
     setUser(loggedUser);
     return true;
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = (name: string, email: string, _pass: string) => {
     const newUser: User = {
       id: 'usr-' + Date.now(),
-      name: name || 'John Doe',
+      name: name || 'User',
       email: email || 'name@example.com',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       tier: 'Top 5% speaker tier',

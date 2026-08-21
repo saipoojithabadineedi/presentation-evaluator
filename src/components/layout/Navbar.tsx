@@ -125,7 +125,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
                   className="w-7 h-7 rounded-lg object-cover ring-1 ring-brand-500/30"
                 />
                 <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  {user?.name || "John Doe"}
+                  {user?.name || "User"}
                 </span>
               </div>
 

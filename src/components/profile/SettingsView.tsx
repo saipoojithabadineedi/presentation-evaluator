@@ -24,7 +24,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
   const { settings, updateSettings } = useEvaluation();
   const { theme, toggleTheme } = useTheme();
 
-  const [name, setName] = useState(user?.name || 'John Doe');
+  const [name, setName] = useState(user?.name || 'User');
   const [email, setEmail] = useState(user?.email || 'name@example.com');
   const [minWpm, setMinWpm] = useState(settings.targetMinWpm);
   const [maxWpm, setMaxWpm] = useState(settings.targetMaxWpm);

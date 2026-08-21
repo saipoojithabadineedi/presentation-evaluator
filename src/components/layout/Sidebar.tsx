@@ -9,13 +9,9 @@ import {
   X, 
   ChevronRight,
   Sparkles,
-  Award,
-  Plus,
-  Moon,
-  Sun
+  Award
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import { useEvaluation } from '../../context/EvaluationContext';
 import { AppView } from '../../types';
 
@@ -35,7 +31,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDesktopStatic = false
 }) => {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const { openUploadModal } = useEvaluation();
 
   const navItems = [
@@ -129,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">
-                {user?.name || "John Doe"}
+                {user?.name || "User"}
               </h3>
               <p className="text-xs text-brand-600 dark:text-brand-400 font-semibold flex items-center gap-1 mt-0.5 truncate">
                 <Award className="w-3 h-3 shrink-0" />
@@ -137,15 +132,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </p>
             </div>
           </div>
-
-          {/* Quick Action Button: New Evaluation */}
-          <button
-            onClick={openUploadModal}
-            className="w-full mt-3.5 px-3 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-xs flex items-center justify-center gap-1.5 transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>+ New Evaluation</span>
-          </button>
         </div>
 
         {/* Navigation Items on the Left */}
@@ -186,20 +172,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Bottom Section: Theme Switcher & Logout */}
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-        {/* Theme button */}
-        <button
-          onClick={toggleTheme}
-          className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors border border-slate-200/60 dark:border-slate-700/60"
-        >
-          <span className="flex items-center gap-2">
-            {theme === 'light' ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-blue-400" />}
-            <span className="capitalize">{theme} Theme</span>
-          </span>
-          <span className="text-[10px] text-slate-400">Toggle</span>
-        </button>
-
+      {/* Bottom Section: Logout */}
+      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
         {/* Logout button */}
         <button
           onClick={handleLogout}
