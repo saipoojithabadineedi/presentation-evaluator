@@ -1,0 +1,64 @@
+{
+  "users": [
+    {
+      "id": "usr-101",
+      "name": "User",
+      "email": "user@example.com",
+      "tier": "Top 5% speaker tier",
+      "practiceHours": 14.5,
+      "totalEvaluations": 8,
+      "averageScore": 92,
+      "averageCadence": 135,
+      "fillerWordRate": 1.2
+    }
+  ],
+  "evaluations": [
+    {
+      "id": "eval-101",
+      "userId": "usr-101",
+      "title": "Quarterly_Strategy_Keynote_2025.mp4",
+      "formattedDate": "May 14, 2025",
+      "duration": "4 min 30 sec",
+      "durationSeconds": 270,
+      "fileType": "video",
+      "fileSize": "48.2 MB",
+      "overallScore": 92,
+      "scoreTier": "Top 5% speaker tier",
+      "averageCadence": 135,
+      "cadenceStatus": "Optimal Cadence (130-150 WPM)",
+      "fillerWordRate": 1.2,
+      "fillerWordCount": 5,
+      "metrics": {
+        "delivery": 94,
+        "content": 90,
+        "visuals": 88,
+        "pacing": 96,
+        "clarity": 92,
+        "engagement": 90
+      },
+      "summary": "High-impact presentation rehearsal. Speech rate remained steady at 135 WPM with excellent tone clarity and minimal filler words."
+    }
+  ],
+  "transcript_segments": [
+    {
+      "id": "seg-101",
+      "evaluationId": "eval-101",
+      "startTime": "00:00",
+      "speaker": "Presenter",
+      "text": "Thank you everyone for joining today's strategy presentation.",
+      "wpm": 130,
+      "tone": "Enthusiastic",
+      "vectorDimensions": 1536
+    },
+    {
+      "id": "seg-102",
+      "evaluationId": "eval-101",
+      "startTime": "00:30",
+      "speaker": "Presenter",
+      "text": "We are addressing our core growth objectives for the upcoming quarter.",
+      "wpm": 138,
+      "tone": "Confident",
+      "vectorDimensions": 1536
+    }
+  ]
+}
