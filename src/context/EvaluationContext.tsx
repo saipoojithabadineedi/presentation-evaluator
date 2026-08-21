@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { EvaluationData, ReportItem, UserSettings } from '../types';
 import { initialEvaluations, initialReports, defaultSettings } from '../utils/mockData';
+import { startAIAnalysisApi } from '../services/api';
 
 interface UploadPayload {
   title: string;

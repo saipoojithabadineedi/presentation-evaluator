@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import { initialUser } from '../utils/mockData';
+import { loginUserApi, registerUserApi } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -34,7 +35,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
-  const login = (email: string, _pass: string) => {
+  const login = (email: string, pass: string) => {
+    loginUserApi(email, pass).then(apiUser => {
+      if (apiUser) {
+        setUser(apiUser);
+      }
+    });
+
     const loggedUser: User = {
       ...initialUser,
       email: email || 'name@example.com',
@@ -44,7 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
-  const register = (name: string, email: string, _pass: string) => {
+  const register = (name: string, email: string, pass: string) => {
+    registerUserApi(name, email, pass).then(apiUser => {
+      if (apiUser) {
+        setUser(apiUser);
+      }
+    });
+
     const newUser: User = {
       id: 'usr-' + Date.now(),
       name: name || 'User',
