@@ -254,6 +254,10 @@ html_content = """<!DOCTYPE html>
     <h2>4. Complete Project Directory Structure</h2>
     <div class="code-block">
 presentation-evaluator/
+├── database/                     # Dedicated Database Module
+│   ├── docker-compose.yml        # PostgreSQL 16 + pgvector container configuration
+│   ├── schema.sql                # PostgreSQL DDL & pgvector HNSW index setup
+│   └── README.md                 # Database setup and execution guide
 ├── src/                          # Frontend React Codebase
 │   ├── components/               # React UI Components
 │   │   ├── auth/                 # LoginForm.tsx, RegisterForm.tsx
@@ -275,8 +279,7 @@ presentation-evaluator/
 │   │   ├── entity/               # UserEntity, EvaluationEntity, TranscriptSegmentEntity
 │   │   ├── repository/           # UserRepository, EvaluationRepository, TranscriptSegmentRepository (pgvector)
 │   │   └── service/              # AuthService, EvaluationService, VectorSearchService
-│   ├── src/main/resources/       # application.yml, schema.sql (pgvector DDL & HNSW index)
-│   ├── docker-compose.yml        # PostgreSQL 16 + pgvector container configuration
+│   ├── src/main/resources/       # application.yml
 │   └── pom.xml                   # Maven dependencies (Java 21, Spring Boot 3.3)
 └── package.json                  # Frontend dependencies
     </div>
