@@ -56,15 +56,15 @@
   box-shadow: 0 20px 40px -15px rgba(16, 185, 129, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.05);
 }
 
-/* Animated Keyframes */
+/* Animated Keyframes & Shimmer Sweeps */
 @keyframes floatSmooth {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.05); }
+  0%, 100% { opacity: 0.6; transform: scale(1); box-shadow: 0 0 15px rgba(16, 185, 129, 0.2); }
+  50% { opacity: 1; transform: scale(1.04); box-shadow: 0 0 30px rgba(16, 185, 129, 0.5); }
 }
 
 @keyframes waveBar {
@@ -78,6 +78,16 @@
   100% { background-position: 0% 50%; }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes radarRipple {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
 .animate-float {
   animation: floatSmooth 4s ease-in-out infinite;
 }
@@ -86,12 +96,24 @@
   animation: pulseGlow 2.5s ease-in-out infinite;
 }
 
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0) 100%);
+  animation: shimmer 2.5s infinite;
+}
+
 .animated-gradient-text {
   background: linear-gradient(135deg, #10b981 0%, #3b82f6 50%, #8b5cf6 100%);
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: gradientShift 6s ease infinite;
+  animation: gradientShift 4s ease infinite;
 }
 
 /* Custom Scrollbar */

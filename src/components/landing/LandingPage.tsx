@@ -23,30 +23,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ setCurrentView, onQuic
           />
         </div>
 
-        {/* AI Tag Pill (Matches Screenshot) */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50/80 dark:bg-brand-950/40 border border-brand-200/80 dark:border-brand-800/60 text-brand-700 dark:text-brand-300 text-xs font-semibold mb-8 backdrop-blur-xs shadow-xs">
-          <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-          <span>AI–powered speech & presentation evaluations</span>
+        {/* AI Tag Pill */}
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50/90 dark:bg-brand-950/60 border border-brand-200/80 dark:border-brand-800/60 text-brand-700 dark:text-brand-300 text-xs font-semibold mb-8 backdrop-blur-md shadow-xs animate-pulse-glow">
+          <Sparkles className="w-4 h-4 text-brand-500 animate-spin" />
+          <span className="tracking-wide">AI–POWERED SPEECH & PRESENTATION EVALUATION ENGINE</span>
         </div>
 
-        {/* Hero Title */}
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-6">
+        {/* Hero Title with Animated Gradient Text */}
+        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-6">
           Your Perfect <br className="hidden sm:block" />
-          <span className="bg-gradient-to-r from-teal-500 via-brand-500 to-emerald-500 bg-clip-text text-transparent">
+          <span className="animated-gradient-text">
             Presentation in Seconds
           </span>
         </h1>
 
         {/* Hero Subtitle */}
-        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed mb-10">
-          Stop guessing. Get a personalized speech delivery analysis built by AI, tailored to your goals, cadence, and schedule.
+        <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed mb-10">
+          Stop guessing. Get a instant speech delivery analysis built by AI, tailored to your pitch pacing, cadence, and schedule.
         </p>
 
-        {/* CTA Action Buttons */}
+        {/* CTA Action Buttons with Shimmer Effects */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
           <button
             onClick={() => setCurrentView('register')}
-            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30 flex items-center justify-center gap-2 transition-all group"
+            className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-bold text-sm shadow-xl shadow-brand-500/25 hover:shadow-2xl hover:shadow-brand-500/40 hover:-translate-y-0.5 flex items-center justify-center gap-2 transition-all group animate-shimmer"
           >
             <span>Get Started Free</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
