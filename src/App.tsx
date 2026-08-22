@@ -18,10 +18,11 @@ import { ReportsArchiveView } from './components/profile/ReportsArchiveView';
 import { SettingsView } from './components/profile/SettingsView';
 import { UploadModal } from './components/upload/UploadModal';
 import { ProcessingModal } from './components/upload/ProcessingModal';
+import { AuthToastNotification } from './components/common/AuthToastNotification';
 import { AppView } from './types';
 
 const MainAppContent: React.FC = () => {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, toastState, closeToast } = useAuth();
   const [currentView, setCurrentView] = useState<AppView>('landing');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -134,9 +135,15 @@ const MainAppContent: React.FC = () => {
 
       </div>
 
-      {/* Modals for Upload & AI Processing Pipeline */}
+      {/* Modals for Upload, AI Processing Pipeline & Auth Popups */}
       <UploadModal onEvaluationComplete={handleEvaluationComplete} />
       <ProcessingModal />
+      <AuthToastNotification 
+        isOpen={toastState.isOpen}
+        message={toastState.message}
+        type={toastState.type}
+        onClose={closeToast}
+      />
 
     </div>
   );

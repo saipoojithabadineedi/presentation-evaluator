@@ -6,6 +6,8 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   registeredUsers: User[];
+  toastState: { isOpen: boolean; message: string; type: 'login' | 'logout' };
+  closeToast: () => void;
   login: (emailOrPhone: string, pass: string) => { success: boolean; error?: string };
   register: (name: string, email: string, phoneNumber: string, pass: string) => { success: boolean; error?: string };
   forgotPassword: (emailOrPhone: string) => { success: boolean; error?: string; otp?: string };
@@ -73,6 +75,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
+  const [toastState, setToastState] = useState<{ isOpen: boolean; message: string; type: 'login' | 'logout' }>({
+    isOpen: false,
+    message: '',
+    type: 'login'
+  });
+
+  const closeToast = () => {
+    setToastState(prev => ({ ...prev, isOpen: false }));
+  };
+
   const register = (name: string, email: string, phoneNumber: string, pass: string) => {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPhone = phoneNumber.trim();
@@ -136,6 +148,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { password, ...safeUser } = matchedUser;
     setUser(safeUser);
 
+    setToastState({
+      isOpen: true,
+      message: `🎉 Welcome back, ${safeUser.name}! Signed in successfully.`,
+      type: 'login'
+    });
+
     // Sync with Spring Boot API
     loginUserApi(matchedUser.email, pass);
 
@@ -198,6 +216,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('pe_auth_user');
+    setToastState({
+      isOpen: true,
+      message: '👋 Logged out successfully. See you next time!',
+      type: 'logout'
+    });
   };
 
   const updateUserProfile = (data: Partial<User>) => {
@@ -214,6 +237,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       user,
       isAuthenticated: !!user,
       registeredUsers,
+      toastState,
+      closeToast,
       login,
       register,
       forgotPassword,
