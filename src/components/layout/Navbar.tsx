@@ -76,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
           </button>
 
           {/* Landing / Auth Nav Links */}
-          {(!isAuthenticated || isLandingPage || isAuthPage) && (
+          {(!isAuthenticated || isAuthPage) && (
             <div className="flex items-center gap-2 sm:gap-4 text-sm font-medium">
               {currentView !== 'landing' && (
                 <button
@@ -107,6 +107,32 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
             </div>
           )}
 
+          {/* Authenticated Controls on Landing Page */}
+          {isAuthenticated && isLandingPage && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-xs transition-all"
+              >
+                Go to Dashboard
+              </button>
+              <button
+                onClick={() => setCurrentView('profile')}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 hover:bg-brand-50/50 transition-all cursor-pointer group"
+                title="Go to Speaker Profile"
+              >
+                <img 
+                  src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"}
+                  alt={user?.name || "User"}
+                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-brand-500/30"
+                />
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600">
+                  Profile ({user?.name})
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* Authenticated Controls */}
           {isInApp && (
             <div className="flex items-center gap-3">
@@ -118,16 +144,20 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
                 <span className="hidden sm:inline">New Evaluation</span>
               </button>
 
-              <div className="hidden sm:flex items-center gap-2.5 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <button
+                onClick={() => setCurrentView('profile')}
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-slate-750 transition-all cursor-pointer group"
+                title="Go to Speaker Profile"
+              >
                 <img 
                   src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"}
                   alt={user?.name || "User"}
-                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-brand-500/30"
+                  className="w-7 h-7 rounded-lg object-cover ring-1 ring-brand-500/30 group-hover:scale-105 transition-transform"
                 />
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-600 dark:group-hover:text-brand-400">
                   {user?.name || "User"}
                 </span>
-              </div>
+              </button>
 
               <button
                 onClick={handleLogout}

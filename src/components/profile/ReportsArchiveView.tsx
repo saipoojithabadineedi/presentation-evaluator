@@ -48,16 +48,21 @@ export const ReportsArchiveView: React.FC<ReportsArchiveViewProps> = ({ setCurre
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-300">
       
-      {/* Shared Profile Sub-Navigation */}
-      <ProfileSubNav currentView="reports-archive" setCurrentView={setCurrentView} />
-
-      <div className="pt-2">
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-          PDF Reports Archive
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Dedicated repository for PDF evaluation reports of each speech and slide deck rehearsal
-        </p>
+      <div className="pt-2 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            PDF Reports Archive
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Dedicated repository for PDF evaluation reports of each speech and slide deck rehearsal
+          </p>
+        </div>
+        <button
+          onClick={() => setCurrentView('dashboard')}
+          className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 transition-all"
+        >
+          ← Back to Dashboard
+        </button>
       </div>
 
       {/* Reports Grid (Matches Sketch: "Pdf form of the report of each evaluation") */}
