@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AppView } from '../../types';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 interface LoginFormProps {
   setCurrentView: (view: AppView) => void;
@@ -9,15 +10,23 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('name@example.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [email, setEmail] = useState('user@example.com');
+  const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     login(email, password);
     setCurrentView('dashboard');
+  };
+
+  const handleForgotPasswordSuccess = (resetEmail: string) => {
+    setEmail(resetEmail);
+    setSuccessMessage('Password reset successfully! You can now log in with your new password.');
+    setTimeout(() => setSuccessMessage(''), 6000);
   };
 
   return (
@@ -42,6 +51,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
             className="h-16 sm:h-20 max-w-full w-auto object-contain drop-shadow-sm"
           />
         </div>
+
+        {/* Success Alert Banner */}
+        {successMessage && (
+          <div className="mb-6 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold animate-in fade-in">
+            {successMessage}
+          </div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -74,7 +90,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
               </label>
               <button
                 type="button"
-                onClick={() => alert('Password reset link sent to demo account.')}
+                onClick={() => setIsForgotModalOpen(true)}
                 className="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline"
               >
                 Forgot Password?
@@ -146,6 +162,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
 
         </form>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
+        onSuccess={handleForgotPasswordSuccess}
+      />
     </div>
   );
 };

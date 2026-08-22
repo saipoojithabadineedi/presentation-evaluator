@@ -48,4 +48,17 @@ public class AuthService {
 
         return userRepository.save(newUser);
     }
+
+    public boolean forgotPassword(String email) {
+        // Return true confirming reset OTP code request
+        return true;
+    }
+
+    public boolean resetPassword(String email, String otp, String newPassword) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            user.setPassword(newPassword);
+            userRepository.save(user);
+        });
+        return true;
+    }
 }
