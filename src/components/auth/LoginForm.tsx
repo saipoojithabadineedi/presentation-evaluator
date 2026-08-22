@@ -10,7 +10,9 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   const { login } = useAuth();
-  const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [emailOrPhone, setEmailOrPhone] = useState(() => {
+    return localStorage.getItem('pe_remembered_credentials') || '';
+  });
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
@@ -38,6 +40,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
     if (!res.success) {
       setErrorMessage(res.error || 'Login failed.');
       return;
+    }
+
+    if (rememberMe) {
+      localStorage.setItem('pe_remembered_credentials', emailOrPhone.trim());
+    } else {
+      localStorage.removeItem('pe_remembered_credentials');
     }
 
     setCurrentView('dashboard');
@@ -102,8 +110,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
               <input
                 type="text"
                 required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="off"
                 value={emailOrPhone}
                 onChange={(e) => setEmailOrPhone(e.target.value)}
