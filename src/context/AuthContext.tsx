@@ -9,7 +9,7 @@ interface AuthContextType {
   login: (emailOrPhone: string, pass: string) => { success: boolean; error?: string };
   register: (name: string, email: string, phoneNumber: string, pass: string) => { success: boolean; error?: string };
   forgotPassword: (emailOrPhone: string) => { success: boolean; error?: string; otp?: string };
-  resetPassword: (emailOrPhone: string, newPass: string) => { success: boolean; error?: string };
+  resetPassword: (emailOrPhone: string, newPass: string, enteredOtp?: string) => { success: boolean; error?: string };
   logout: () => void;
   updateUserProfile: (data: Partial<User>) => void;
 }
@@ -59,6 +59,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null; // Start unauthenticated
   });
 
+  const [pendingOtps, setPendingOtps] = useState<Record<string, string>>({});
+
   useEffect(() => {
     localStorage.setItem('pe_registered_users', JSON.stringify(registeredUsers));
   }, [registeredUsers]);
@@ -99,9 +101,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       password: pass
     };
 
-    // Update state & localStorage
+    // Save to registered users list without logging in automatically
     setRegisteredUsers(prev => [...prev, newUserRecord]);
-    setUser(newUserRecord);
 
     // Sync with Spring Boot backend asynchronously
     registerUserApi(newUserRecord.name, newUserRecord.email, pass);
@@ -155,11 +156,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     }
 
-    return { success: true, otp: '123456' };
+    // Generate dynamic random 6-digit OTP code
+    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    setPendingOtps(prev => ({ ...prev, [query]: generatedOtp }));
+
+    return { success: true, otp: generatedOtp };
   };
 
-  const resetPassword = (emailOrPhone: string, newPass: string) => {
+  const resetPassword = (emailOrPhone: string, newPass: string, enteredOtp?: string) => {
     const query = emailOrPhone.trim().toLowerCase();
+
+    // Verify OTP code
+    if (enteredOtp && pendingOtps[query] && pendingOtps[query] !== enteredOtp.trim()) {
+      return { success: false, error: 'Invalid verification code. Please enter the exact 6-digit OTP sent to your credentials.' };
+    }
 
     const matchedIndex = registeredUsers.findIndex(
       u => u.email.toLowerCase() === query || (u.phoneNumber && u.phoneNumber === query)
@@ -172,6 +182,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setRegisteredUsers(prev => {
       const copy = [...prev];
       copy[matchedIndex] = { ...copy[matchedIndex], password: newPass };
+      return copy;
+    });
+
+    // Clear pending OTP
+    setPendingOtps(prev => {
+      const copy = { ...prev };
+      delete copy[query];
       return copy;
     });
 

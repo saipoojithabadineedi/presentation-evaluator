@@ -44,7 +44,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
       return;
     }
 
-    setCurrentView('dashboard');
+    localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! Please sign in with your credentials.');
+    setCurrentView('login');
   };
 
   return (

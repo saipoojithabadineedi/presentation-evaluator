@@ -15,7 +15,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState(() => {
+    const regMsg = localStorage.getItem('pe_reg_success_msg');
+    if (regMsg) {
+      localStorage.removeItem('pe_reg_success_msg');
+      return regMsg;
+    }
+    return '';
+  });
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {

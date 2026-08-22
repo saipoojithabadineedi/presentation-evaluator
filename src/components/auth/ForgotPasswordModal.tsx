@@ -17,6 +17,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const { forgotPassword, resetPassword } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [generatedOtp, setGeneratedOtp] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -44,6 +45,10 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         return;
       }
 
+      if (res.otp) {
+        setGeneratedOtp(res.otp);
+      }
+
       setStep(2);
     } catch (err: any) {
       setError('Failed to send verification code. Please try again.');
@@ -59,6 +64,12 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setError('Please enter the 6-digit verification code.');
       return;
     }
+
+    if (generatedOtp && otp.trim() !== generatedOtp.trim()) {
+      setError(`Invalid verification code. Please enter the exact 6-digit OTP sent to your credentials (${generatedOtp}).`);
+      return;
+    }
+
     setStep(3);
   };
 
@@ -79,7 +90,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setIsLoading(true);
 
     try {
-      const res = resetPassword(emailOrPhone, newPassword);
+      const res = resetPassword(emailOrPhone, newPassword, otp);
       if (!res.success) {
         setError(res.error || 'Failed to update password.');
         return;
@@ -186,8 +197,8 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         {/* Step 2: Verification Code */}
         {step === 2 && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs">
-              <span className="font-bold">Code Sent!</span> Verification code sent to <span className="font-semibold">{emailOrPhone}</span> (Use OTP code <code className="bg-teal-100 dark:bg-teal-900 px-1 py-0.5 rounded font-mono font-bold">123456</code>).
+            <div className="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs">
+              <span className="font-bold">Verification Code Sent!</span> Sent to <span className="font-semibold">{emailOrPhone}</span>. Your 6-digit OTP code is: <code className="bg-teal-100 dark:bg-teal-900 px-1.5 py-0.5 rounded font-mono font-bold text-sm text-teal-900 dark:text-teal-100">{generatedOtp}</code>. Please enter this code below.
             </div>
 
             <div>
