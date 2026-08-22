@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AppView } from '../../types';
@@ -10,8 +10,10 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   const { login } = useAuth();
+  const emailInputRef = useRef<HTMLInputElement>(null);
+
   const [emailOrPhone, setEmailOrPhone] = useState(() => {
-    return localStorage.getItem('pe_remembered_credentials') || '';
+    return localStorage.getItem('pe_remembered_credentials') || localStorage.getItem('pe_last_login_credential') || '';
   });
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,6 +28,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
     return '';
   });
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Auto-focus and select remembered email/phone if present
+  useEffect(() => {
+    if (emailOrPhone && emailInputRef.current) {
+      emailInputRef.current.focus();
+      emailInputRef.current.select();
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,6 +52,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
       return;
     }
 
+    localStorage.setItem('pe_last_login_credential', emailOrPhone.trim());
     if (rememberMe) {
       localStorage.setItem('pe_remembered_credentials', emailOrPhone.trim());
     } else {
@@ -108,6 +119,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
                 <Mail className="w-4 h-4" />
               </div>
               <input
+                ref={emailInputRef}
                 type="text"
                 required
                 autoComplete="off"

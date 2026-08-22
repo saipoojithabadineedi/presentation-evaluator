@@ -44,6 +44,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
       return;
     }
 
+    localStorage.setItem('pe_last_login_credential', email.trim() || phoneNumber.trim());
+    localStorage.setItem('pe_remembered_credentials', email.trim() || phoneNumber.trim());
     localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! Please sign in with your credentials.');
     setCurrentView('login');
   };
