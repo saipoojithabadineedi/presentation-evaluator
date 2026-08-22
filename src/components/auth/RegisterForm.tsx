@@ -67,7 +67,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
           <img 
             src="/assets/logo.jpg" 
             alt="Presentation Evaluator - Analyze. Improve. Succeed." 
-            className="h-16 sm:h-20 max-w-full w-auto object-contain drop-shadow-sm"
+            className="h-16 sm:h-20 max-w-full w-auto object-contain logo-blend drop-shadow-sm"
           />
         </div>
 

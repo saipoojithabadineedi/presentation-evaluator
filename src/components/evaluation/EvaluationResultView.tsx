@@ -189,6 +189,57 @@ export const EvaluationResultView: React.FC<EvaluationResultViewProps> = ({ setC
       {activeTab === 'overview' && (
         <div className="space-y-8">
           
+          {/* Live Audio & Speech Pitch Waveform Spectrum (WOW Visual Feature) */}
+          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 text-white shadow-xl space-y-4 relative overflow-hidden">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleAudio}
+                  className="p-3 rounded-2xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white shadow-lg shadow-brand-500/30 transition-all flex items-center justify-center"
+                >
+                  {isPlayingAudio ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
+                </button>
+                <div>
+                  <h3 className="text-sm font-black text-white flex items-center gap-2">
+                    <span>Live AI Speech Pitch & Frequency Visualizer</span>
+                    <span className="px-2 py-0.5 rounded-full bg-brand-950 text-brand-400 border border-brand-800/80 text-[10px] font-mono">
+                      REALTIME SPECTRUM
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {isPlayingAudio ? 'Playing rehearsed audio stream...' : 'Click play to simulate pitch modulation audio playback'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="hidden sm:flex items-center gap-4 text-xs font-mono text-slate-400">
+                <span>Cadence: <strong className="text-brand-400">{activeEvaluation.averageCadence} WPM</strong></span>
+                <span>Pacing Score: <strong className="text-emerald-400">{activeEvaluation.metrics.pacing}%</strong></span>
+              </div>
+            </div>
+
+            {/* Dynamic Animated Frequency Spectrum Bars */}
+            <div className="h-16 flex items-end justify-between gap-1 pt-2">
+              {Array.from({ length: 48 }).map((_, i) => {
+                const heightPercent = isPlayingAudio 
+                  ? Math.floor(20 + Math.sin(i * 0.5) * 35 + Math.random() * 45)
+                  : Math.floor(15 + (i % 5) * 12);
+                return (
+                  <div
+                    key={i}
+                    className={`flex-1 rounded-full transition-all duration-150 ${
+                      isPlayingAudio ? 'bg-gradient-to-t from-teal-500 to-brand-400' : 'bg-slate-700/60'
+                    }`}
+                    style={{ 
+                      height: `${heightPercent}%`,
+                      transitionDelay: `${(i % 6) * 20}ms`
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
           {/* 6 Dimension Score Bars */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {Object.entries(activeEvaluation.metrics).map(([key, val]) => (

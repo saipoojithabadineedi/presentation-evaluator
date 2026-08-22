@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <img 
               src="/assets/logo.jpg" 
               alt="Presentation Evaluator - Analyze. Improve. Succeed." 
-              className="h-12 w-auto max-w-[200px] object-contain transition-transform group-hover:scale-105"
+              className="h-12 w-auto max-w-[200px] object-contain logo-blend transition-transform group-hover:scale-105"
             />
           </button>
 

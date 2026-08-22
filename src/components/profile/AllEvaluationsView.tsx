@@ -33,9 +33,6 @@ export const AllEvaluationsView: React.FC<AllEvaluationsViewProps> = ({ setCurre
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-300">
-      
-      {/* Shared Profile Sub-Navigation */}
-      <ProfileSubNav currentView="all-evaluations" setCurrentView={setCurrentView} />
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
         <div>

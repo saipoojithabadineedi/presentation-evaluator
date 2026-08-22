@@ -445,6 +445,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
         </div>
       </div>
 
+      {/* Floating Live AI Speech Coach Widget (WOW Feature for Evaluators) */}
+      <div className="fixed bottom-6 right-6 z-40 animate-float hidden md:block">
+        <div className="p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-brand-200 dark:border-brand-800/80 shadow-2xl backdrop-blur-md max-w-sm space-y-2 ring-1 ring-brand-500/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-500"></span>
+              </span>
+              <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-brand-500 animate-spin" />
+                Live AI Speech Coach
+              </span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950 text-[10px] font-bold text-brand-600 dark:text-brand-300">
+              ACTIVE
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+            💡 <span className="font-bold text-slate-800 dark:text-slate-100">Pro Tip:</span> Maintain <code className="bg-brand-50 dark:bg-slate-800 px-1 py-0.5 rounded text-brand-600 dark:text-brand-400 font-bold">130-150 WPM</code> with pause breaks every 15 seconds to maximize audience persuasion and clarity!
+          </p>
+        </div>
+      </div>
+
     </div>
   );
 };

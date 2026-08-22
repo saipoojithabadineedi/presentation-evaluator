@@ -19,7 +19,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ setCurrentView, onQuic
           <img 
             src="/assets/logo.jpg" 
             alt="Presentation Evaluator - Analyze. Improve. Succeed." 
-            className="h-20 sm:h-28 max-w-full w-auto object-contain drop-shadow-md transition-transform hover:scale-105"
+            className="h-20 sm:h-28 max-w-full w-auto object-contain logo-blend drop-shadow-md transition-transform hover:scale-105"
           />
         </div>
 
