@@ -197,13 +197,33 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         {/* Step 2: Verification Code */}
         {step === 2 && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs">
-              <span className="font-bold">Verification Code Sent!</span> A 6-digit OTP code has been sent to <span className="font-semibold">{emailOrPhone}</span>. Please check your SMS / Email inbox and enter the code below.
+            <div className="p-4 rounded-2xl bg-teal-50/80 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-900 dark:text-teal-200 text-xs space-y-2">
+              <div className="flex items-center justify-between font-bold">
+                <span className="flex items-center gap-1.5 text-teal-700 dark:text-teal-300">
+                  📱 Simulated SMS / Email Delivery
+                </span>
+                <span className="px-2 py-0.5 rounded-md bg-teal-200/60 dark:bg-teal-900 text-teal-900 dark:text-teal-100 text-[10px] font-mono">
+                  SENT
+                </span>
+              </div>
+              <p className="text-[11px] text-teal-800 dark:text-teal-300">
+                OTP sent to <span className="font-semibold">{emailOrPhone}</span>.
+              </p>
+              <div className="pt-1 flex items-center justify-between border-t border-teal-200/60 dark:border-teal-800/80">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">Received OTP Code:</span>
+                <button
+                  type="button"
+                  onClick={() => setOtp(generatedOtp)}
+                  className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-mono font-bold text-xs transition-all shadow-xs flex items-center gap-1"
+                >
+                  <span>Use Code ({generatedOtp})</span>
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                6-Digit Verification Code
+                Enter 6-Digit Verification Code
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -215,7 +235,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   maxLength={6}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  placeholder="e.g. 123456"
+                  placeholder="Enter 6-digit OTP code"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                 />
               </div>
@@ -225,7 +245,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               type="submit"
               className="w-full py-3.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all"
             >
-              <span>Verify Code</span>
+              <span>Verify OTP & Continue</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>

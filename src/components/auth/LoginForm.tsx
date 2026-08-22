@@ -88,7 +88,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
           
           {/* Email or Phone Field */}
           <div>
@@ -102,6 +102,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
               <input
                 type="text"
                 required
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="off"
                 value={emailOrPhone}
                 onChange={(e) => setEmailOrPhone(e.target.value)}
@@ -132,7 +134,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
-                autoComplete="off"
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"

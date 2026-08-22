@@ -107,6 +107,10 @@ const MainAppContent: React.FC = () => {
               <ReportPreviewModal setCurrentView={setCurrentView} />
             )}
 
+            {currentView === 'profile' && (
+              <ProfileDashboardView setCurrentView={setCurrentView} />
+            )}
+
             {currentView === 'recent-presentations' && (
               <RecentPresentationsView setCurrentView={setCurrentView} />
             )}

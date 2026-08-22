@@ -7,6 +7,7 @@ export type AppView =
   | 'dashboard' 
   | 'evaluation' 
   | 'report' 
+  | 'profile'
   | 'recent-presentations' 
   | 'all-evaluations' 
   | 'reports-archive' 

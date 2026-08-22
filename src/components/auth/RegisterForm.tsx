@@ -94,6 +94,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type="text"
                 required
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="off"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -115,6 +117,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type="email"
                 required
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -136,6 +140,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type="tel"
                 required
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="off"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
@@ -157,6 +163,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -185,6 +193,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 required
+                readOnly
+                onFocus={(e) => e.target.removeAttribute('readonly')}
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
