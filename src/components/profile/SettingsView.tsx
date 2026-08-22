@@ -26,6 +26,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
 
   const [name, setName] = useState(user?.name || 'User');
   const [email, setEmail] = useState(user?.email || 'name@example.com');
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '9876543210');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80');
   const [minWpm, setMinWpm] = useState(settings.targetMinWpm);
   const [maxWpm, setMaxWpm] = useState(settings.targetMaxWpm);
   const [aiStrictness, setAiStrictness] = useState(settings.aiStrictness);
@@ -33,9 +35,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
   const [fillerAlerts, setFillerAlerts] = useState(settings.enableFillerAlerts);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
+  const sampleAvatars = [
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=250&q=80',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=250&q=80',
+    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80'
+  ];
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setAvatarUrl(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile({ name, email });
+    updateUserProfile({ name, email, phoneNumber, avatarUrl });
     updateSettings({
       targetMinWpm: minWpm,
       targetMaxWpm: maxWpm,
@@ -59,20 +82,59 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
           Application & Speech Settings
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          Configure speech goals, cadence thresholds, audio sensitivity, and AI evaluation strictness
+          Configure speech goals, cadence thresholds, audio sensitivity, and speaker profile details
         </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         
-        {/* Profile Details */}
-        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-base">
+        {/* Profile Details & Photo Upload */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs space-y-5">
+          <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-base border-b border-slate-100 dark:border-slate-800 pb-3">
             <User className="w-4 h-4 text-brand-500" />
-            <h2>Speaker Profile</h2>
+            <h2>Speaker Profile & Avatar Photo</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Profile Picture Uploader */}
+          <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+            <img 
+              src={avatarUrl} 
+              alt="Profile Preview" 
+              className="w-20 h-20 rounded-2xl object-cover ring-4 ring-brand-500/20 shadow-xs"
+            />
+            <div className="space-y-2 text-center sm:text-left">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                Change Profile Picture
+              </label>
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold cursor-pointer transition-all shadow-xs inline-block">
+                  Upload Photo
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileUpload} 
+                    className="hidden" 
+                  />
+                </label>
+                <span className="text-xs text-slate-400">or pick preset:</span>
+                <div className="flex items-center gap-1.5">
+                  {sampleAvatars.map((url, idx) => (
+                    <img 
+                      key={idx}
+                      src={url} 
+                      alt={`Avatar ${idx+1}`}
+                      onClick={() => setAvatarUrl(url)}
+                      className={`w-7 h-7 rounded-lg object-cover cursor-pointer transition-transform hover:scale-110 ${
+                        avatarUrl === url ? 'ring-2 ring-brand-500 scale-105' : 'opacity-70 hover:opacity-100'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Full Name
@@ -93,6 +155,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Phone Number
+              </label>
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="e.g. 9876543210"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
               />
             </div>

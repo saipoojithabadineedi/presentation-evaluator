@@ -79,7 +79,7 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              {user?.email || "name@example.com"} • Active Rehearsal Member • 14 Certified Sessions
+              {user?.email || "name@example.com"} • Phone: {user?.phoneNumber || "N/A"} • Active Speaker
             </p>
           </div>
         </div>

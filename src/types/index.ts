@@ -16,6 +16,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   avatarUrl?: string;
   tier: string;
   practiceHours: number;

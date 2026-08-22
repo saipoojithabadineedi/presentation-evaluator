@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AppView } from '../../types';
 import { ForgotPasswordModal } from './ForgotPasswordModal';
@@ -10,21 +10,34 @@ interface LoginFormProps {
 
 export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   const { login } = useAuth();
-  const [email, setEmail] = useState('user@example.com');
-  const [password, setPassword] = useState('password123');
+  const [emailOrPhone, setEmailOrPhone] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, password);
+    setErrorMessage('');
+
+    if (!emailOrPhone.trim() || !password.trim()) {
+      setErrorMessage('Please enter your Email/Phone and Password.');
+      return;
+    }
+
+    const res = login(emailOrPhone, password);
+    if (!res.success) {
+      setErrorMessage(res.error || 'Login failed.');
+      return;
+    }
+
     setCurrentView('dashboard');
   };
 
-  const handleForgotPasswordSuccess = (resetEmail: string) => {
-    setEmail(resetEmail);
+  const handleForgotPasswordSuccess = (resetCredential: string) => {
+    setEmailOrPhone(resetCredential);
     setSuccessMessage('Password reset successfully! You can now log in with your new password.');
     setTimeout(() => setSuccessMessage(''), 6000);
   };
@@ -52,6 +65,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
           />
         </div>
 
+        {/* Error Alert Banner */}
+        {errorMessage && (
+          <div className="mb-6 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         {/* Success Alert Banner */}
         {successMessage && (
           <div className="mb-6 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-semibold animate-in fade-in">
@@ -62,21 +83,21 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
           
-          {/* Email Field */}
+          {/* Email or Phone Field */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Email
+              Email Address or Phone Number
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <Mail className="w-4 h-4" />
               </div>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
+                value={emailOrPhone}
+                onChange={(e) => setEmailOrPhone(e.target.value)}
+                placeholder="Email or Phone number"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
             </div>

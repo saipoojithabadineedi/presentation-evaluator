@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, ArrowRight, Check } from 'lucide-react';
+import { User as UserIcon, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AppView } from '../../types';
 
@@ -11,19 +11,39 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
   const { register } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('SecretPass123!');
-  const [confirmPassword, setConfirmPassword] = useState('SecretPass123!');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
+  const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!agreeTerms) {
-      alert('Please agree to the Terms & Conditions.');
+    setError('');
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
-    register(fullName, email, password);
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match. Please check and try again.');
+      return;
+    }
+
+    if (!agreeTerms) {
+      setError('Please agree to the Terms & Conditions.');
+      return;
+    }
+
+    const res = register(fullName, email, phoneNumber, password);
+    if (!res.success) {
+      setError(res.error || 'Registration failed.');
+      return;
+    }
+
     setCurrentView('dashboard');
   };
 
@@ -50,6 +70,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
           />
         </div>
 
+        {/* Error Banner */}
+        {error && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
@@ -67,7 +95,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="John Doe"
+                placeholder="Enter your full name"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
             </div>
@@ -76,7 +104,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
           {/* Email */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Email
+              Email Address
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -88,6 +116,26 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Phone Number */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Phone Number
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                <Phone className="w-4 h-4" />
+              </div>
+              <input
+                type="tel"
+                required
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="e.g. 9876543210"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
             </div>

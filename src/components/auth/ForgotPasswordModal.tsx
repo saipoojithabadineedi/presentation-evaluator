@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Mail, Lock, KeyRound, CheckCircle2, ArrowRight, X, Eye, EyeOff, ShieldCheck } from 'lucide-react';
-import { requestPasswordResetApi, confirmPasswordResetApi } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { confirmPasswordResetApi } from '../../services/api';
 
 interface ForgotPasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (email: string) => void;
+  onSuccess: (credential: string) => void;
 }
 
 export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
@@ -13,8 +14,9 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   onClose,
   onSuccess
 }) => {
+  const { forgotPassword, resetPassword } = useAuth();
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
-  const [email, setEmail] = useState('user@example.com');
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -27,13 +29,24 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const handleRequestCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!emailOrPhone.trim()) {
+      setError('Please enter your registered Email Address or Phone Number.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await requestPasswordResetApi(email);
+      const res = forgotPassword(emailOrPhone);
+      if (!res.success) {
+        setError(res.error || 'No registered account found with this Email or Phone Number.');
+        return;
+      }
+
       setStep(2);
     } catch (err: any) {
-      setError(err.message || 'Failed to send verification code.');
+      setError('Failed to send verification code. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -66,17 +79,22 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     setIsLoading(true);
 
     try {
-      await confirmPasswordResetApi(email, otp, newPassword);
+      const res = resetPassword(emailOrPhone, newPassword);
+      if (!res.success) {
+        setError(res.error || 'Failed to update password.');
+        return;
+      }
+      confirmPasswordResetApi(emailOrPhone, otp, newPassword);
       setStep(4);
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password. Please try again.');
+      setError('Failed to reset password. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDone = () => {
-    onSuccess(email);
+    onSuccess(emailOrPhone);
     onClose();
     // Reset modal state
     setStep(1);
@@ -132,23 +150,23 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         {step === 1 && (
           <form onSubmit={handleRequestCode} className="space-y-4">
             <p className="text-xs text-slate-600 dark:text-slate-300">
-              Enter your registered email address. We will send a 6-digit verification code to reset your password.
+              Enter your registered Email Address or Phone Number. We will send a 6-digit verification code to reset your password.
             </p>
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Email Address
+                Email Address or Phone Number
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
+                  value={emailOrPhone}
+                  onChange={(e) => setEmailOrPhone(e.target.value)}
+                  placeholder="Enter email or phone number"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                 />
               </div>
@@ -169,7 +187,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         {step === 2 && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="p-3 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs">
-              <span className="font-bold">Code Sent!</span> Check your inbox at <span className="font-semibold">{email}</span> (Use demo code <code className="bg-teal-100 dark:bg-teal-900 px-1 py-0.5 rounded font-mono">123456</code>).
+              <span className="font-bold">Code Sent!</span> Verification code sent to <span className="font-semibold">{emailOrPhone}</span> (Use OTP code <code className="bg-teal-100 dark:bg-teal-900 px-1 py-0.5 rounded font-mono font-bold">123456</code>).
             </div>
 
             <div>
