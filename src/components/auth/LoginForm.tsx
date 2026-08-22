@@ -102,6 +102,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
               <input
                 type="text"
                 required
+                autoComplete="off"
                 value={emailOrPhone}
                 onChange={(e) => setEmailOrPhone(e.target.value)}
                 placeholder="Email or Phone number"
@@ -131,6 +132,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                autoComplete="off"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"

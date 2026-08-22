@@ -66,7 +66,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     }
 
     if (generatedOtp && otp.trim() !== generatedOtp.trim()) {
-      setError(`Invalid verification code. Please enter the exact 6-digit OTP sent to your credentials (${generatedOtp}).`);
+      setError('Invalid verification code. Please enter the exact 6-digit OTP code sent to your credentials.');
       return;
     }
 
@@ -198,7 +198,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         {step === 2 && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
             <div className="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs">
-              <span className="font-bold">Verification Code Sent!</span> Sent to <span className="font-semibold">{emailOrPhone}</span>. Your 6-digit OTP code is: <code className="bg-teal-100 dark:bg-teal-900 px-1.5 py-0.5 rounded font-mono font-bold text-sm text-teal-900 dark:text-teal-100">{generatedOtp}</code>. Please enter this code below.
+              <span className="font-bold">Verification Code Sent!</span> A 6-digit OTP code has been sent to <span className="font-semibold">{emailOrPhone}</span>. Please check your SMS / Email inbox and enter the code below.
             </div>
 
             <div>

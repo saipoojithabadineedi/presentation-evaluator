@@ -94,6 +94,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type="text"
                 required
+                autoComplete="off"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter your full name"
@@ -114,6 +115,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type="email"
                 required
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
@@ -134,6 +136,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type="tel"
                 required
+                autoComplete="off"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 placeholder="e.g. 9876543210"
@@ -154,6 +157,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create strong password"
@@ -181,9 +185,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 required
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter password"
+                placeholder="Confirm strong password"
                 className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
               <button
