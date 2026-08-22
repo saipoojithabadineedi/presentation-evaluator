@@ -38,8 +38,8 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
         <div className="flex justify-center mb-8">
           <img 
             src="/assets/logo.jpg" 
-            alt="Presentation Evaluator" 
-            className="h-14 w-auto object-contain rounded-md"
+            alt="Presentation Evaluator - Analyze. Improve. Succeed." 
+            className="h-16 sm:h-20 max-w-full w-auto object-contain drop-shadow-sm"
           />
         </div>
 

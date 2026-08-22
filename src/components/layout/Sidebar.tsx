@@ -90,12 +90,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <button 
             onClick={() => handleNavigate('dashboard')}
-            className="flex items-center gap-3 text-left focus:outline-none group"
+            className="flex items-center gap-3 text-left focus:outline-none group w-full"
           >
             <img 
               src="/assets/logo.jpg" 
-              alt="Presentation Evaluator" 
-              className="h-10 w-auto object-contain rounded-md shadow-xs transition-transform group-hover:scale-105"
+              alt="Presentation Evaluator - Analyze. Improve. Succeed." 
+              className="h-12 w-auto max-w-[200px] object-contain transition-transform group-hover:scale-105"
             />
           </button>
 

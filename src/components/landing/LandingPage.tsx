@@ -14,6 +14,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ setCurrentView, onQuic
       {/* Hero Section */}
       <section className="relative pt-12 pb-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
         
+        {/* Official Brand Logo Banner */}
+        <div className="flex justify-center mb-8">
+          <img 
+            src="/assets/logo.jpg" 
+            alt="Presentation Evaluator - Analyze. Improve. Succeed." 
+            className="h-20 sm:h-28 max-w-full w-auto object-contain drop-shadow-md transition-transform hover:scale-105"
+          />
+        </div>
+
         {/* AI Tag Pill (Matches Screenshot) */}
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-50/80 dark:bg-brand-950/40 border border-brand-200/80 dark:border-brand-800/60 text-brand-700 dark:text-brand-300 text-xs font-semibold mb-8 backdrop-blur-xs shadow-xs">
           <Sparkles className="w-3.5 h-3.5 text-brand-500" />

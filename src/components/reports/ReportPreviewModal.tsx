@@ -138,8 +138,8 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
           <div>
             <img 
               src="/assets/logo.jpg" 
-              alt="Presentation Evaluator" 
-              className="h-14 w-auto object-contain mb-2"
+              alt="Presentation Evaluator - Analyze. Improve. Succeed." 
+              className="h-16 w-auto object-contain mb-2"
             />
             <div className="text-[11px] font-bold tracking-wider text-teal-600 uppercase">
               Official Executive Speech Evaluation

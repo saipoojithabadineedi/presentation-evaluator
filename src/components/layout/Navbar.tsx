@@ -47,8 +47,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
           >
             <img 
               src="/assets/logo.jpg" 
-              alt="Presentation Evaluator" 
-              className="h-10 w-auto object-contain rounded-md shadow-xs transition-transform group-hover:scale-105"
+              alt="Presentation Evaluator - Analyze. Improve. Succeed." 
+              className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
             />
           </button>
         </div>

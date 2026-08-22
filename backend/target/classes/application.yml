@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: evaluator-backend
+  datasource:
+    url: jdbc:h2:mem:presentation_db;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password: 
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.presentation.evaluator: DEBUG
+    org.hibernate.SQL: DEBUG
