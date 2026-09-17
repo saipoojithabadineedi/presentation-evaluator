@@ -23,7 +23,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
 
   const [activeTab, setActiveTab] = useState<'upload' | 'record' | 'samples'>('upload');
   const [presentationTitle, setPresentationTitle] = useState('New Rehearsal Session');
-  const [selectedFile, setSelectedFile] = useState<{ name: string; size: string; type: 'video' | 'audio' | 'slides' } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size: string; type: 'video' | 'audio' | 'slides'; durationSec?: number; rawFile?: File } | null>(null);
   
   // Microphone recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -43,13 +43,27 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
         : 'audio';
       
       const sizeMb = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-      setSelectedFile({ name: file.name, size: sizeMb, type });
+      setSelectedFile({ name: file.name, size: sizeMb, type, rawFile: file });
       setPresentationTitle(file.name.replace(/\.[^/.]+$/, ""));
+
+      // Extract real duration for video/audio files
+      if (file.type.includes('video') || file.type.includes('audio')) {
+        const mediaElem = document.createElement(file.type.includes('video') ? 'video' : 'audio');
+        mediaElem.preload = 'metadata';
+        mediaElem.src = URL.createObjectURL(file);
+        mediaElem.onloadedmetadata = () => {
+          URL.revokeObjectURL(mediaElem.src);
+          const duration = Math.round(mediaElem.duration || 0);
+          if (duration > 0) {
+            setSelectedFile(prev => prev ? { ...prev, durationSec: duration } : null);
+          }
+        };
+      }
     }
   };
 
-  const handleSampleSelect = (sampleTitle: string, type: 'video' | 'audio' | 'slides', size: string) => {
-    setSelectedFile({ name: `${sampleTitle}.${type === 'video' ? 'mp4' : type === 'audio' ? 'wav' : 'pdf'}`, size, type });
+  const handleSampleSelect = (sampleTitle: string, type: 'video' | 'audio' | 'slides', size: string, durationSec: number = 280) => {
+    setSelectedFile({ name: `${sampleTitle}.${type === 'video' ? 'mp4' : type === 'audio' ? 'wav' : 'pdf'}`, size, type, durationSec });
     setPresentationTitle(sampleTitle);
   };
 
@@ -60,7 +74,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
       setSelectedFile({
         name: `Live_Mic_Rehearsal_${new Date().toISOString().slice(0, 10)}.wav`,
         size: `${(recordSeconds * 0.1).toFixed(1)} MB`,
-        type: 'audio'
+        type: 'audio',
+        durationSec: recordSeconds
       });
       setPresentationTitle(`Live Speech Rehearsal (${recordSeconds}s)`);
     } else {
@@ -83,12 +98,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
     const finalFileType = selectedFile?.type || 'video';
     const finalFileSize = selectedFile?.size || '25 MB';
     const finalFileName = selectedFile?.name || 'rehearsal_recording.mp4';
+    const finalDurationSec = selectedFile?.durationSec;
+    const rawFile = selectedFile?.rawFile;
 
     await startAIAnalysis({
       title: finalTitle,
       fileType: finalFileType,
       fileName: finalFileName,
-      fileSize: finalFileSize
+      fileSize: finalFileSize,
+      durationSeconds: finalDurationSec,
+      fileObject: rawFile
     });
     
     onEvaluationComplete();

@@ -116,6 +116,42 @@
   animation: gradientShift 4s ease infinite;
 }
 
+/* Page & Modal Smooth Transitions */
+.page-fade-enter {
+  animation: pageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pageFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+}
+
+.card-glow-active {
+  position: relative;
+}
+.card-glow-active::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #10b981, #3b82f6, #8b5cf6);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.metric-ring-glow {
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.4));
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

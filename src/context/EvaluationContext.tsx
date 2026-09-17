@@ -2,12 +2,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { EvaluationData, ReportItem, UserSettings } from '../types';
 import { initialEvaluations, initialReports, defaultSettings } from '../utils/mockData';
 import { startAIAnalysisApi } from '../services/api';
+import { generateDynamicEvaluation } from '../utils/dynamicEvaluation';
+import { extractRealAudioMetrics, buildAccurateEvaluationData } from '../utils/audioAnalyzer';
 
 interface UploadPayload {
   title: string;
   fileType: 'video' | 'audio' | 'slides';
   fileName: string;
   fileSize: string;
+  durationSeconds?: number;
+  fileObject?: File;
   customNotes?: string;
 }
 
@@ -153,93 +157,25 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     await new Promise(r => setTimeout(r, 600));
 
-    // Generate random / heuristic metrics for the newly uploaded rehearsal
-    const calculatedScore = Math.floor(Math.random() * 8) + 88; // 88 - 95
-    const cadence = Math.floor(Math.random() * 16) + 130; // 130 - 145
-    const fillerRate = Number((Math.random() * 0.8 + 0.4).toFixed(1)); // 0.4 - 1.2%
+    let newEval: EvaluationData;
 
-    const newEval: EvaluationData = {
-      id: 'eval-' + Date.now(),
-      presentationId: 'pres-' + Date.now(),
-      title: payload.title || 'New Rehearsal Evaluation',
-      date: 'Just now',
-      formattedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      duration: '5 min 14 sec',
-      durationSeconds: 314,
-      fileType: payload.fileType,
-      fileSize: payload.fileSize || '24.5 MB',
-      overallScore: calculatedScore,
-      scoreTier: calculatedScore >= 90 ? 'Top 5% speaker tier' : 'Top 10% speaker tier',
-      averageCadence: cadence,
-      cadenceStatus: 'Optimal keynote pace (125-150)',
-      fillerWordRate: fillerRate,
-      fillerWordCount: Math.round(fillerRate * 5),
-      fillerBreakdown: {
-        um: 1,
-        like: 2,
-        uh: 0,
-        youKnow: 1,
-        actually: 0,
-        so: 0
-      },
-      metrics: {
-        delivery: Math.min(100, calculatedScore + 2),
-        content: calculatedScore - 1,
-        visuals: calculatedScore - 3,
-        pacing: Math.min(100, calculatedScore + 4),
-        clarity: calculatedScore,
-        engagement: calculatedScore + 1
-      },
-      cadenceTimeline: [
-        { time: '0:30', wpm: cadence - 6, targetMin: 125, targetMax: 150 },
-        { time: '1:00', wpm: cadence - 2, targetMin: 125, targetMax: 150 },
-        { time: '1:30', wpm: cadence + 4, targetMin: 125, targetMax: 150 },
-        { time: '2:00', wpm: cadence + 2, targetMin: 125, targetMax: 150 },
-        { time: '2:30', wpm: cadence - 1, targetMin: 125, targetMax: 150 },
-        { time: '3:00', wpm: cadence + 5, targetMin: 125, targetMax: 150 },
-        { time: '3:30', wpm: cadence, targetMin: 125, targetMax: 150 },
-        { time: '4:00', wpm: cadence - 3, targetMin: 125, targetMax: 150 }
-      ],
-      strengths: [
-        'Dynamic rhythm and excellent cadence control throughout key talking points.',
-        'High vocal clarity and crisp enunciation on technical terminology.',
-        'Extremely low filler word frequency, maintaining strong executive presence.'
-      ],
-      improvements: [
-        'Introduce purposeful 2-second pauses before major takeaway transitions.',
-        'Elevate pitch variation during the closing call to action to boost engagement.'
-      ],
-      transcript: [
-        {
-          id: 't-new-1',
-          startTime: '00:00',
-          seconds: 0,
-          speaker: 'Speaker',
-          text: `Thank you everyone for joining today's presentation on ${payload.title}.`,
-          wpm: cadence - 5,
-          tone: 'enthusiastic'
-        },
-        {
-          id: 't-new-2',
-          startTime: '00:25',
-          seconds: 25,
-          speaker: 'Speaker',
-          text: 'We are addressing our core growth objectives and delivering key architectural milestones for the team.',
-          wpm: cadence,
-          tone: 'confident'
-        },
-        {
-          id: 't-new-3',
-          startTime: '00:58',
-          seconds: 58,
-          speaker: 'Speaker',
-          text: 'Our AI evaluation benchmarks show an immediate improvement in delivery confidence and audience retention.',
-          wpm: cadence + 3,
-          tone: 'confident'
-        }
-      ],
-      summary: `High-impact rehearsal for "${payload.title}". Delivery pacing was steady at ${cadence} WPM with minimal conversational fillers.`
-    };
+    // Check if raw File object is provided for Web Audio API PCM analysis
+    if (payload.fileObject) {
+      setProcessingStatusText('Decoding Web Audio API PCM PCM frames & signal energy...');
+      const realMetrics = await extractRealAudioMetrics(payload.fileObject);
+      newEval = buildAccurateEvaluationData(
+        payload.title,
+        payload.fileType,
+        payload.fileName,
+        payload.fileSize,
+        realMetrics
+      );
+    } else {
+      newEval = generateDynamicEvaluation(payload);
+    }
+
+    // Attempt backend sync
+    startAIAnalysisApi(payload);
 
     setEvaluations(prev => [newEval, ...prev]);
     setActiveEvaluation(newEval);

@@ -77,7 +77,7 @@ const MainAppContent: React.FC = () => {
 
         {/* Main Content Pane */}
         <div className="flex-1 flex flex-col min-w-0">
-          <main className="flex-1">
+          <main className="flex-1 page-fade-enter" key={currentView}>
             {currentView === 'landing' && (
               <LandingPage 
                 setCurrentView={setCurrentView} 
