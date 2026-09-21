@@ -4,6 +4,7 @@ import { initialEvaluations, initialReports, defaultSettings } from '../utils/mo
 import { startAIAnalysisApi } from '../services/api';
 import { generateDynamicEvaluation } from '../utils/dynamicEvaluation';
 import { extractRealAudioMetrics, buildAccurateEvaluationData } from '../utils/audioAnalyzer';
+import { analyzePresentationWithGeminiLLM } from '../services/geminiService';
 
 interface UploadPayload {
   title: string;
@@ -161,14 +162,29 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     // Check if raw File object is provided for Web Audio API PCM analysis
     if (payload.fileObject) {
-      setProcessingStatusText('Decoding Web Audio API PCM PCM frames & signal energy...');
+      setProcessingStatusText('Decoding Web Audio API PCM frames & audio energy...');
       const realMetrics = await extractRealAudioMetrics(payload.fileObject);
+
+      setProcessingStatusText('Invoking Google Gemini LLM neural evaluation engine...');
+      const llmResult = await analyzePresentationWithGeminiLLM({
+        title: payload.title,
+        fileType: payload.fileType,
+        fileName: payload.fileName,
+        fileSize: payload.fileSize,
+        durationSeconds: realMetrics.durationSeconds,
+        wpm: realMetrics.calculatedWpm,
+        clarityScore: realMetrics.clarityScore,
+        fillerCount: realMetrics.detectedFillerCount,
+        silenceRatioPercent: realMetrics.silenceRatioPercent
+      });
+
       newEval = buildAccurateEvaluationData(
         payload.title,
         payload.fileType,
         payload.fileName,
         payload.fileSize,
-        realMetrics
+        realMetrics,
+        llmResult
       );
     } else {
       newEval = generateDynamicEvaluation(payload);

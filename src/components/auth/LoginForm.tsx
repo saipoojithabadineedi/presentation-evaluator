@@ -9,11 +9,16 @@ interface LoginFormProps {
 }
 
 export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
-  const { login } = useAuth();
+  const { login, registeredUsers } = useAuth();
   const emailInputRef = useRef<HTMLInputElement>(null);
 
   const [emailOrPhone, setEmailOrPhone] = useState(() => {
-    return localStorage.getItem('pe_remembered_credentials') || localStorage.getItem('pe_last_login_credential') || '';
+    const remembered = localStorage.getItem('pe_remembered_credentials') || localStorage.getItem('pe_last_login_credential');
+    if (remembered) return remembered;
+    if (registeredUsers && registeredUsers.length > 0) {
+      return registeredUsers[0].email || registeredUsers[0].phoneNumber || '';
+    }
+    return '';
   });
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

@@ -1,4 +1,5 @@
 import { EvaluationData } from '../types';
+import { GeminiLLMAnalysisResponse } from '../services/geminiService';
 
 export interface AudioAnalysisResult {
   durationSeconds: number;
@@ -107,21 +108,21 @@ export async function extractRealAudioMetrics(file: File): Promise<AudioAnalysis
 }
 
 /**
- * Creates accurate EvaluationData using Web Audio API metrics + optional Spring Boot API result
+ * Creates accurate EvaluationData using Web Audio API metrics + optional Gemini LLM result
  */
 export function buildAccurateEvaluationData(
   title: string,
   fileType: 'video' | 'audio' | 'slides',
   fileName: string,
   fileSize: string,
-  metrics: AudioAnalysisResult
+  metrics: AudioAnalysisResult,
+  llmResult?: GeminiLLMAnalysisResponse | null
 ): EvaluationData {
   const mins = Math.floor(metrics.durationSeconds / 60);
   const secs = metrics.durationSeconds % 60;
   const formattedDuration = `${mins} min ${secs} sec`;
 
-  // Compute Overall Score based on Real Speech Metrics
-  // Ideal WPM = 130 - 150 WPM, Silence = 10-20%
+  // Compute Overall Score based on Real Speech Metrics or Gemini LLM score
   let wpmPenalty = 0;
   if (metrics.calculatedWpm < 125) wpmPenalty = (125 - metrics.calculatedWpm) * 0.3;
   if (metrics.calculatedWpm > 155) wpmPenalty = (metrics.calculatedWpm - 155) * 0.3;
@@ -133,7 +134,8 @@ export function buildAccurateEvaluationData(
     wpmPenalty
   );
 
-  const overallScore = Math.min(98, Math.max(68, rawOverall));
+  const overallScore = llmResult?.overallScore || Math.min(98, Math.max(68, rawOverall));
+  const scoreTier = llmResult?.scoreTier || (overallScore >= 90 ? 'Top 5% speaker tier' : overallScore >= 82 ? 'Top 15% speaker tier' : 'Top 25% speaker tier');
 
   // Cadence status
   let cadenceStatus = 'Optimal keynote pace (125-150 WPM)';
@@ -180,7 +182,7 @@ export function buildAccurateEvaluationData(
     fileType: fileType,
     fileSize: fileSize,
     overallScore: overallScore,
-    scoreTier: overallScore >= 90 ? 'Top 5% speaker tier' : overallScore >= 82 ? 'Top 15% speaker tier' : 'Top 25% speaker tier',
+    scoreTier: scoreTier,
     averageCadence: metrics.calculatedWpm,
     cadenceStatus: cadenceStatus,
     fillerWordRate: fillerRate,
@@ -202,12 +204,12 @@ export function buildAccurateEvaluationData(
       engagement: Math.min(99, Math.max(65, Math.round(metrics.vocalEnergyScore * 0.95)))
     },
     cadenceTimeline,
-    strengths: [
+    strengths: (llmResult?.strengths && llmResult.strengths.length > 0) ? llmResult.strengths : [
       `Web Audio API verified speech duration of ${formattedDuration} with ${metrics.calculatedWpm} WPM speech cadence.`,
       `Vocal signal clarity measured at ${metrics.clarityScore}% with ${100 - metrics.silenceRatioPercent}% speech activity ratio.`,
       `Stable audio frequency modulation (${metrics.pitchVariationHz} Hz pitch variance).`
     ],
-    improvements: [
+    improvements: (llmResult?.improvements && llmResult.improvements.length > 0) ? llmResult.improvements : [
       metrics.calculatedWpm > 150 
         ? `Speech velocity of ${metrics.calculatedWpm} WPM is fast — incorporate 2-second pauses.` 
         : `Silence ratio of ${metrics.silenceRatioPercent}% detected — maintain momentum between slide points.`,
@@ -233,6 +235,6 @@ export function buildAccurateEvaluationData(
         tone: 'confident'
       }
     ],
-    summary: `Accurate Web Audio analysis for "${title}" (${fileName}, ${fileSize}). Speech duration: ${formattedDuration}, average pace: ${metrics.calculatedWpm} WPM, vocal clarity: ${metrics.clarityScore}%.`
+    summary: llmResult?.executiveSummary || `Accurate Web Audio AI analysis for "${title}" (${fileName}, ${fileSize}). Speech duration: ${formattedDuration}, average pace: ${metrics.calculatedWpm} WPM, vocal clarity: ${metrics.clarityScore}%.`
   };
 }

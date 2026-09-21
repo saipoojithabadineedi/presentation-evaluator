@@ -26,3 +26,6 @@ dist-ssr
 # Java / Maven target directories
 target/
 backend/target/
+
+# Media Test Files
+*.mp4

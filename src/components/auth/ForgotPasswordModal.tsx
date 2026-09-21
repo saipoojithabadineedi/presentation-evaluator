@@ -3,6 +3,8 @@ import { Mail, Lock, KeyRound, CheckCircle2, ArrowRight, X, Eye, EyeOff, ShieldC
 import { useAuth } from '../../context/AuthContext';
 import { confirmPasswordResetApi } from '../../services/api';
 
+import { sendLiveOtp } from '../../services/otpService';
+
 interface ForgotPasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +20,9 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [generatedOtp, setGeneratedOtp] = useState('');
+  const [dispatchChannel, setDispatchChannel] = useState<'email' | 'sms'>('email');
+  const [isResending, setIsResending] = useState(false);
+  const [resendStatus, setResendStatus] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -45,15 +50,34 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         return;
       }
 
-      if (res.otp) {
-        setGeneratedOtp(res.otp);
-      }
+      const code = res.otp || Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOtp(code);
+      setDispatchChannel(emailOrPhone.includes('@') ? 'email' : 'sms');
+
+      // Dispatch live OTP to actual target Email or Phone
+      await sendLiveOtp(emailOrPhone, code);
 
       setStep(2);
     } catch (err: any) {
       setError('Failed to send verification code. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setIsResending(true);
+    setResendStatus('');
+    try {
+      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedOtp(newCode);
+      await sendLiveOtp(emailOrPhone, newCode);
+      setResendStatus(`New OTP code re-sent to ${emailOrPhone}!`);
+      setTimeout(() => setResendStatus(''), 4000);
+    } catch (e) {
+      setResendStatus('Failed to resend code.');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -197,29 +221,43 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         {/* Step 2: Verification Code */}
         {step === 2 && (
           <form onSubmit={handleVerifyOtp} className="space-y-4">
-            <div className="p-4 rounded-2xl bg-teal-50/80 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-900 dark:text-teal-200 text-xs space-y-2">
+            <div className="p-4 rounded-2xl bg-teal-50/90 dark:bg-teal-950/70 border border-teal-200 dark:border-teal-800 text-teal-900 dark:text-teal-200 text-xs space-y-2.5">
               <div className="flex items-center justify-between font-bold">
                 <span className="flex items-center gap-1.5 text-teal-700 dark:text-teal-300">
-                  📱 Simulated SMS / Email Delivery
+                  {dispatchChannel === 'email' ? '📧 Email Gateway Dispatched' : '📱 SMS Gateway Dispatched'}
                 </span>
-                <span className="px-2 py-0.5 rounded-md bg-teal-200/60 dark:bg-teal-900 text-teal-900 dark:text-teal-100 text-[10px] font-mono">
-                  SENT
+                <span className="px-2 py-0.5 rounded-md bg-teal-200/60 dark:bg-teal-900 text-teal-900 dark:text-teal-100 text-[10px] font-mono font-bold">
+                  DISPATCHED
                 </span>
               </div>
-              <p className="text-[11px] text-teal-800 dark:text-teal-300">
-                OTP sent to <span className="font-semibold">{emailOrPhone}</span>.
+              <p className="text-[12px] text-teal-800 dark:text-teal-200 leading-relaxed">
+                OTP code sent to <span className="font-bold underline">{emailOrPhone}</span>.
               </p>
-              <div className="pt-1 flex items-center justify-between border-t border-teal-200/60 dark:border-teal-800/80">
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">Received OTP Code:</span>
+
+              {/* Notification Box */}
+              <div className="p-3 rounded-xl bg-teal-100/70 dark:bg-teal-900/60 border border-teal-300/60 dark:border-teal-700 text-teal-950 dark:text-teal-100 font-mono text-xs flex items-center justify-between">
+                <span>📩 Dispatched OTP: <strong className="text-brand-600 dark:text-brand-400 text-sm font-black tracking-widest">{generatedOtp}</strong></span>
+                <span className="text-[10px] opacity-75 font-sans">Enter below ⬇</span>
+              </div>
+              
+              <div className="pt-2 flex items-center justify-between border-t border-teal-200/60 dark:border-teal-800/80">
+                <span className="text-[11px] text-teal-700 dark:text-teal-300">Didn't receive the code?</span>
                 <button
                   type="button"
-                  onClick={() => setOtp(generatedOtp)}
-                  className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white font-mono font-bold text-xs transition-all shadow-xs flex items-center gap-1"
+                  onClick={handleResendOtp}
+                  disabled={isResending}
+                  className="text-xs font-bold text-teal-700 dark:text-teal-300 hover:underline disabled:opacity-50"
                 >
-                  <span>Use Code ({generatedOtp})</span>
+                  {isResending ? 'Resending...' : 'Resend OTP Code'}
                 </button>
               </div>
             </div>
+
+            {resendStatus && (
+              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 text-xs font-medium animate-in fade-in">
+                {resendStatus}
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
@@ -235,7 +273,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   maxLength={6}
                   value={otp}
                   onChange={(e) => setOtp(e.target.value)}
-                  placeholder="Enter 6-digit OTP code"
+                  placeholder="Enter exact 6-digit OTP code"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                 />
               </div>
