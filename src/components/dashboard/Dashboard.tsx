@@ -2,10 +2,7 @@ import React, { useState, useRef } from 'react';
 import { 
   Sparkles, 
   UploadCloud, 
-  TrendingUp, 
   Mic, 
-  CheckCircle2, 
-  Presentation, 
   FileText, 
   FileVideo, 
   FileAudio,
@@ -13,12 +10,14 @@ import {
   ArrowRight,
   StopCircle,
   Play,
-  User as UserIcon,
-  Layers
+  Video,
+  ShieldCheck,
+  Zap,
+  Info
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluation } from '../../context/EvaluationContext';
-import { AppView, EvaluationData } from '../../types';
+import { AppView } from '../../types';
 
 interface DashboardProps {
   setCurrentView: (view: AppView) => void;
@@ -27,7 +26,7 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSidebar }) => {
   const { user } = useAuth();
-  const { evaluations, startAIAnalysis, setActiveEvaluation } = useEvaluation();
+  const { startAIAnalysis } = useEvaluation();
 
   // In-page upload state
   const [activeUploadTab, setActiveUploadTab] = useState<'upload' | 'record' | 'samples'>('upload');
@@ -102,20 +101,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
     setCurrentView('evaluation');
   };
 
-  const handleViewExistingReport = (item: EvaluationData) => {
-    setActiveEvaluation(item);
-    setCurrentView('evaluation');
-  };
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
       
-      {/* Home Page Top Banner with Profile Access */}
+      {/* Welcome Banner & Direct Action */}
       <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-50 dark:bg-brand-950/60 border border-brand-200/80 dark:border-brand-800/60 text-brand-700 dark:text-brand-300 text-xs font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-brand-500" />
-            <span>AI Speech & Slide Evaluation Engine Active</span>
+            <span>AI Speech & Presentation Evaluation Engine Active</span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
@@ -123,21 +117,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
           </h1>
 
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-            Upload your presentation audio, video, or slide deck below for instantaneous AI speech delivery, pacing, and visual analysis.
+            Upload your presentation video, audio file, or slide deck below to start instant AI evaluation.
           </p>
         </div>
+
+        {/* Profile Navigation Shortcut */}
+        <button
+          onClick={() => setCurrentView('profile')}
+          className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/50 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition-all cursor-pointer group shrink-0"
+        >
+          <img 
+            src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"}
+            alt={user?.name || "User"}
+            className="w-10 h-10 rounded-xl object-cover ring-2 ring-brand-500/30 group-hover:scale-105 transition-transform"
+          />
+          <div className="text-left">
+            <div className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-brand-600">
+              View Profile Dashboard
+            </div>
+            <div className="text-[10px] text-slate-400">
+              Analytics & Performance Overview →
+            </div>
+          </div>
+        </button>
       </div>
 
-      {/* CORE WORKFLOW SECTION: UPLOAD PRESENTATION & AI ANALYZE BUTTON (From Sketch) */}
+      {/* CORE WORKFLOW SECTION: UPLOAD FILE & VIDEO EVALUATION HUB */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-brand-500/30 dark:border-brand-500/30 shadow-xl shadow-brand-500/5 p-6 sm:p-10 space-y-6">
         
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded-md">
-              Home Page Upload Hub
+              Upload & Video Analysis Hub
             </span>
             <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
-              Upload Your Presentation
+              Upload Your Presentation Video or Audio
             </h2>
           </div>
 
@@ -152,7 +166,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
               }`}
             >
               <UploadCloud className="w-4 h-4" />
-              <span>Upload File</span>
+              <span>Upload Video/File</span>
             </button>
 
             <button
@@ -199,7 +213,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
         {activeUploadTab === 'upload' && (
           <div 
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-brand-500/40 hover:border-brand-500 rounded-3xl p-8 sm:p-10 text-center cursor-pointer transition-all bg-brand-50/20 dark:bg-brand-950/20 hover:bg-brand-50/40 flex flex-col items-center justify-center group"
+            className="border-2 border-dashed border-brand-500/40 hover:border-brand-500 rounded-3xl p-8 sm:p-12 text-center cursor-pointer transition-all bg-brand-50/20 dark:bg-brand-950/20 hover:bg-brand-50/40 flex flex-col items-center justify-center group"
           >
             <input 
               ref={fileInputRef}
@@ -208,14 +222,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
               className="hidden" 
               onChange={handleFileChange}
             />
-            <div className="w-16 h-16 rounded-2xl bg-brand-500 text-white flex items-center justify-center mb-3 shadow-lg shadow-brand-500/30 group-hover:scale-110 transition-transform">
-              <UploadCloud className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-brand-500 text-white flex items-center justify-center mb-4 shadow-lg shadow-brand-500/30 group-hover:scale-110 transition-transform">
+              <Video className="w-8 h-8" />
             </div>
-            <p className="text-base font-bold text-slate-900 dark:text-white mb-1">
-              {selectedFile ? selectedFile.name : 'Click to browse or drop your presentation file here'}
+            <p className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white mb-1">
+              {selectedFile ? selectedFile.name : 'Click to select or drop presentation video/audio file'}
             </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              Selected: <span className="font-semibold text-brand-600">{selectedFile ? `${selectedFile.type.toUpperCase()} • ${selectedFile.size}` : 'None'}</span> — Supports .mp4, .wav, .mp3, .pdf, .pptx
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Selected: <span className="font-bold text-brand-600">{selectedFile ? `${selectedFile.type.toUpperCase()} • ${selectedFile.size}` : 'None'}</span> — Supports MP4, MOV, WAV, MP3, PDF, PPTX
             </p>
           </div>
         )}
@@ -239,7 +253,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
               {formatTimer(recordSeconds)}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {isRecording ? '🔴 Live Recording in progress... speak clearly into your mic' : 'Click the mic icon to start your presentation rehearsal'}
+              {isRecording ? '🔴 Live Recording in progress... speak clearly into your mic' : 'Click the mic icon to start live presentation recording'}
             </p>
           </div>
         )}
@@ -280,10 +294,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
           </div>
         )}
 
-        {/* CORE CTA: "AI Analyze" BUTTON (Directly as drawn in sketch) */}
+        {/* CORE CTA: "AI Analyze" BUTTON */}
         <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="text-xs text-slate-500">
-            Selected Presentation: <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFile?.name || 'Ready to analyze'}</span>
+            Selected Presentation: <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFile?.name || 'Ready for AI evaluation'}</span>
           </div>
 
           <button
@@ -291,181 +305,48 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
             className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-brand-500/30 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]"
           >
             <Sparkles className="w-5 h-5 animate-pulse" />
-            <span>AI Analyze</span>
+            <span>AI Analyze Presentation</span>
             <ArrowRight className="w-5 h-5" />
           </button>
         </div>
 
       </div>
 
-      {/* 4 Metric KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs card-hover flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Overall Score
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/60 border border-brand-100 dark:border-brand-900/60 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-brand-500" />
+      {/* Guidance Cards for Presentation Evaluation */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2.5 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600">
+              <Zap className="w-5 h-5" />
             </div>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Instant AI Signal Decoding</h3>
           </div>
-          <div>
-            <div className="text-3xl font-extrabold text-brand-600 dark:text-brand-400 tracking-tight">
-              92%
-            </div>
-            <div className="text-xs font-semibold text-brand-600 dark:text-brand-400 mt-1">
-              ↑ Top 5% speaker tier
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs card-hover flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Average Cadence
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-100 dark:border-sky-900/60 flex items-center justify-center">
-              <Mic className="w-4 h-4 text-sky-500" />
-            </div>
-          </div>
-          <div>
-            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              135 <span className="text-sm font-semibold text-slate-400">WPM</span>
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Optimal keynote pace (125–150)
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs card-hover flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Filler Word Rate
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-900/60 flex items-center justify-center">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            </div>
-          </div>
-          <div>
-            <div className="text-3xl font-extrabold text-brand-600 dark:text-brand-400 tracking-tight">
-              0.8%
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Zero "um" / "like" detected
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs card-hover flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Rehearsals Evaluated
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-100 dark:border-amber-900/60 flex items-center justify-center">
-              <Presentation className="w-4 h-4 text-amber-500" />
-            </div>
-          </div>
-          <div>
-            <div className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              14
-            </div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Total 5.4 practice hours
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Recent Evaluations Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-6 sm:p-8">
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
-            Recent Speech Evaluations
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Detailed AI-generated reports with transcript and delivery breakdowns
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Extract pitch, tone, filler words ("um", "like", "actually"), and WPM cadence automatically from audio tracks.
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                <th className="pb-3.5 pl-2">Presentation Title</th>
-                <th className="pb-3.5 px-4">Date</th>
-                <th className="pb-3.5 px-4">Pace</th>
-                <th className="pb-3.5 px-4">Score</th>
-                <th className="pb-3.5 pr-2 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60 text-xs sm:text-sm">
-              {evaluations.map((item) => (
-                <tr 
-                  key={item.id}
-                  className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer"
-                  onClick={() => handleViewExistingReport(item)}
-                >
-                  <td className="py-4 pl-2 font-semibold text-slate-800 dark:text-slate-200">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                      <span>{item.title}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                    {item.date}
-                  </td>
-                  <td className="py-4 px-4 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
-                    {item.averageCadence} WPM
-                  </td>
-                  <td className="py-4 px-4 whitespace-nowrap">
-                    <span className="font-bold text-brand-600 dark:text-brand-400">
-                      {item.overallScore}%
-                    </span>
-                  </td>
-                  <td className="py-4 pr-2 text-right whitespace-nowrap">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewExistingReport(item);
-                      }}
-                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all shadow-2xs"
-                    >
-                      View Report
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Floating Live AI Speech Coach Widget (WOW Feature for Evaluators) */}
-      <div className="fixed bottom-6 right-6 z-40 animate-float hidden md:block">
-        <div className="p-4 rounded-2xl bg-white/90 dark:bg-slate-900/90 border border-brand-200 dark:border-brand-800/80 shadow-2xl backdrop-blur-md max-w-sm space-y-2 ring-1 ring-brand-500/20">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-500"></span>
-              </span>
-              <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-brand-500 animate-spin" />
-                Live AI Speech Coach
-              </span>
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <span className="px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950 text-[10px] font-bold text-brand-600 dark:text-brand-300">
-              ACTIVE
-            </span>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Google Gemini LLM Analysis</h3>
           </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Multimodal analysis evaluates slide content balance, bullet density, speech structure, and persuasion tactics.
+          </p>
+        </div>
 
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
-            💡 <span className="font-bold text-slate-800 dark:text-slate-100">Pro Tip:</span> Maintain <code className="bg-brand-50 dark:bg-slate-800 px-1 py-0.5 rounded text-brand-600 dark:text-brand-400 font-bold">130-150 WPM</code> with pause breaks every 15 seconds to maximize audience persuasion and clarity!
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600">
+              <Info className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Profile Dashboard</h3>
+          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Want to view your overall evaluation scores and performance charts? Click on <span className="font-bold text-brand-600 hover:underline cursor-pointer" onClick={() => setCurrentView('profile')}>Profile Dashboard</span> anytime.
           </p>
         </div>
       </div>

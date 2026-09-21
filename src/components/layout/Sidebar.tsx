@@ -1,5 +1,5 @@
-import React from 'react';
 import { 
+  UploadCloud,
   LayoutDashboard, 
   Clock, 
   BarChart3, 
@@ -36,6 +36,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     {
       id: 'dashboard' as AppView,
+      label: 'Upload File & Video',
+      subtitle: 'Upload presentation file or record mic',
+      icon: UploadCloud
+    },
+    {
+      id: 'profile' as AppView,
       label: 'Profile Dashboard',
       subtitle: 'Overview & performance analytics',
       icon: LayoutDashboard
@@ -48,13 +54,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       id: 'all-evaluations' as AppView,
-      label: 'Evaluation',
+      label: 'Evaluation History',
       subtitle: 'All presentation evaluations & scores',
       icon: BarChart3
     },
     {
       id: 'reports-archive' as AppView,
-      label: 'Reports',
+      label: 'Reports Archive',
       subtitle: 'PDF reports for each evaluation',
       icon: FileText
     },
@@ -109,21 +115,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* User Profile Card on the Left */}
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/40">
+        {/* User Profile Card on the Left (Clickable to open Profile Dashboard) */}
+        <div 
+          onClick={() => handleNavigate('profile')}
+          className="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-850/40 hover:bg-brand-50/50 dark:hover:bg-brand-950/30 cursor-pointer transition-colors group"
+          title="Click to view Profile Dashboard"
+        >
           <div className="flex items-center gap-3.5">
             <div className="relative shrink-0">
               <img 
                 src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"}
                 alt={user?.name || "User"}
-                className="w-12 h-12 rounded-2xl object-cover ring-2 ring-brand-500/40 shadow-xs"
+                className="w-12 h-12 rounded-2xl object-cover ring-2 ring-brand-500/40 shadow-xs group-hover:scale-105 transition-transform"
               />
               <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-brand-500 border-2 border-white dark:border-slate-900 flex items-center justify-center">
                 <Sparkles className="w-2.5 h-2.5 text-white" />
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">
+              <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate group-hover:text-brand-600">
                 {user?.name || "User"}
               </h3>
               <p className="text-xs text-brand-600 dark:text-brand-400 font-semibold flex items-center gap-1 mt-0.5 truncate">
