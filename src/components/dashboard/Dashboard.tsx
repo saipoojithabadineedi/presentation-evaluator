@@ -13,7 +13,15 @@ import {
   Video,
   ShieldCheck,
   Zap,
-  Info
+  Info,
+  Cpu,
+  Layers,
+  TrendingUp,
+  BarChart2,
+  CheckCircle2,
+  Target,
+  Award,
+  HelpCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluation } from '../../context/EvaluationContext';
@@ -102,7 +110,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-in fade-in duration-300">
       
       {/* Welcome Banner & Direct Action */}
       <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -348,6 +356,176 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
           <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
             Want to view your overall evaluation scores and performance charts? Click on <span className="font-bold text-brand-600 hover:underline cursor-pointer" onClick={() => setCurrentView('profile')}>Profile Dashboard</span> anytime.
           </p>
+        </div>
+      </div>
+
+      {/* SECTION 1: HOW THE PRESENTATION IS PROCESSED (STEP-BY-STEP AI PIPELINE) */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-8 space-y-6">
+        <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="p-3 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600">
+            <Cpu className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded-md">
+              AI Processing Workflow
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
+              How It Processes Your Presentation
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          {/* Step 1 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 relative group">
+            <span className="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[11px] font-black tracking-wider">
+              STEP 1
+            </span>
+            <div className="pt-2">
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-brand-600 w-fit mb-3 shadow-2xs">
+                <UploadCloud className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                1. Media Ingestion
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Accepts video files (`.mp4`, `.mov`), audio tracks (`.wav`, `.mp3`), slide decks (`.pdf`, `.pptx`), or live microphone recording.
+              </p>
+            </div>
+          </div>
+
+          {/* Step 2 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 relative group">
+            <span className="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[11px] font-black tracking-wider">
+              STEP 2
+            </span>
+            <div className="pt-2">
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-sky-500 w-fit mb-3 shadow-2xs">
+                <Zap className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                2. Web Audio Extraction
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Decodes vocal signals in real-time via `AudioContext` and `AnalyserNode` to compute pitch stability, WPM pace, and filler words ("um", "like").
+              </p>
+            </div>
+          </div>
+
+          {/* Step 3 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 relative group">
+            <span className="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[11px] font-black tracking-wider">
+              STEP 3
+            </span>
+            <div className="pt-2">
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-emerald-500 w-fit mb-3 shadow-2xs">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                3. Gemini LLM Inference
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Sends extracted metrics to Google Gemini 1.5 Flash LLM to analyze slide readability, bullet density, speech structure, and persuasion tactics.
+              </p>
+            </div>
+          </div>
+
+          {/* Step 4 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 relative group">
+            <span className="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-brand-500 text-white text-[11px] font-black tracking-wider">
+              STEP 4
+            </span>
+            <div className="pt-2">
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-amber-500 w-fit mb-3 shadow-2xs">
+                <BarChart2 className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                4. Report & Score Generation
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Generates overall delivery score (70–98%), speaker tier classification, actionable strengths/improvements, and downloadable PDF reports.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* SECTION 2: WHY PRESENTATION EVALUATOR IS NEEDED */}
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-8 space-y-6">
+        <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
+            <Target className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-md">
+              Core Purpose & Value
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
+              Why Presentation Evaluator?
+            </h2>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <div className="p-6 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-emerald-500 text-white">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                Science-Backed Speech Metrics
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Built on international speech delivery standards. Evaluates pace cadence against the optimal keynote benchmark range (125–150 WPM) to ensure audience engagement and clarity.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-brand-500 text-white">
+                <Zap className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                Instant Objective AI Coaching
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Eliminates human scheduling delays and subjective bias. Rehearsing speakers receive immediate, objective score breakdowns in seconds before pitching investors or keynotes.
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-sky-500 text-white">
+                <Layers className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                Dual Speech & Visual Analysis
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Evaluates both <strong>how you speak</strong> (cadence, tone, filler words) and <strong>what you show</strong> (slide bullet density, readability scores, visual balance).
+            </p>
+          </div>
+
+          <div className="p-6 rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-500 text-white">
+                <Award className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">
+                Long-Term Speaker Progression
+              </h3>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Tracks your practice hours, filler word elimination, and speaker tier advancement over time in your personal Profile Dashboard.
+            </p>
+          </div>
+
         </div>
       </div>
 

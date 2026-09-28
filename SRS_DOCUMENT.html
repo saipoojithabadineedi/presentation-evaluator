@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Software Requirements Specification - Presentation Evaluator</title>
+<style>
+  @page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+  }
+  body {
+    font-family: 'Liberation Sans', 'Segoe UI', Arial, sans-serif;
+    color: #1e293b;
+    line-height: 1.5;
+    font-size: 10.5pt;
+    margin: 0;
+    padding: 0;
+  }
+  h1 {
+    font-size: 20pt;
+    color: #0f172a;
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 6px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+  }
+  h2 {
+    font-size: 13.5pt;
+    color: #1e40af;
+    border-bottom: 1.5px solid #cbd5e1;
+    padding-bottom: 4px;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+  h3 {
+    font-size: 11.5pt;
+    color: #0f172a;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  h4 {
+    font-size: 10.5pt;
+    color: #334155;
+    margin-top: 10px;
+    margin-bottom: 4px;
+  }
+  p {
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 9.5pt;
+  }
+  th, td {
+    border: 1px solid #cbd5e1;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th {
+    background-color: #f1f5f9;
+    font-weight: bold;
+    color: #0f172a;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  code {
+    font-family: 'Liberation Mono', 'Courier New', monospace;
+    background-color: #f1f5f9;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 9pt;
+    color: #0f766e;
+  }
+  pre {
+    background-color: #0f172a;
+    color: #f8fafc;
+    padding: 12px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 9pt;
+    line-height: 1.35;
+    margin: 10px 0;
+  }
+  pre code {
+    background-color: transparent;
+    color: inherit;
+    padding: 0;
+  }
+  hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 18px 0;
+  }
+  ul {
+    padding-left: 20px;
+    margin-top: 4px;
+    margin-bottom: 6px;
+  }
+  li {
+    margin-bottom: 3px;
+  }
+  strong {
+    color: #0f172a;
+  }
+</style>
+</head>
+<body>
+<h1>Software Requirements Specification (SRS)</h1>
+<h2>For Presentation Evaluator — AI-Powered Speech & Presentation Evaluation Engine</h2>
+
+<p><strong>Version 1.0 Approved</strong>  </p>
+<p><strong>Prepared by:</strong> Development Team  </p>
+<p><strong>Organization:</strong> Presentation Evaluator Project  </p>
+<p><strong>Date Created:</strong> September 28, 2026  </p>
+
+<hr/>
+
+<h2>Table of Contents</h2>
+<ul><li>[Revision History](#revision-history)</li></ul>
+<ul><li>[1. Introduction](#1-introduction)</li></ul>
+<p>  - <a href="#11-purpose">1.1 Purpose</a></p>
+<p>  - <a href="#12-document-conventions">1.2 Document Conventions</a></p>
+<p>  - <a href="#13-intended-audience-and-reading-suggestions">1.3 Intended Audience and Reading Suggestions</a></p>
+<p>  - <a href="#14-product-scope">1.4 Product Scope</a></p>
+<p>  - <a href="#15-references">1.5 References</a></p>
+<ul><li>[2. Overall Description](#2-overall-description)</li></ul>
+<p>  - <a href="#21-product-perspective">2.1 Product Perspective</a></p>
+<p>  - <a href="#22-product-functions">2.2 Product Functions</a></p>
+<p>  - <a href="#23-user-classes-and-characteristics">2.3 User Classes and Characteristics</a></p>
+<p>  - <a href="#24-operating-environment">2.4 Operating Environment</a></p>
+<p>  - <a href="#25-design-and-implementation-constraints">2.5 Design and Implementation Constraints</a></p>
+<p>  - <a href="#26-user-documentation">2.6 User Documentation</a></p>
+<p>  - <a href="#27-assumptions-and-dependencies">2.7 Assumptions and Dependencies</a></p>
+<ul><li>[3. External Interface Requirements](#3-external-interface-requirements)</li></ul>
+<p>  - <a href="#31-user-interfaces">3.1 User Interfaces</a></p>
+<p>  - <a href="#32-hardware-interfaces">3.2 Hardware Interfaces</a></p>
+<p>  - <a href="#33-software-interfaces">3.3 Software Interfaces</a></p>
+<p>  - <a href="#34-communications-interfaces">3.4 Communications Interfaces</a></p>
+<ul><li>[4. System Features](#4-system-features)</li></ul>
+<p>  - <a href="#41-system-feature-1-presentation-media-upload--live-mic-recording">4.1 System Feature 1: Presentation Media Upload & Live Mic Recording</a></p>
+<p>  - <a href="#42-system-feature-2-multimodal-google-gemini-llm-analysis-engine">4.2 System Feature 2: Multimodal Google Gemini LLM Analysis Engine</a></p>
+<p>  - <a href="#43-system-feature-3-web-audio-api-real-time-signal-processing--cadence-analysis">4.3 System Feature 3: Web Audio API Real-Time Signal Processing & Cadence Analysis</a></p>
+<p>  - <a href="#44-system-feature-4-user-authentication--live-otp-password-verification">4.4 System Feature 4: User Authentication & Live OTP Password Verification</a></p>
+<p>  - <a href="#45-system-feature-5-profile-dashboard--performance-analytics">4.5 System Feature 5: Profile Dashboard & Performance Analytics</a></p>
+<p>  - <a href="#46-system-feature-6-pdf-evaluation-report-generation--export">4.6 System Feature 6: PDF Evaluation Report Generation & Export</a></p>
+<ul><li>[5. Other Nonfunctional Requirements](#5-other-nonfunctional-requirements)</li></ul>
+<p>  - <a href="#51-performance-requirements">5.1 Performance Requirements</a></p>
+<p>  - <a href="#52-safety-requirements">5.2 Safety Requirements</a></p>
+<p>  - <a href="#53-security-requirements">5.3 Security Requirements</a></p>
+<p>  - <a href="#54-software-quality-attributes">5.4 Software Quality Attributes</a></p>
+<p>  - <a href="#55-business-rules">5.5 Business Rules</a></p>
+<ul><li>[6. Other Requirements](#6-other-requirements)</li></ul>
+<p>  - <a href="#appendix-a-glossary">Appendix A: Glossary</a></p>
+<p>  - <a href="#appendix-b-analysis-models">Appendix B: Analysis Models</a></p>
+<p>  - <a href="#appendix-c-to-be-determined-list">Appendix C: To Be Determined List</a></p>
+
+<hr/>
+
+<h2>Revision History</h2>
+
+<table border="1">
+<thead><tr><th>Name</th><th>Date</th><th>Reason For Changes</th><th>Version</th></tr></thead><tbody>
+<tr><td>Core Development Team</td><td>Sep 17, 2026</td><td>Initial System Specification & Audio Analyzer Engine</td><td>0.1</td></tr>
+<tr><td>Core Development Team</td><td>Sep 21, 2026</td><td>Added Gemini LLM Integration, Live OTP Dispatch & Pre-filled Auth</td><td>0.9</td></tr>
+<tr><td>Core Development Team</td><td>Sep 28, 2026</td><td>Finalized UI Layout (Dedicated Upload Page & Profile Dashboard) and Baseline Release</td><td>1.0</td></tr>
+</tbody></table>
+
+<hr/>
+
+<h2>1. Introduction</h2>
+
+<h3>1.1 Purpose</h3>
+<p>This Software Requirements Specification (SRS) document describes the functional, nonfunctional, interface, and behavioral requirements for the <strong>Presentation Evaluator</strong> application, Version 1.0. Presentation Evaluator is a web application designed to analyze video, audio, and slide deck rehearsals using multimodal artificial intelligence (Google Gemini 1.5 Flash LLM) and Web Audio API real-time signal processing.</p>
+
+<h3>1.2 Document Conventions</h3>
+<ul><li><strong>High Priority (H):</strong> Mandatory features required for core operation (e.g., file upload, Gemini LLM evaluation, user authentication, OTP verification).</li></ul>
+<ul><li><strong>Medium Priority (M):</strong> Features enhancing user experience (e.g., live mic recorder, historical progress charts, theme toggle).</li></ul>
+<ul><li><strong>Low Priority (L):</strong> Optional extensions (e.g., export to third-party LMS platforms).</li></ul>
+<ul><li><strong>Formatting:</strong> Monospaced font (<code>code</code>) denotes API endpoints, file names, data models, or code parameters.</li></ul>
+
+<h3>1.3 Intended Audience and Reading Suggestions</h3>
+<p>This document is intended for:</p>
+<ul><li><strong>Software Engineers & Developers:</strong> To implement system modules and API connections.</li></ul>
+<ul><li><strong>UI/UX Designers:</strong> To align page layouts with specified user workflows.</li></ul>
+<ul><li><strong>Quality Assurance Testers:</strong> To design test suites and verify software quality attributes.</li></ul>
+<ul><li><strong>Academic Evaluators & Project Stakeholders:</strong> To assess software scope, architecture, and compliance.</li></ul>
+
+<h3>1.4 Product Scope</h3>
+<p>Presentation Evaluator replaces manual speech coaching with an automated, objective evaluation suite. The software accepts video files (<code>.mp4</code>, <code>.mov</code>), audio files (<code>.wav</code>, <code>.mp3</code>), slide decks (<code>.pdf</code>, <code>.pptx</code>), or live microphone input, and calculates pitch clarity, pace cadence in words-per-minute (WPM), silence ratios, and filler word frequency ("um", "like", "actually"). It leverages Google Gemini LLM to generate executive feedback summaries, slide readability scores, and actionable delivery recommendations.</p>
+
+<h3>1.5 References</h3>
+<p>1. IEEE Std 830-1998, <em>IEEE Recommended Practice for Software Requirements Specifications</em>.</p>
+<p>2. Karl E. Wiegers, <em>Software Requirements</em>, Microsoft Press, 1999.</p>
+<p>3. Google Gemini API Documentation: <code>https://ai.google.dev/docs</code></p>
+<p>4. W3C Web Audio API Specification: <code>https://www.w3.org/TR/webaudio/</code></p>
+
+<hr/>
+
+<h2>2. Overall Description</h2>
+
+<h3>2.1 Product Perspective</h3>
+<p>Presentation Evaluator is a self-contained, client-centric Single Page Application (SPA) built with React, TypeScript, and Vite, styled with TailwindCSS. It integrates with external REST services including Google Gemini 1.5 Flash API for AI reasoning, EmailJS and Spring Boot backend services for live OTP code dispatch, and browser local storage for persistent user sessions.</p>
+
+<pre><code>+-----------------------------------------------------------------------------------+
+|                                 WEB BROWSER UI                                    |
+|   +--------------------------+  +-------------------+  +----------------------+   |
+|   | Upload File &amp; Video Page |  | Profile Dashboard |  | Evaluation Report UI |   |
+|   +--------------------------+  +-------------------+  +----------------------+   |
++----------------------------------------|------------------------------------------+
+                                         |
+            +----------------------------+----------------------------+
+            |                            |                            |
+            v                            v                            v
++-----------------------+    +-----------------------+    +-----------------------+
+|  Web Audio Signal     |    |  Google Gemini 1.5    |    |  Live OTP Dispatch    |
+|  Analyzer (Browser)   |    |  Flash LLM API        |    |  (EmailJS / Backend)  |
++-----------------------+    +-----------------------+    +-----------------------+</code></pre>
+
+<h3>2.2 Product Functions</h3>
+<ul><li><strong>Direct Login Landing:</strong> Upon successful login, users land on the dedicated <strong>Upload File & Video Page</strong> (<code>dashboard</code> view).</li></ul>
+<ul><li><strong>Multimodal Upload & Recording:</strong> Upload presentation media or record speech live via browser microphone.</li></ul>
+<ul><li><strong>Real-Time Signal Extraction:</strong> Compute RMS volume, pitch frequency, WPM speech rate, silence pause ratio, and filler word counts.</li></ul>
+<ul><li><strong>AI Neural Inference:</strong> Pass metrics to Google Gemini 1.5 Flash LLM to produce overall delivery scores (70–98%), executive summaries, strengths, and improvements.</li></ul>
+<ul><li><strong>Profile Dashboard:</strong> Accessible via the top-right profile button (<code>sweety</code>), rendering overall speaker tier, historical average WPM, filler word rates, Recharts performance trend graphs, and recent evaluation tables.</li></ul>
+<ul><li><strong>Secure Authentication & Live OTP:</strong> Password reset workflows backed by live 6-digit OTP codes dispatched via Email/SMS channels.</li></ul>
+
+<h3>2.3 User Classes and Characteristics</h3>
+<ul><li><strong>Student / Rehearsing Speaker:</strong> Uses the system to practice pitch decks, keynote speeches, or academic presentations. Needs fast feedback and actionable pacing guidance.</li></ul>
+<ul><li><strong>Executive / Professional:</strong> Seeks structured metric breakdowns (WPM, filler word rate, slide bullet density) and downloadable PDF evaluation reports.</li></ul>
+<ul><li><strong>System Administrator:</strong> Oversees authentication rules, API key configurations, and telemetry standards.</li></ul>
+
+<h3>2.4 Operating Environment</h3>
+<ul><li><strong>Client OS:</strong> Cross-platform (Linux, Windows, macOS, Android, iOS).</li></ul>
+<ul><li><strong>Web Browsers:</strong> Google Chrome (v110+), Mozilla Firefox (v110+), Apple Safari (v16+), Microsoft Edge (v110+).</li></ul>
+<ul><li><strong>Runtime Stack:</strong> Node.js (v18+), React (v18+), Vite (v6+), TypeScript (v5+).</li></ul>
+
+<h3>2.5 Design and Implementation Constraints</h3>
+<ul><li><strong>Client-Side Execution:</strong> Signal processing must execute locally in the browser via Web Audio API without requiring mandatory cloud audio uploading.</li></ul>
+<ul><li><strong>API Key Fallback:</strong> If <code>VITE_GEMINI_API_KEY</code> is not provided, the system must fallback gracefully to local neural inference rules without crashing.</li></ul>
+<ul><li><strong>UI Responsiveness:</strong> Must support light/dark modes and render responsively on mobile, tablet, and desktop viewports.</li></ul>
+
+<h3>2.6 User Documentation</h3>
+<p>The software provides in-app guidance cards, interactive tooltips, live speech coach recommendations, and modal notifications.</p>
+
+<h3>2.7 Assumptions and Dependencies</h3>
+<ul><li>User devices possess a functional audio input device (microphone) for live recording.</li></ul>
+<ul><li>Client browsers support ES2022 JavaScript syntax, Web Audio API (<code>AudioContext</code>), and <code>fetch</code> API.</li></ul>
+<ul><li>Internet connectivity is required to access Google Gemini LLM API and live OTP email dispatch services.</li></ul>
+
+<hr/>
+
+<h2>3. External Interface Requirements</h2>
+
+<h3>3.1 User Interfaces</h3>
+<ul><li><strong>Header Navigation Bar:</strong> Contains brand logo (top left), light/dark mode toggle, "+ New Evaluation" CTA, profile badge (<code>sweety</code>), and logout button.</li></ul>
+<ul><li><strong>Upload File & Video Page (<code>dashboard</code>):</strong> Main landing view post-login featuring drag-and-drop file upload, live mic controls, sample presets, title input, and "AI Analyze Presentation" button.</li></ul>
+<ul><li><strong>Profile Dashboard Page (<code>profile</code>):</strong> Triggered by clicking the top-right profile badge, displaying user profile card, 4 KPI cards (Overall Score, Avg Cadence, Filler Word Rate, Total Rehearsals), Recharts growth trend graph, recent evaluations table, and side navigation menu.</li></ul>
+
+<h3>3.2 Hardware Interfaces</h3>
+<ul><li><strong>Microphone Interface:</strong> Standard audio capture interface via HTML5 <code>navigator.mediaDevices.getUserMedia({ audio: true })</code>.</li></ul>
+<ul><li><strong>Display Resolution:</strong> Minimum resolution 360px (mobile) up to 4K desktop screens.</li></ul>
+
+<h3>3.3 Software Interfaces</h3>
+<ul><li><strong>Google Gemini LLM API:</strong> <code>POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}</code></li></ul>
+<ul><li><strong>EmailJS API:</strong> <code>POST https://api.emailjs.com/api/v1.0/email/send</code> for client-side OTP email delivery.</li></ul>
+<ul><li><strong>Spring Boot Telephony Gateway:</strong> <code>POST http://localhost:8080/api/v1/auth/send-otp</code> (optional local backend).</li></ul>
+
+<h3>3.4 Communications Interfaces</h3>
+<ul><li><strong>HTTPS Protocol:</strong> All external API requests use TLS/HTTPS encryption.</li></ul>
+<ul><li><strong>JSON Data Interchange:</strong> Payloads sent and received use standard <code>application/json</code> formatting.</li></ul>
+
+<hr/>
+
+<h2>4. System Features</h2>
+
+<h3>4.1 System Feature 1: Presentation Media Upload & Live Mic Recording</h3>
+<h4>4.1.1 Description and Priority</h4>
+<p>Allows users to upload presentation media (<code>.mp4</code>, <code>.mov</code>, <code>.wav</code>, <code>.mp3</code>, <code>.pdf</code>, <code>.pptx</code>) or record live speech via microphone. <strong>Priority: High</strong>.</p>
+
+<h4>4.1.2 Stimulus/Response Sequences</h4>
+<p>1. User navigates to Upload File & Video Page (<code>dashboard</code> view).</p>
+<p>2. User selects a file or clicks the live mic record icon.</p>
+<p>3. System validates file format/size or starts live recording timer.</p>
+<p>4. System updates selected file label and enables the "AI Analyze Presentation" button.</p>
+
+<h4>4.1.3 Functional Requirements</h4>
+<ul><li><strong>REQ-1.1:</strong> System shall accept files up to 200MB of format MP4, MOV, WAV, MP3, PDF, and PPTX.</li></ul>
+<ul><li><strong>REQ-1.2:</strong> System shall provide live mic start/stop recording with real-time timer display (<code>MM:SS</code>).</li></ul>
+<ul><li><strong>REQ-1.3:</strong> System shall pre-load sample preset presentations (Q3 Product Pitch, AI Pitch Deck, Series A Investor Deck) for instant testing.</li></ul>
+
+<h3>4.2 System Feature 2: Multimodal Google Gemini LLM Analysis Engine</h3>
+<h4>4.2.1 Description and Priority</h4>
+<p>Sends presentation delivery metrics to Google Gemini 1.5 Flash LLM to obtain structured neural evaluation feedback. <strong>Priority: High</strong>.</p>
+
+<h4>4.2.2 Stimulus/Response Sequences</h4>
+<p>1. User clicks "AI Analyze Presentation".</p>
+<p>2. System triggers <code>analyzePresentationWithGeminiLLM()</code> with duration, WPM, clarity, and filler metrics.</p>
+<p>3. System receives JSON response containing overall score, tier, executive summary, strengths, and pacing feedback.</p>
+<p>4. System renders Evaluation Results View (<code>evaluation</code>).</p>
+
+<h4>4.2.3 Functional Requirements</h4>
+<ul><li><strong>REQ-2.1:</strong> System shall format Gemini API prompt requesting JSON response matching <code>GeminiLLMAnalysisResponse</code> schema.</li></ul>
+<ul><li><strong>REQ-2.2:</strong> System shall fallback to internal deterministic scoring rules if API key is missing or network call fails.</li></ul>
+
+<h3>4.3 System Feature 3: Web Audio API Real-Time Signal Processing & Cadence Analysis</h3>
+<h4>4.3.1 Description and Priority</h4>
+<p>Decodes raw audio buffers to calculate volume RMS, pitch stability, WPM pace, and filler word detection. <strong>Priority: High</strong>.</p>
+
+<h4>4.3.2 Stimulus/Response Sequences</h4>
+<p>1. System receives audio buffer or live media stream.</p>
+<p>2. <code>AudioContext</code> and <code>AnalyserNode</code> perform Fast Fourier Transform (FFT) analysis.</p>
+<p>3. System extracts pitch frequency, silent pause ratios, and cadence WPM.</p>
+
+<h4>4.3.3 Functional Requirements</h4>
+<ul><li><strong>REQ-3.1:</strong> System shall calculate WPM cadence and benchmark against optimal speech range (125–150 WPM).</li></ul>
+<ul><li><strong>REQ-3.2:</strong> System shall detect filler words ("um", "like", "actually", "you know") and calculate filler word rate percentage.</li></ul>
+
+<h3>4.4 System Feature 4: User Authentication & Live OTP Password Verification</h3>
+<h4>4.4.1 Description and Priority</h4>
+<p>Manages user sign-in, credential auto-fill, and mandatory 6-digit OTP verification for password reset. <strong>Priority: High</strong>.</p>
+
+<h4>4.4.2 Stimulus/Response Sequences</h4>
+<p>1. User clicks "Forgot Password?" on Login screen.</p>
+<p>2. User enters registered Email or Phone number and clicks "Send OTP".</p>
+<p>3. System dispatches a random 6-digit OTP via <code>sendLiveOtp()</code> service.</p>
+<p>4. User must enter exact OTP code before system permits setting a new password.</p>
+
+<h4>4.4.3 Functional Requirements</h4>
+<ul><li><strong>REQ-4.1:</strong> System shall pre-fill previously registered email or phone credentials on the Login screen.</li></ul>
+<ul><li><strong>REQ-4.2:</strong> System shall enforce mandatory 6-digit OTP code verification before password update.</li></ul>
+
+<h3>4.5 System Feature 5: Profile Dashboard & Performance Analytics</h3>
+<h4>4.5.1 Description and Priority</h4>
+<p>Provides speaker overview, historical average WPM, filler word rates, Recharts performance trend graphs, and recent evaluations table. <strong>Priority: Medium</strong>.</p>
+
+<h4>4.5.2 Stimulus/Response Sequences</h4>
+<p>1. User clicks top-right Profile badge (<code>sweety</code>) on Navbar.</p>
+<p>2. System navigates to Profile Dashboard (<code>profile</code> view).</p>
+<p>3. System displays left sidebar navigation hub alongside performance analytics.</p>
+
+<h4>4.5.3 Functional Requirements</h4>
+<ul><li><strong>REQ-5.1:</strong> System shall display 4 KPI metric cards (Overall Score %, Avg Cadence WPM, Filler Word Rate %, Total Rehearsals / Practice Hours).</li></ul>
+<ul><li><strong>REQ-5.2:</strong> System shall render an interactive Recharts Area Chart displaying historical performance score progression.</li></ul>
+
+<h3>4.6 System Feature 6: PDF Evaluation Report Generation & Export</h3>
+<h4>4.6.1 Description and Priority</h4>
+<p>Generates downloadable, printable PDF evaluation reports containing transcript breakdowns and score summaries. <strong>Priority: Medium</strong>.</p>
+
+<h4>4.6.2 Stimulus/Response Sequences</h4>
+<p>1. User clicks "Export PDF Report" on Evaluation Result or Reports Archive view.</p>
+<p>2. System compiles report graphics and triggers browser PDF print dialog.</p>
+
+<h4>4.6.3 Functional Requirements</h4>
+<ul><li><strong>REQ-6.1:</strong> System shall format PDF report including speaker name, title, date, metric breakdown, and executive summary.</li></ul>
+
+<hr/>
+
+<h2>5. Other Nonfunctional Requirements</h2>
+
+<h3>5.1 Performance Requirements</h3>
+<ul><li><strong>Page Load Time:</strong> Initial SPA load time shall be under 1.5 seconds on standard broadband connections.</li></ul>
+<ul><li><strong>AI Processing Latency:</strong> Audio signal processing and Gemini LLM analysis combined shall complete within 3.5 seconds.</li></ul>
+<ul><li><strong>UI Frame Rate:</strong> Smooth 60 FPS transitions during theme toggling and modal animations.</li></ul>
+
+<h3>5.2 Safety Requirements</h3>
+<ul><li>User data shall be processed strictly within the active browser session.</li></ul>
+<ul><li>System shall prevent audio recording without explicit browser microphone permission.</li></ul>
+
+<h3>5.3 Security Requirements</h3>
+<ul><li><strong>Data Privacy:</strong> Presentation media files shall not be stored permanently on external servers without user consent.</li></ul>
+<ul><li><strong>Input Sanitization:</strong> All text inputs (titles, search queries, credentials) shall be sanitized to prevent XSS attacks.</li></ul>
+<ul><li><strong>OTP Expiration:</strong> Dispatched OTP verification codes shall expire after 5 minutes.</li></ul>
+
+<h3>5.4 Software Quality Attributes</h3>
+<ul><li><strong>Usability:</strong> Intuitive glassmorphic UI requiring zero prior training for new users.</li></ul>
+<ul><li><strong>Reliability:</strong> 99.9% uptime for client-side evaluation logic via built-in offline fallbacks.</li></ul>
+<ul><li><strong>Maintainability:</strong> Modular React component architecture adhering to strict TypeScript typing.</li></ul>
+<ul><li><strong>Portability:</strong> Fully responsive layout adaptable across mobile, tablet, and desktop viewports.</li></ul>
+
+<h3>5.5 Business Rules</h3>
+<ul><li>Only registered and authenticated users can view historical evaluation archives and PDF reports.</li></ul>
+<ul><li>Unauthenticated users attempting to access in-app views shall be redirected to the Landing Page.</li></ul>
+
+<hr/>
+
+<h2>6. Other Requirements</h2>
+
+<h3>Appendix A: Glossary</h3>
+<ul><li><strong>FFT (Fast Fourier Transform):</strong> Algorithm used in Web Audio API to convert time-domain audio signals into frequency domain metrics.</li></ul>
+<ul><li><strong>WPM (Words Per Minute):</strong> Standard measure of speech pacing.</li></ul>
+<ul><li><strong>LLM (Large Language Model):</strong> Artificial intelligence model (Google Gemini 1.5 Flash) used for semantic evaluation.</li></ul>
+<ul><li><strong>OTP (One-Time Password):</strong> A dynamic 6-digit security code used for identity verification.</li></ul>
+
+<h3>Appendix B: Analysis Models</h3>
+<h4>Data Flow Diagram (DFD Level 1)</h4>
+
+<pre><code>[ User ] --- (1. Upload Media / Record Mic) ---&gt; [ Audio Signal Analyzer ]
+                                                        |
+                                                        v (Extract WPM, Pitch, Fillers)
+                                            [ Gemini LLM Evaluation Service ]
+                                                        |
+                                                        v (Generate Score &amp; Feedback)
+[ User ] &lt;--- (2. Render Evaluation &amp; PDF) --- [ Evaluation Result View ]</code></pre>
+
+<h3>Appendix C: To Be Determined (TBD) List</h3>
+<p>1. Integration with enterprise Learning Management Systems (LMS) via LTI standard.</p>
+<p>2. Automated real-time translation of speech transcripts into international languages.</p>
+
+<hr/>
+<p><em>Document end — Presentation Evaluator SRS Version 1.0 approved.</em></p>
+</body>
+</html>
