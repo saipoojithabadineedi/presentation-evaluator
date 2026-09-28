@@ -23,15 +23,20 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
 
   const isAuthPage = currentView === 'login' || currentView === 'register';
   const isLandingPage = currentView === 'landing';
+  const isProfileSection = currentView === 'profile' || 
+                           currentView === 'recent-presentations' || 
+                           currentView === 'all-evaluations' || 
+                           currentView === 'reports-archive' || 
+                           currentView === 'settings';
   const isInApp = isAuthenticated && !isAuthPage && !isLandingPage;
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
         
-        {/* Left Side: Mobile Menu Button + Brand Logo (on public pages) */}
+        {/* Left Side: Mobile Menu Button + Brand Logo (Always visible) */}
         <div className="flex items-center gap-3">
-          {isInApp && (
+          {isInApp && isProfileSection && (
             <button
               onClick={onOpenSidebar}
               className="md:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-brand-500 transition-colors"
@@ -43,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
 
           <button 
             onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'landing')}
-            className={`flex items-center gap-3 text-left focus:outline-none group ${isInApp ? 'md:hidden' : ''}`}
+            className="flex items-center gap-3 text-left focus:outline-none group"
           >
             <img 
               src="/assets/logo.jpg" 

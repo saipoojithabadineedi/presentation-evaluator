@@ -37,7 +37,11 @@ const MainAppContent: React.FC = () => {
 
   const isAuthPage = currentView === 'login' || currentView === 'register';
   const isLandingPage = currentView === 'landing';
-  const isInApp = isAuthenticated && !isAuthPage && !isLandingPage;
+  const isProfileSection = currentView === 'profile' || 
+                           currentView === 'recent-presentations' || 
+                           currentView === 'all-evaluations' || 
+                           currentView === 'reports-archive' || 
+                           currentView === 'settings';
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 transition-colors duration-200 flex flex-col">
@@ -49,11 +53,11 @@ const MainAppContent: React.FC = () => {
         onOpenSidebar={() => setIsSidebarOpen(true)}
       />
 
-      {/* Main Layout Container with LEFT SIDEBAR on in-app pages */}
+      {/* Main Layout Container */}
       <div className="flex-1 flex w-full">
         
-        {/* Left Side Profile Dashboard Sidebar (Persistent on Desktop, Slide-out on Mobile) */}
-        {isInApp && (
+        {/* Left Side Profile Dashboard Sidebar (Shown ONLY when viewing Profile Dashboard sections) */}
+        {isAuthenticated && isProfileSection && (
           <>
             {/* Desktop Left Sidebar */}
             <Sidebar 
