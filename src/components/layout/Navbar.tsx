@@ -1,8 +1,6 @@
 import React from 'react';
-import { Moon, Plus, LogOut, Menu } from 'lucide-react';
-import { useTheme } from '../../context/ThemeContext';
+import { LogOut, Menu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useEvaluation } from '../../context/EvaluationContext';
 import { AppView } from '../../types';
 
 interface NavbarProps {
@@ -12,9 +10,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onOpenSidebar }) => {
-  const { theme, toggleTheme } = useTheme();
   const { user, isAuthenticated, logout } = useAuth();
-  const { openUploadModal } = useEvaluation();
 
   const handleLogout = () => {
     logout();
@@ -61,25 +57,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
         {/* Right Navigation & Actions */}
         <div className="flex items-center gap-3 sm:gap-4">
           
-          {/* Theme Toggle Pill Button */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-slate-800 border border-amber-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold hover:bg-amber-100 dark:hover:bg-slate-700 transition-colors shadow-xs"
-            title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} mode`}
-          >
-            {theme === 'light' ? (
-              <>
-                <span className="text-amber-500 text-sm">☀️</span>
-                <span className="hidden sm:inline">Light</span>
-              </>
-            ) : (
-              <>
-                <Moon className="w-3.5 h-3.5 text-blue-400" />
-                <span className="hidden sm:inline">Dark</span>
-              </>
-            )}
-          </button>
-
           {/* Landing / Auth Nav Links */}
           {(!isAuthenticated || isAuthPage) && (
             <div className="flex items-center gap-2 sm:gap-4 text-sm font-medium">
@@ -119,12 +96,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
                 onClick={() => setCurrentView('dashboard')}
                 className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-xs transition-all"
               >
-                Go to Dashboard
+                Go to Upload
               </button>
               <button
-                onClick={() => setCurrentView('profile')}
+                onClick={() => setCurrentView('settings')}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 hover:bg-brand-50/50 transition-all cursor-pointer group"
-                title="Go to Speaker Profile"
+                title="View Profile & User Details"
               >
                 <img 
                   src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"}
@@ -141,18 +118,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
           {/* Authenticated Controls */}
           {isInApp && (
             <div className="flex items-center gap-3">
+              
+              {/* Point 3: Top Right Profile Badge opens Settings / Profile & User Details page */}
               <button
-                onClick={openUploadModal}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-all"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">New Evaluation</span>
-              </button>
-
-              <button
-                onClick={() => setCurrentView('profile')}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-slate-750 transition-all cursor-pointer group"
-                title="Go to Speaker Profile"
+                onClick={() => setCurrentView('settings')}
+                className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-slate-750 transition-all cursor-pointer group shadow-2xs"
+                title="Click to view Profile Details & User Settings"
               >
                 <img 
                   src={user?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"}

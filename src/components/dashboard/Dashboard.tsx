@@ -21,7 +21,7 @@ import {
   CheckCircle2,
   Target,
   Award,
-  HelpCircle
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluation } from '../../context/EvaluationContext';
@@ -40,6 +40,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
   const [activeUploadTab, setActiveUploadTab] = useState<'upload' | 'record' | 'samples'>('upload');
   const [presentationTitle, setPresentationTitle] = useState('');
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: string; type: 'video' | 'audio' | 'slides' } | null>(null);
+  const [uploadError, setUploadError] = useState('');
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -59,12 +60,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
       const sizeMb = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
       setSelectedFile({ name: file.name, size: sizeMb, type });
       setPresentationTitle(file.name.replace(/\.[^/.]+$/, ""));
+      setUploadError('');
     }
   };
 
   const handleSampleClick = (sampleTitle: string, type: 'video' | 'audio' | 'slides', size: string) => {
     setSelectedFile({ name: `${sampleTitle}.${type === 'video' ? 'mp4' : type === 'audio' ? 'wav' : 'pdf'}`, size, type });
     setPresentationTitle(sampleTitle);
+    setUploadError('');
   };
 
   const toggleRecording = () => {
@@ -77,6 +80,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
         type: 'audio'
       });
       setPresentationTitle(`Live Speech Rehearsal (${recordSeconds}s)`);
+      setUploadError('');
     } else {
       setRecordSeconds(0);
       setIsRecording(true);
@@ -93,10 +97,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
   };
 
   const handleAIAnalyzeClick = async () => {
+    // Point 1: Check if video/file is uploaded
+    if (!selectedFile) {
+      setUploadError('Video is not uploaded! Please upload the file of a video.');
+      return;
+    }
+
+    setUploadError('');
     const finalTitle = presentationTitle.trim() || 'New Presentation Rehearsal';
-    const finalFileType = selectedFile?.type || 'video';
-    const finalFileSize = selectedFile?.size || '48.2 MB';
-    const finalFileName = selectedFile?.name || 'presentation_file.mp4';
+    const finalFileType = selectedFile.type;
+    const finalFileSize = selectedFile.size;
+    const finalFileName = selectedFile.name;
 
     await startAIAnalysis({
       title: finalTitle,
@@ -129,7 +140,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
           </p>
         </div>
 
-        {/* Profile Navigation Shortcut */}
+        {/* Profile Dashboard Shortcut (Point 3: Dashboard appears when clicking this button) */}
         <button
           onClick={() => setCurrentView('profile')}
           className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950/50 border border-slate-200 dark:border-slate-700 hover:border-brand-500 transition-all cursor-pointer group shrink-0"
@@ -202,6 +213,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
             </button>
           </div>
         </div>
+
+        {/* Point 1: Upload Error Banner */}
+        {uploadError && (
+          <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs sm:text-sm font-bold flex items-center gap-3 animate-in fade-in">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-rose-500" />
+            <span>{uploadError}</span>
+          </div>
+        )}
 
         {/* Title Input */}
         <div>
@@ -305,7 +324,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
         {/* CORE CTA: "AI Analyze" BUTTON */}
         <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="text-xs text-slate-500">
-            Selected Presentation: <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFile?.name || 'Ready for AI evaluation'}</span>
+            Selected Presentation: <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFile?.name || 'No file uploaded'}</span>
           </div>
 
           <button
