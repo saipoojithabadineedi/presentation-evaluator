@@ -35,6 +35,8 @@ interface EvaluationContextType {
   generateReport: (evaluation: EvaluationData) => ReportItem;
   updateSettings: (newSettings: Partial<UserSettings>) => void;
   deleteEvaluation: (id: string) => void;
+  clearAllEvaluations: () => void;
+  clearAllReports: () => void;
 }
 
 const EvaluationContext = createContext<EvaluationContextType | undefined>(undefined);
@@ -108,6 +110,18 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (activeEvaluation?.id === id) {
       setActiveEvaluation(null);
     }
+  };
+
+  const clearAllEvaluations = () => {
+    setEvaluations([]);
+    setActiveEvaluation(null);
+    localStorage.removeItem('pe_evaluations');
+  };
+
+  const clearAllReports = () => {
+    setReports([]);
+    setActiveReport(null);
+    localStorage.removeItem('pe_reports');
   };
 
   const generateReport = (evaluation: EvaluationData): ReportItem => {
@@ -217,7 +231,9 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       startAIAnalysis,
       generateReport,
       updateSettings,
-      deleteEvaluation
+      deleteEvaluation,
+      clearAllEvaluations,
+      clearAllReports
     }}>
       {children}
     </EvaluationContext.Provider>

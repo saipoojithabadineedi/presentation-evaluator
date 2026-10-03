@@ -11,7 +11,8 @@ import {
   Clock,
   Settings,
   ChevronRight,
-  UploadCloud
+  UploadCloud,
+  Trash2
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -32,7 +33,7 @@ interface ProfileDashboardViewProps {
 
 export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setCurrentView }) => {
   const { user } = useAuth();
-  const { evaluations, reports, setActiveEvaluation } = useEvaluation();
+  const { evaluations, reports, setActiveEvaluation, clearAllEvaluations } = useEvaluation();
 
   // Performance history trend data
   const performanceHistory = [
@@ -225,13 +226,28 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
               Detailed AI-generated reports with transcript and delivery breakdowns
             </p>
           </div>
-          <button
-            onClick={() => setCurrentView('all-evaluations')}
-            className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
-          >
-            <span>View All</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-3">
+            {evaluations.length > 0 && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Are you sure you want to clear all evaluation history?')) {
+                    clearAllEvaluations();
+                  }
+                }}
+                className="px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 text-xs font-bold transition-all flex items-center gap-1 shadow-2xs"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Clear All</span>
+              </button>
+            )}
+            <button
+              onClick={() => setCurrentView('all-evaluations')}
+              className="text-xs font-bold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+            >
+              <span>View All</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -246,44 +262,52 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 dark:divide-slate-800/60 text-xs sm:text-sm">
-              {evaluations.map((item) => (
-                <tr 
-                  key={item.id}
-                  className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer"
-                  onClick={() => handleViewExistingReport(item)}
-                >
-                  <td className="py-4 pl-2 font-semibold text-slate-800 dark:text-slate-200">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 flex items-center justify-center">
-                        <FileText className="w-4 h-4" />
-                      </div>
-                      <span>{item.title}</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
-                    {item.date}
-                  </td>
-                  <td className="py-4 px-4 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
-                    {item.averageCadence} WPM
-                  </td>
-                  <td className="py-4 px-4 whitespace-nowrap">
-                    <span className="font-bold text-brand-600 dark:text-brand-400">
-                      {item.overallScore}%
-                    </span>
-                  </td>
-                  <td className="py-4 pr-2 text-right whitespace-nowrap">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleViewExistingReport(item);
-                      }}
-                      className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all shadow-2xs"
-                    >
-                      View Report
-                    </button>
+              {evaluations.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                    No speech evaluations available.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                evaluations.map((item) => (
+                  <tr 
+                    key={item.id}
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer"
+                    onClick={() => handleViewExistingReport(item)}
+                  >
+                    <td className="py-4 pl-2 font-semibold text-slate-800 dark:text-slate-200">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 flex items-center justify-center">
+                          <FileText className="w-4 h-4" />
+                        </div>
+                        <span>{item.title}</span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                      {item.date}
+                    </td>
+                    <td className="py-4 px-4 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap">
+                      {item.averageCadence} WPM
+                    </td>
+                    <td className="py-4 px-4 whitespace-nowrap">
+                      <span className="font-bold text-brand-600 dark:text-brand-400">
+                        {item.overallScore}%
+                      </span>
+                    </td>
+                    <td className="py-4 pr-2 text-right whitespace-nowrap">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewExistingReport(item);
+                        }}
+                        className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all shadow-2xs"
+                      >
+                        View Report
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

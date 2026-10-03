@@ -20,7 +20,7 @@ interface RecentPresentationsViewProps {
 }
 
 export const RecentPresentationsView: React.FC<RecentPresentationsViewProps> = ({ setCurrentView }) => {
-  const { evaluations, setActiveEvaluation, openUploadModal, deleteEvaluation } = useEvaluation();
+  const { evaluations, setActiveEvaluation, openUploadModal, deleteEvaluation, clearAllEvaluations } = useEvaluation();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'video' | 'audio' | 'slides'>('all');
 
@@ -33,6 +33,12 @@ export const RecentPresentationsView: React.FC<RecentPresentationsViewProps> = (
   const handleOpenEvaluation = (item: EvaluationData) => {
     setActiveEvaluation(item);
     setCurrentView('evaluation');
+  };
+
+  const handleClearAll = () => {
+    if (window.confirm('Are you sure you want to clear all presentation history?')) {
+      clearAllEvaluations();
+    }
   };
 
   return (
@@ -50,7 +56,7 @@ export const RecentPresentationsView: React.FC<RecentPresentationsViewProps> = (
 
         {/* Search & Filter Controls */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[240px]">
+          <div className="relative min-w-[200px]">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -76,6 +82,16 @@ export const RecentPresentationsView: React.FC<RecentPresentationsViewProps> = (
               </button>
             ))}
           </div>
+
+          {evaluations.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              className="px-3.5 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Clear All</span>
+            </button>
+          )}
         </div>
       </div>
 
