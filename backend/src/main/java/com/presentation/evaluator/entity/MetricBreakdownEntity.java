@@ -18,6 +18,7 @@ public class MetricBreakdownEntity {
 
     @OneToOne
     @JoinColumn(name = "evaluation_id", referencedColumnName = "id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private EvaluationEntity evaluation;
 
     private Integer delivery;

@@ -17,6 +17,7 @@ public class TranscriptSegmentEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "evaluation_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private EvaluationEntity evaluation;
 
     @Column(name = "start_time")

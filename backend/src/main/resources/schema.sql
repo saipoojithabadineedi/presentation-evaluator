@@ -1,5 +1,5 @@
--- Enable pgvector extension for AI Embeddings
-CREATE EXTENSION IF NOT EXISTS vector;
+-- Enable pgvector extension for AI Embeddings (PostgreSQL only)
+-- CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Users Table
 CREATE TABLE IF NOT EXISTS users (
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS evaluation_metrics (
     engagement INT
 );
 
--- Transcript Segments Table with Vector Column (pgvector vector(1536))
+-- Transcript Segments Table
 CREATE TABLE IF NOT EXISTS transcript_segments (
     id VARCHAR(100) PRIMARY KEY,
     evaluation_id VARCHAR(100) REFERENCES evaluations(id) ON DELETE CASCADE,
@@ -61,9 +61,6 @@ CREATE TABLE IF NOT EXISTS transcript_segments (
     text TEXT,
     wpm INT,
     tone VARCHAR(50),
-    embedding vector(1536) -- pgvector 1536-dimensional vector for AI similarity search
+    embedding TEXT
 );
 
--- Create HNSW index for high performance vector similarity search
-CREATE INDEX IF NOT EXISTS idx_transcript_embedding_hnsw 
-ON transcript_segments USING hnsw (embedding vector_cosine_ops);
