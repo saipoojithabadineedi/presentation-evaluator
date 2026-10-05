@@ -71,15 +71,17 @@ export const initialEvaluations: EvaluationData[] = [
       { time: '6:00', wpm: 135, targetMin: 125, targetMax: 150 }
     ],
     strengths: [
-      'Exceptional rhythmic cadence maintained strictly within the 135–145 WPM sweet spot.',
-      'Strong opening hook establishing the Q3 strategic value proposition immediately.',
-      'Extremely low filler frequency with only 4 minor conversational fillers across 6+ minutes.',
-      'Clear, confident vocal inflection and natural transitions between key milestones.'
+      'You maintained an ideal speaking speed of 138 words per minute from start to finish.',
+      'Your vocal clarity reached 93%, with sharp pronunciation and clear enunciation.',
+      'You used almost no filler words (0.8% rate), keeping your delivery smooth and professional.',
+      'Your overall delivery score was 94%, showing high vocal energy and steady confidence.',
+      'You organized your presentation clearly, moving smoothly from opening ideas to conclusion.'
     ],
     improvements: [
-      'Incorporate a 1.5-second deliberate pause before announcing the projected 42% ROI metric.',
-      'Slide 4 visual density: Reduce bullet count from 7 down to 3 high-impact takeaway cards.',
-      'Conclusion CTA: Strengthen final closing sentence with direct timeline call-to-action.'
+      'Try taking a short 2-second silent pause before announcing key metrics to build anticipation.',
+      'Use silent 1-second pauses when transitioning between major topics instead of filler words.',
+      'Emphasize key takeaway sentences with a slightly stronger, louder vocal tone.',
+      'End your presentation with a clear summary sentence that states the main takeaway for listeners.'
     ],
     transcript: [
       {
@@ -213,14 +215,17 @@ export const initialEvaluations: EvaluationData[] = [
       { time: '4:00', wpm: 134, targetMin: 125, targetMax: 150 }
     ],
     strengths: [
-      'Captivating opening story demonstrating the core AI capability.',
-      'Clear, accessible terminology without unnecessary technical jargon.',
-      'Consistent volume and vocal energy.'
+      'You started with a clear vocal introduction that caught the audience\'s attention right away.',
+      'You used simple, clear language that anyone could understand without confusing jargon.',
+      'You kept a steady, balanced voice volume and high energy throughout the talk.',
+      'Your speaking speed (132 WPM) was very easy for listeners to follow comfortably.',
+      'Your presentation had a clear speech structure that guided listeners smoothly from problem to solution.'
     ],
     improvements: [
-      'Reduce hesitation pauses during the competitive landscape comparison.',
-      'Watch out for repeated "um" filler words when transitioning between slides 3 and 4.',
-      'Make financial projections slide simpler by spotlighting the MRR growth curve.'
+      'Try taking a 2-second silent pause when moving between main speech sections.',
+      'Avoid repeating filler words like "um" when transitioning to a new topic.',
+      'Sustain your vocal volume when stating your key conclusion numbers.',
+      'End with a clear summary question or call-to-action sentence to get your audience involved.'
     ],
     transcript: [
       {
@@ -296,14 +301,65 @@ export const initialEvaluations: EvaluationData[] = [
       { time: '8:00', wpm: 139, targetMin: 125, targetMax: 150 }
     ],
     strengths: [
-      'Masterclass in unit economics storytelling and defensibility presentation.',
-      'Nearly zero filler words across an extensive 8-minute delivery.',
-      'Clear vocal emphasis on traction milestones and 3x MoM growth.'
+      'You explained complex business numbers in a very simple and convincing way.',
+      'You spoke for over 8 minutes with almost zero extra words like "um" or "uh".',
+      'Your voice emphasized important growth numbers with great enthusiasm.',
+      'You maintained an excellent speaking speed (141 WPM) through the whole presentation.',
+      'Your slides looked clean, sharp, and easy to read from a distance.'
     ],
     improvements: [
-      'Ensure the ask slide gives a clear breakdown of fund allocation percentages.'
+      'Make sure your final investment slide breaks down money allocation into simple pie chart percentages.',
+      'Take a brief 2-second pause after sharing your biggest growth milestone.',
+      'Keep your tone equally energetic during the question and answer portion.',
+      'Use direct eye contact when closing your speech with your final request.'
     ],
-    transcript: [],
+    transcript: [
+      {
+        id: 't-31',
+        startTime: '00:00',
+        seconds: 0,
+        speaker: 'Presenter',
+        text: 'Good afternoon partners and investors. Today I am excited to share our Series A growth momentum and key milestone achievements.',
+        wpm: 138,
+        tone: 'enthusiastic'
+      },
+      {
+        id: 't-32',
+        startTime: '01:15',
+        seconds: 75,
+        speaker: 'Presenter',
+        text: 'Over the last six months, our enterprise customer base grew by over 240%, driven by strong organic referrals and high retention.',
+        wpm: 142,
+        tone: 'confident'
+      },
+      {
+        id: 't-33',
+        startTime: '02:40',
+        seconds: 160,
+        speaker: 'Presenter',
+        text: 'Our AI evaluation engine reduces preparation time by 60%, providing instant feedback on cadence, vocal clarity, and visual slide hierarchy.',
+        wpm: 140,
+        tone: 'confident'
+      },
+      {
+        id: 't-34',
+        startTime: '04:10',
+        seconds: 250,
+        speaker: 'Presenter',
+        text: 'With this Series A funding, we will scale our engineering team and expand international go-to-market partnerships.',
+        wpm: 144,
+        tone: 'enthusiastic'
+      },
+      {
+        id: 't-35',
+        startTime: '06:20',
+        seconds: 380,
+        speaker: 'Presenter',
+        text: 'In closing, we are building the definitive AI coaching platform for professionals worldwide. Thank you for your support.',
+        wpm: 139,
+        tone: 'confident'
+      }
+    ],
     summary: 'Exceptional executive presence and pitch pacing. Ready for top-tier venture investor meetings.'
   }
 ];

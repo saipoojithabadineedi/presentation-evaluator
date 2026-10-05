@@ -1,12 +1,12 @@
 import React from 'react';
-import { Sparkles, Shield, Award, Heart } from 'lucide-react';
+import { Sparkles, Shield, Mail, Phone, Heart } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="w-full border-t border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md transition-colors mt-auto">
+    <footer id="footer" className="w-full border-t border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur-md transition-colors mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           
           {/* Brand & Logo Column */}
           <div className="space-y-3 md:col-span-1">
@@ -39,17 +39,38 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* Analytics Column */}
+          {/* Contact Us Column (Requested) */}
           <div className="space-y-2.5">
             <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-              Speaker Performance
+              Contact & Support
             </h4>
-            <ul className="space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <li className="hover:text-brand-600 cursor-pointer transition-colors">Profile Dashboard Overview</li>
-              <li className="hover:text-brand-600 cursor-pointer transition-colors">Cadence (WPM) Benchmarks</li>
-              <li className="hover:text-brand-600 cursor-pointer transition-colors">Filler Word Detection</li>
-              <li className="hover:text-brand-600 cursor-pointer transition-colors">PDF Export Archives</li>
-            </ul>
+            <div className="space-y-2 text-xs">
+              <a 
+                href="mailto:presentationevaluator@gmail.com" 
+                className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors font-medium group"
+                title="Send email to presentationevaluator@gmail.com"
+              >
+                <div className="p-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
+                  <Mail className="w-3.5 h-3.5" />
+                </div>
+                <span className="underline decoration-brand-500/30 underline-offset-2">presentationevaluator@gmail.com</span>
+              </a>
+
+              <a 
+                href="tel:+919876543210" 
+                className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors font-medium group"
+                title="Call +91 98765 43210"
+              >
+                <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                  <Phone className="w-3.5 h-3.5" />
+                </div>
+                <span>+91 98765 43210</span>
+              </a>
+
+              <div className="text-[11px] text-slate-400 dark:text-slate-500 pt-1">
+                24/7 AI Evaluation Support & Inquiries
+              </div>
+            </div>
           </div>
 
           {/* Trust & Benchmarks Column */}

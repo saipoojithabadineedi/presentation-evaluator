@@ -6,7 +6,8 @@ import {
   Check, 
   Sparkles,
   Printer,
-  Trash2
+  Trash2,
+  ArrowLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useEvaluation } from '../../context/EvaluationContext';
@@ -54,6 +55,17 @@ export const ReportsArchiveView: React.FC<ReportsArchiveViewProps> = ({ setCurre
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-300">
+
+      {/* Top Header Controls: Back to Home Button */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setCurrentView('dashboard')}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 text-xs sm:text-sm font-bold shadow-2xs transition-all cursor-pointer group"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-brand-500" />
+          <span>Back to Home</span>
+        </button>
+      </div>
       
       <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
         <div>

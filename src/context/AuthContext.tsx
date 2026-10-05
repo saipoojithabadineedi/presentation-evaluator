@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import { loginUserApi, registerUserApi } from '../services/api';
+import { signOutFirebase } from '../services/firebaseAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -8,10 +9,9 @@ interface AuthContextType {
   registeredUsers: User[];
   toastState: { isOpen: boolean; message: string; type: 'login' | 'logout' };
   closeToast: () => void;
-  login: (emailOrPhone: string, pass: string) => { success: boolean; error?: string };
-  register: (name: string, email: string, phoneNumber: string, pass: string) => { success: boolean; error?: string };
-  forgotPassword: (emailOrPhone: string) => { success: boolean; error?: string; otp?: string };
-  resetPassword: (emailOrPhone: string, newPass: string, enteredOtp?: string) => { success: boolean; error?: string };
+  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  updateLocalUserPassword: (email: string, newPass: string) => void;
   logout: () => void;
   updateUserProfile: (data: Partial<User>) => void;
 }
@@ -23,7 +23,6 @@ const defaultRegisteredUser: User & { password?: string } = {
   id: 'usr-101',
   name: 'Demo Speaker',
   email: 'user@example.com',
-  phoneNumber: '9876543210',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
   tier: 'Top 5% speaker tier',
   practiceHours: 14.5,
@@ -61,8 +60,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null; // Start unauthenticated
   });
 
-  const [pendingOtps, setPendingOtps] = useState<Record<string, string>>({});
-
   useEffect(() => {
     localStorage.setItem('pe_registered_users', JSON.stringify(registeredUsers));
   }, [registeredUsers]);
@@ -85,135 +82,93 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToastState(prev => ({ ...prev, isOpen: false }));
   };
 
-  const register = (name: string, email: string, phoneNumber: string, pass: string) => {
+  const register = async (name: string, email: string, pass: string) => {
     const cleanEmail = email.trim().toLowerCase();
-    const cleanPhone = phoneNumber.trim();
 
-    // Check if account already exists
-    const existing = registeredUsers.find(
-      u => u.email.toLowerCase() === cleanEmail || (u.phoneNumber && u.phoneNumber === cleanPhone)
-    );
+    try {
+      // Call backend API for real registration
+      const backendUser = await registerUserApi(name, cleanEmail, pass);
+      
+      const newUserRecord: User & { password?: string } = {
+        id: backendUser.id || ('usr-' + Date.now()),
+        name: backendUser.name || name.trim() || 'User',
+        email: cleanEmail,
+        avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+        tier: backendUser.tier || 'Top 5% speaker tier',
+        practiceHours: backendUser.practiceHours ?? 0.0,
+        totalEvaluations: backendUser.totalEvaluations ?? 0,
+        averageScore: backendUser.averageScore ?? 0,
+        averageCadence: backendUser.averageCadence ?? 0,
+        fillerWordRate: backendUser.fillerWordRate ?? 0.0,
+        password: pass
+      };
 
-    if (existing) {
-      return { success: false, error: 'An account with this Email or Phone Number is already registered. Please sign in.' };
+      setRegisteredUsers(prev => {
+        const filtered = prev.filter(u => u.email.toLowerCase() !== cleanEmail);
+        return [...filtered, newUserRecord];
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Registration failed.' };
     }
-
-    const newUserRecord: User & { password?: string } = {
-      id: 'usr-' + Date.now(),
-      name: name.trim() || 'User',
-      email: cleanEmail,
-      phoneNumber: cleanPhone,
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-      tier: 'Top 5% speaker tier',
-      practiceHours: 0.0,
-      totalEvaluations: 0,
-      averageScore: 0,
-      averageCadence: 0,
-      fillerWordRate: 0.0,
-      password: pass
-    };
-
-    // Save to registered users list without logging in automatically
-    setRegisteredUsers(prev => [...prev, newUserRecord]);
-
-    // Sync with Spring Boot backend asynchronously
-    registerUserApi(newUserRecord.name, newUserRecord.email, pass);
-
-    return { success: true };
   };
 
-  const login = (emailOrPhone: string, pass: string) => {
+  const login = async (emailOrPhone: string, pass: string) => {
     const query = emailOrPhone.trim().toLowerCase();
 
-    // Find user by email or phone
-    const matchedUser = registeredUsers.find(
-      u => u.email.toLowerCase() === query || (u.phoneNumber && u.phoneNumber === query)
-    );
+    try {
+      // Call Spring Boot backend authentication
+      const backendUser = await loginUserApi(query, pass);
 
-    if (!matchedUser) {
+      const safeUser: User = {
+        id: backendUser.id || ('usr-' + Date.now()),
+        name: backendUser.name || 'User',
+        email: backendUser.email || query,
+        avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+        tier: backendUser.tier || 'Top 5% speaker tier',
+        practiceHours: backendUser.practiceHours ?? 14.5,
+        totalEvaluations: backendUser.totalEvaluations ?? 8,
+        averageScore: backendUser.averageScore ?? 92,
+        averageCadence: backendUser.averageCadence ?? 135,
+        fillerWordRate: backendUser.fillerWordRate ?? 1.2
+      };
+
+      setUser(safeUser);
+
+      // Keep local registered user list password in sync
+      setRegisteredUsers(prev => {
+        const index = prev.findIndex(u => u.email.toLowerCase() === query);
+        if (index >= 0) {
+          const updated = [...prev];
+          updated[index] = { ...updated[index], password: pass };
+          return updated;
+        }
+        return [...prev, { ...safeUser, password: pass }];
+      });
+
+      setToastState({
+        isOpen: true,
+        message: `🎉 Welcome back, ${safeUser.name}! Signed in successfully.`,
+        type: 'login'
+      });
+
+      return { success: true };
+    } catch (err: any) {
       return { 
         success: false, 
-        error: 'No registered account found with this Email or Phone Number. Please sign up first!' 
+        error: err.message || 'Incorrect email or password. Please verify your credentials and try again.' 
       };
     }
-
-    if (matchedUser.password && matchedUser.password !== pass) {
-      return { 
-        success: false, 
-        error: 'Incorrect password. Please verify your credentials and try again.' 
-      };
-    }
-
-    // Login successful
-    const { password, ...safeUser } = matchedUser;
-    setUser(safeUser);
-
-    setToastState({
-      isOpen: true,
-      message: `🎉 Welcome back, ${safeUser.name}! Signed in successfully.`,
-      type: 'login'
-    });
-
-    // Sync with Spring Boot API
-    loginUserApi(matchedUser.email, pass);
-
-    return { success: true };
   };
 
-  const forgotPassword = (emailOrPhone: string) => {
-    const query = emailOrPhone.trim().toLowerCase();
-
-    const matchedUser = registeredUsers.find(
-      u => u.email.toLowerCase() === query || (u.phoneNumber && u.phoneNumber === query)
-    );
-
-    if (!matchedUser) {
-      return { 
-        success: false, 
-        error: 'No registered account found with this Email or Phone Number. Please check and try again.' 
-      };
-    }
-
-    // Generate dynamic random 6-digit OTP code
-    const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    setPendingOtps(prev => ({ ...prev, [query]: generatedOtp }));
-
-    return { success: true, otp: generatedOtp };
-  };
-
-  const resetPassword = (emailOrPhone: string, newPass: string, enteredOtp?: string) => {
-    const query = emailOrPhone.trim().toLowerCase();
-
-    // Verify OTP code
-    if (enteredOtp && pendingOtps[query] && pendingOtps[query] !== enteredOtp.trim()) {
-      return { success: false, error: 'Invalid verification code. Please enter the exact 6-digit OTP sent to your credentials.' };
-    }
-
-    const matchedIndex = registeredUsers.findIndex(
-      u => u.email.toLowerCase() === query || (u.phoneNumber && u.phoneNumber === query)
-    );
-
-    if (matchedIndex === -1) {
-      return { success: false, error: 'User account not found.' };
-    }
-
-    setRegisteredUsers(prev => {
-      const copy = [...prev];
-      copy[matchedIndex] = { ...copy[matchedIndex], password: newPass };
-      return copy;
-    });
-
-    // Clear pending OTP
-    setPendingOtps(prev => {
-      const copy = { ...prev };
-      delete copy[query];
-      return copy;
-    });
-
-    return { success: true };
+  const updateLocalUserPassword = (email: string, newPass: string) => {
+    const clean = email.trim().toLowerCase();
+    setRegisteredUsers(prev => prev.map(u => u.email.toLowerCase() === clean ? { ...u, password: newPass } : u));
   };
 
   const logout = () => {
+    signOutFirebase();
     setUser(null);
     localStorage.removeItem('pe_auth_user');
     setToastState({
@@ -228,7 +183,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updatedUser = { ...user, ...data };
     setUser(updatedUser);
 
-    // Update in registeredUsers list as well
     setRegisteredUsers(prev => prev.map(u => u.id === user.id ? { ...u, ...data } : u));
   };
 
@@ -241,8 +195,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       closeToast,
       login,
       register,
-      forgotPassword,
-      resetPassword,
+      updateLocalUserPassword,
       logout,
       updateUserProfile
     }}>

@@ -78,36 +78,80 @@ export function generateDynamicEvaluation(payload: DynamicUploadPayload): Evalua
     });
   }
 
-  // Dynamic Strengths & Areas to Improve
+  // Comprehensive Dynamic Strengths (5 points in simple, student-friendly language based on presenter performance data)
   const strengthsList = [];
+
+  // 1. Pace & Rhythm
   if (cadence >= 125 && cadence <= 152) {
-    strengthsList.push(`Ideal delivery rhythm maintained at ${cadence} WPM average throughout the presentation.`);
+    strengthsList.push(`You maintained an ideal speaking speed of ${cadence} words per minute, keeping your speech clear and easy to follow.`);
+  } else if (cadence > 152) {
+    strengthsList.push(`You spoke with high energy at ${cadence} words per minute, keeping the presentation lively.`);
   } else {
-    strengthsList.push(`Distinct voice modulation and confident articulation on core talking points.`);
+    strengthsList.push(`You spoke at a deliberate pace of ${cadence} words per minute, giving listeners time to absorb your main points.`);
   }
 
-  if (overallScore >= 88) {
-    strengthsList.push('Exceptional enunciation and polished executive presence during key pitch slides.');
-    strengthsList.push(`Extremely low filler frequency (${fillerWordRate}%), sustaining high listener engagement.`);
+  // 2. Vocal Clarity & Articulation
+  if (clarity >= 88) {
+    strengthsList.push(`Your vocal clarity reached ${clarity}%, with sharp pronunciation and clear enunciation on key statements.`);
   } else {
-    strengthsList.push('Clear vocal projection with solid baseline presentation structure.');
-    strengthsList.push('Good visual alignment between slide transitions and spoken narrative.');
+    strengthsList.push(`Your voice remained clear with a clarity score of ${clarity}%, ensuring your main message was audible.`);
   }
 
+  // 3. Filler Word Control
+  if (totalFillers <= 2) {
+    strengthsList.push(`You used almost no filler words (${totalFillers} detected, ${fillerWordRate}% rate), which made your delivery sound very polished.`);
+  } else if (totalFillers <= 6) {
+    strengthsList.push(`You kept filler words under control (${totalFillers} total fillers), maintaining good speech flow.`);
+  } else {
+    strengthsList.push(`You sustained speech momentum despite using ${totalFillers} extra words during your talk.`);
+  }
+
+  // 4. Delivery & Vocal Energy
+  if (delivery >= 88) {
+    strengthsList.push(`Your overall delivery score was ${delivery}%, showing strong vocal confidence and steady enthusiasm.`);
+  } else {
+    strengthsList.push(`You maintained a steady vocal tone and friendly delivery score of ${delivery}%.`);
+  }
+
+  // 5. Structure & Transitions
+  strengthsList.push(`You organized your presentation clearly, moving smoothly from your introduction to your final conclusions.`);
+
+
+  // Comprehensive Actionable Improvements (4-5 points in simple, student-friendly language based on presenter performance data)
   const improvementsList = [];
+
+  // 1. Speed / Pace Adjustment
   if (cadence > 152) {
-    improvementsList.push(`Pacing reached ${cadence} WPM in middle sections — insert deliberate 2-second pauses after key takeaways.`);
+    improvementsList.push(`Your speaking pace of ${cadence} words per minute was fast — practice taking short 2-second silent pauses after key points so listeners can digest the information.`);
   } else if (cadence < 125) {
-    improvementsList.push(`Cadence averaged ${cadence} WPM — consider increasing energy to prevent audience monotony.`);
+    improvementsList.push(`Your speaking pace of ${cadence} words per minute was slow — increase your vocal energy slightly to build excitement.`);
   } else {
-    improvementsList.push('Vary vocal pitch modulation during opening hook to establish immediate audience rapport.');
+    improvementsList.push(`Your overall pace of ${cadence} WPM was good — try varying your speed slightly when introducing major new ideas.`);
   }
 
-  if (totalFillers > 5) {
-    improvementsList.push(`Detected ${totalFillers} total conversational fillers (primarily "um" & "like") — replace with silence.`);
+  // 2. Filler Word Elimination
+  if (totalFillers > 4) {
+    improvementsList.push(`You used ${totalFillers} extra words like "um" or "like" — try pausing in complete silence when gathering your thoughts.`);
   } else {
-    improvementsList.push('Maintain consistent eye contact with camera when transitioning between complex slide charts.');
+    improvementsList.push(`When moving between main topics, use a silent 1-second pause instead of filler words.`);
   }
+
+  // 3. Vocal Clarity & Enunciation
+  if (clarity < 85) {
+    improvementsList.push(`Work on enunciating sentence endings more clearly to improve your vocal clarity score above ${clarity}%.`);
+  } else {
+    improvementsList.push(`Emphasize key numbers and main conclusions with a slightly stronger, louder vocal tone.`);
+  }
+
+  // 4. Delivery Fluency & Pause Control
+  if (delivery < 85) {
+    improvementsList.push(`Rehearse your main points out loud to improve your delivery score from ${delivery}% to 90%+.`);
+  } else {
+    improvementsList.push(`Use purposeful pauses before important sentences to give your key points extra weight.`);
+  }
+
+  // 5. Presentation Closing
+  improvementsList.push(`End your talk with a strong final summary sentence that clearly states the main takeaway for your listeners.`);
 
   // Dynamic Transcript
   const now = new Date();
@@ -148,35 +192,54 @@ export function generateDynamicEvaluation(payload: DynamicUploadPayload): Evalua
     cadenceTimeline,
     strengths: strengthsList,
     improvements: improvementsList,
-    transcript: [
-      {
-        id: 't-dyn-1',
-        startTime: '00:00',
-        seconds: 0,
-        speaker: 'Presenter',
-        text: `Welcome everyone to "${payload.title}". Today we're reviewing key milestones and operational goals.`,
-        wpm: cadence - 4,
-        tone: 'enthusiastic'
-      },
-      {
-        id: 't-dyn-2',
-        startTime: '00:30',
-        seconds: 30,
-        speaker: 'Presenter',
-        text: `Examining our primary metrics, the overall delivery score reflects a strong cadence of ${cadence} WPM.`,
-        wpm: cadence,
-        tone: 'confident'
-      },
-      {
-        id: 't-dyn-3',
-        startTime: '01:15',
-        seconds: 75,
-        speaker: 'Presenter',
-        text: `Moving to our conclusion, maintaining clear pauses will further reduce filler rate below ${fillerWordRate}%.`,
-        wpm: cadence + 2,
-        tone: 'confident'
+    transcript: (() => {
+      const numSegs = Math.max(4, Math.min(10, Math.floor(durationSeconds / 45)));
+      const interval = Math.floor(durationSeconds / Math.max(1, numSegs));
+      const cleanT = payload.title || 'Presentation';
+
+      const templates = [
+        `Good morning everyone. Today I'm pleased to share our progress on "${cleanT}", covering our key project goals and market positioning.`,
+        `Examining our customer feedback and baseline requirements, we identified several critical workflow bottlenecks that needed immediate resolution.`,
+        `Our team developed an automated solution designed to streamline communication and enhance team execution speed across all departments.`,
+        `Reviewing our recent performance benchmarks, user engagement has increased steadily while maintaining high quality standards.`,
+        `Looking ahead to our upcoming milestones, our primary focus is optimizing resource delivery and ensuring long-term project stability.`
+      ];
+
+      const tr: import('../types').TranscriptSegment[] = [];
+      for (let i = 0; i < numSegs; i++) {
+        const sSec = i * interval;
+        const eSec = (i === numSegs - 1) ? durationSeconds : (i + 1) * interval;
+        const m = Math.floor(sSec / 60);
+        const s = (sSec % 60).toString().padStart(2, '0');
+        const em = Math.floor(eSec / 60);
+        const es = (eSec % 60).toString().padStart(2, '0');
+        let textStr = templates[i % templates.length];
+        const segHasFiller = totalFillers > 0 && i % 2 === 1;
+        const fWords = segHasFiller ? (i % 3 === 1 ? ['um'] : ['like']) : undefined;
+
+        if (segHasFiller && fWords && fWords.length > 0) {
+          const words = textStr.split(' ');
+          if (words.length > 5) {
+            words.splice(3, 0, `, ${fWords[0]},`);
+            textStr = words.join(' ');
+          }
+        }
+
+        tr.push({
+          id: `t-dyn-${i + 1}`,
+          startTime: `${m}:${s}`,
+          endTime: `${em}:${es}`,
+          seconds: sSec,
+          speaker: 'Presenter',
+          text: textStr,
+          hasFiller: segHasFiller,
+          fillerWords: fWords,
+          wpm: Math.max(90, Math.min(170, cadence + ((i % 3) * 3 - 3))),
+          tone: i === 0 ? 'enthusiastic' : 'confident'
+        });
       }
-    ],
+      return tr;
+    })(),
     summary: `Dynamic evaluation for "${payload.title}" (${payload.fileName}, ${payload.fileSize}). Delivery duration: ${formattedDuration}, overall speech cadence: ${cadence} WPM with ${totalFillers} total filler words detected.`
   };
 }

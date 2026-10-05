@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User as UserIcon, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, Check, AlertCircle } from 'lucide-react';
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AppView } from '../../types';
 
@@ -11,15 +11,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
   const { register } = useAuth();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -38,16 +38,24 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
       return;
     }
 
-    const res = register(fullName, email, phoneNumber, password);
-    if (!res.success) {
-      setError(res.error || 'Registration failed.');
-      return;
-    }
+    setIsLoading(true);
 
-    localStorage.setItem('pe_last_login_credential', email.trim() || phoneNumber.trim());
-    localStorage.setItem('pe_remembered_credentials', email.trim() || phoneNumber.trim());
-    localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! Please sign in with your credentials.');
-    setCurrentView('login');
+    try {
+      const res = await register(fullName, email, password);
+      if (!res.success) {
+        setError(res.error || 'Registration failed.');
+        return;
+      }
+
+      localStorage.setItem('pe_last_login_credential', email.trim());
+      localStorage.setItem('pe_remembered_credentials', email.trim());
+      localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! Please sign in with your credentials.');
+      setCurrentView('login');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -125,29 +133,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
-              />
-            </div>
-          </div>
-
-          {/* Phone Number */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Phone Number
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Phone className="w-4 h-4" />
-              </div>
-              <input
-                type="tel"
-                required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
-                autoComplete="off"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="e.g. 9876543210"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
             </div>
@@ -237,9 +222,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
           {/* Register Button */}
           <button
             type="submit"
-            className="w-full py-3.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all mt-2"
+            disabled={isLoading}
+            className="w-full py-3.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-60"
           >
-            <span>Register</span>
+            <span>{isLoading ? 'Creating Account...' : 'Register'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 

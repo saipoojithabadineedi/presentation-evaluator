@@ -52,7 +52,6 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
         mediaElem.preload = 'metadata';
         mediaElem.src = URL.createObjectURL(file);
         mediaElem.onloadedmetadata = () => {
-          URL.revokeObjectURL(mediaElem.src);
           const duration = Math.round(mediaElem.duration || 0);
           if (duration > 0) {
             setSelectedFile(prev => prev ? { ...prev, durationSec: duration } : null);
@@ -67,20 +66,52 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
     setPresentationTitle(sampleTitle);
   };
 
-  const toggleRecording = () => {
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  const toggleRecording = async () => {
     if (isRecording) {
       if (timerRef.current) clearInterval(timerRef.current);
       setIsRecording(false);
-      setSelectedFile({
-        name: `Live_Mic_Rehearsal_${new Date().toISOString().slice(0, 10)}.wav`,
-        size: `${(recordSeconds * 0.1).toFixed(1)} MB`,
-        type: 'audio',
-        durationSec: recordSeconds
-      });
-      setPresentationTitle(`Live Speech Rehearsal (${recordSeconds}s)`);
+
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+      }
     } else {
       setRecordSeconds(0);
       setIsRecording(true);
+      audioChunksRef.current = [];
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            audioChunksRef.current.push(e.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const rawFile = new File([audioBlob], `Live_Mic_Rehearsal_${Date.now()}.webm`, { type: 'audio/webm' });
+          setSelectedFile({
+            name: rawFile.name,
+            size: `${(audioBlob.size / (1024 * 1024)).toFixed(1)} MB`,
+            type: 'audio',
+            durationSec: recordSeconds || 15,
+            rawFile: rawFile
+          });
+          setPresentationTitle(`Live Speech Rehearsal (${recordSeconds}s)`);
+        };
+
+        mediaRecorder.start();
+        mediaRecorderRef.current = mediaRecorder;
+      } catch (err) {
+        console.warn('Microphone permission not granted or unavailable:', err);
+      }
+
       timerRef.current = setInterval(() => {
         setRecordSeconds(prev => prev + 1);
       }, 1000);
@@ -300,7 +331,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
             className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-xs font-bold shadow-md shadow-brand-500/20 flex items-center gap-2 transition-all"
           >
             <Sparkles className="w-4 h-4" />
-            <span>AI Analyze</span>
+            <span>Analyze Presentation</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

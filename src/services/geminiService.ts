@@ -39,26 +39,46 @@ export async function analyzePresentationWithGeminiLLM(
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   const prompt = `
-You are an expert executive speech coach and presentation evaluator. Analyze the following presentation delivery metrics and return a JSON evaluation response.
+You are an expert AI speech coach and presentation delivery evaluator.
+Your goal is to evaluate HOW THE PERSON PRESENTS based ONLY on the presenter's performance and delivery data provided below.
 
-Presentation Details:
-- Title: "${req.title}"
-- Media File: "${req.fileName}" (${req.fileType}, ${req.fileSize})
-- Speech Duration: ${Math.floor(req.durationSeconds / 60)}m ${req.durationSeconds % 60}s
-- Speech Pace (WPM): ${req.wpm} WPM
+CRITICAL REQUIREMENTS & RULES:
+1. DO NOT evaluate PPT design, slide aesthetics, slide layout, text density, slide colors, or visual quality.
+2. DO NOT evaluate unmeasured characteristics like eye contact, camera presence, body language, or facial expressions.
+3. Focus ONLY on speech delivery performance: speaking pace (WPM), filler word usage, silence & pause duration, vocal clarity, speech fluency, confidence, timing, and vocal energy.
+4. Write ALL response fields in plain, simple, clean, student-friendly English so that anyone can easily understand.
+5. Generate 5 UNIQUE Key Strengths and 4 to 5 UNIQUE Actionable Improvements based strictly on the input data.
+6. DO NOT use fixed, repetitive, or generic template sentences. Every evaluation must be distinct and specific to this presentation session's actual metrics.
+
+Presenter Performance Session Data:
+- Presentation Title: "${req.title}"
+- Duration: ${Math.floor(req.durationSeconds / 60)}m ${req.durationSeconds % 60}s (${req.durationSeconds} seconds)
+- Speaking Speed (WPM): ${req.wpm} WPM
 - Vocal Clarity Score: ${req.clarityScore}/100
-- Detected Filler Words: ${req.fillerCount}
-- Silence Pause Ratio: ${req.silenceRatioPercent}%
+- Detected Filler Words: ${req.fillerCount} filler words
+- Silence / Pause Ratio: ${req.silenceRatioPercent}%
 
-Respond strictly with a valid JSON object matching this exact schema:
+Respond strictly with a valid JSON object matching this schema:
 {
-  "overallScore": number (integer between 70 and 98),
-  "scoreTier": "string (e.g. Top 5% speaker tier / Top 15% speaker tier)",
-  "executiveSummary": "string (2-3 sentences of concise executive feedback)",
-  "strengths": ["string", "string", "string"],
-  "improvements": ["string", "string"],
-  "pacingFeedback": "string (feedback on ${req.wpm} WPM pace)",
-  "clarityFeedback": "string (feedback on vocal clarity)"
+  "overallScore": number (integer between 50 and 98 based on performance data),
+  "scoreTier": "string (e.g. Top 5% speaker tier / Developing speaker tier)",
+  "executiveSummary": "string (2-3 simple, encouraging sentences evaluating this presenter's actual speech performance)",
+  "strengths": [
+    "string (simple strength 1: speaking pace & rhythm evaluation)",
+    "string (simple strength 2: vocal clarity & articulation evaluation)",
+    "string (simple strength 3: filler word control evaluation)",
+    "string (simple strength 4: vocal energy & delivery score evaluation)",
+    "string (simple strength 5: pause timing & speech structure evaluation)"
+  ],
+  "improvements": [
+    "string (simple actionable advice 1: WPM speaking speed adjustment)",
+    "string (simple actionable advice 2: filler word elimination / silent pause technique)",
+    "string (simple actionable advice 3: vocal articulation & clarity enhancement)",
+    "string (simple actionable advice 4: delivery fluency & confidence building)",
+    "string (simple actionable advice 5: closing takeaway & summary sentence)"
+  ],
+  "pacingFeedback": "string (simple feedback on ${req.wpm} WPM speaking pace)",
+  "clarityFeedback": "string (simple feedback on ${req.clarityScore}% vocal clarity)"
 }
 `;
 

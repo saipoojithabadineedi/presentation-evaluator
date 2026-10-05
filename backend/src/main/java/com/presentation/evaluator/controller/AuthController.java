@@ -1,10 +1,10 @@
 package com.presentation.evaluator.controller;
 
-import com.presentation.evaluator.dto.LoginRequest;
-import com.presentation.evaluator.dto.RegisterRequest;
+import com.presentation.evaluator.dto.*;
 import com.presentation.evaluator.entity.UserEntity;
 import com.presentation.evaluator.service.AuthService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,28 +16,48 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<UserEntity> login(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        try {
+            UserEntity user = authService.login(request);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.builder().success(false).message(e.getMessage()).build());
+        }
     }
 
     @PostMapping("/register")
-    public ResponseEntity<UserEntity> register(@RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        try {
+            UserEntity user = authService.register(request);
+            return ResponseEntity.ok(user);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.builder().success(false).message(e.getMessage()).build());
+        }
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody java.util.Map<String, String> payload) {
-        String email = payload.get("email");
-        authService.forgotPassword(email);
-        return ResponseEntity.ok(java.util.Map.of("success", true, "message", "Verification code sent to " + email));
+    public ResponseEntity<ApiResponse> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        ApiResponse response = authService.forgotPassword(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<ApiResponse> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        ApiResponse response = authService.verifyOtp(request);
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody java.util.Map<String, String> payload) {
-        String email = payload.get("email");
-        String otp = payload.get("otp");
-        String newPassword = payload.get("newPassword");
-        authService.resetPassword(email, otp, newPassword);
-        return ResponseEntity.ok(java.util.Map.of("success", true, "message", "Password updated successfully"));
+    public ResponseEntity<ApiResponse> resetPassword(@RequestBody ResetPasswordRequest request) {
+        ApiResponse response = authService.resetPassword(request);
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+        return ResponseEntity.ok(response);
     }
 }

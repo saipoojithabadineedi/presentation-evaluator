@@ -19,12 +19,46 @@ import { SettingsView } from './components/profile/SettingsView';
 import { UploadModal } from './components/upload/UploadModal';
 import { ProcessingModal } from './components/upload/ProcessingModal';
 import { AuthToastNotification } from './components/common/AuthToastNotification';
+import { StartingIntroAnimation } from './components/common/StartingIntroAnimation';
 import { AppView } from './types';
 
 const MainAppContent: React.FC = () => {
   const { isAuthenticated, login, toastState, closeToast } = useAuth();
-  const [currentView, setCurrentView] = useState<AppView>('landing');
+  const [showIntroAnimation, setShowIntroAnimation] = useState(true);
+  
+  const [currentView, setCurrentView] = useState<AppView>(() => {
+    const savedUser = localStorage.getItem('pe_auth_user');
+    const isUserLoggedIn = !!savedUser;
+    const savedView = sessionStorage.getItem('pe_current_view') as AppView;
+
+    if (isUserLoggedIn) {
+      if (savedView && savedView !== 'landing' && savedView !== 'login' && savedView !== 'register') {
+        return savedView;
+      }
+      return 'dashboard';
+    }
+    return 'landing';
+  });
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Sync currentView to sessionStorage
+  React.useEffect(() => {
+    sessionStorage.setItem('pe_current_view', currentView);
+  }, [currentView]);
+
+  // Automatically enforce view state depending on authentication status
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      if (currentView === 'landing' || currentView === 'login' || currentView === 'register') {
+        setCurrentView('dashboard');
+      }
+    } else {
+      if (currentView !== 'login' && currentView !== 'register') {
+        setCurrentView('landing');
+      }
+    }
+  }, [isAuthenticated]);
 
   const handleQuickDemo = () => {
     login('name@example.com', 'password');
@@ -40,8 +74,7 @@ const MainAppContent: React.FC = () => {
   const isProfileSection = currentView === 'profile' || 
                            currentView === 'recent-presentations' || 
                            currentView === 'all-evaluations' || 
-                           currentView === 'reports-archive' || 
-                           currentView === 'settings';
+                           currentView === 'reports-archive';
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 transition-colors duration-200 flex flex-col">
@@ -138,6 +171,11 @@ const MainAppContent: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Starting 5-second Intro Video Animation */}
+      {showIntroAnimation && (
+        <StartingIntroAnimation onComplete={() => setShowIntroAnimation(false)} />
+      )}
 
       {/* Modals for Upload, AI Processing Pipeline & Auth Popups */}
       <UploadModal onEvaluationComplete={handleEvaluationComplete} />

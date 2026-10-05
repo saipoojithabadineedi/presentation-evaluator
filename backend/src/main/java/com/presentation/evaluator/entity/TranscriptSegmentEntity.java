@@ -33,6 +33,6 @@ public class TranscriptSegmentEntity {
     private String tone;
 
     // String representation of vector for pgvector integration
-    @Column(name = "embedding", columnDefinition = "vector(1536)")
+    @Column(name = "embedding", columnDefinition = "TEXT")
     private String embedding;
 }

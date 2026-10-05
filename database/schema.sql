@@ -67,3 +67,27 @@ CREATE TABLE IF NOT EXISTS transcript_segments (
 -- Create HNSW index for high performance vector similarity search
 CREATE INDEX IF NOT EXISTS idx_transcript_embedding_hnsw 
 ON transcript_segments USING hnsw (embedding vector_cosine_ops);
+
+-- Password Reset OTPs Table (Stores cryptographically hashed 6-digit OTPs with expiration and attempt tracking)
+CREATE TABLE IF NOT EXISTS password_reset_otps (
+    id VARCHAR(100) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    attempts INT DEFAULT 0,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_reset_otps_email ON password_reset_otps(email);
+
+-- Password Reset Tokens Table (Stores single-use short-lived reset authorization tokens)
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id VARCHAR(100) PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    token_hash VARCHAR(255) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_reset_tokens_email ON password_reset_tokens(email);
+

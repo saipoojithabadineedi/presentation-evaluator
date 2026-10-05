@@ -9,7 +9,9 @@ import {
   Moon,
   Volume2,
   Award,
-  BarChart2
+  BarChart2,
+  LogOut,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluation } from '../../context/EvaluationContext';
@@ -21,13 +23,12 @@ interface SettingsViewProps {
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) => {
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUserProfile, logout } = useAuth();
   const { settings, updateSettings } = useEvaluation();
   const { theme, toggleTheme } = useTheme();
 
   const [name, setName] = useState(user?.name || 'User');
   const [email, setEmail] = useState(user?.email || 'name@example.com');
-  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '9876543210');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80');
   const [minWpm, setMinWpm] = useState(settings.targetMinWpm);
   const [maxWpm, setMaxWpm] = useState(settings.targetMaxWpm);
@@ -59,7 +60,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile({ name, email, phoneNumber, avatarUrl });
+    updateUserProfile({ name, email, avatarUrl });
     updateSettings({
       targetMinWpm: minWpm,
       targetMaxWpm: maxWpm,
@@ -73,8 +74,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-300">
       
+      {/* Top Header Controls: Back to Home Button */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setCurrentView('dashboard')}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 text-slate-700 dark:text-slate-200 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 text-xs sm:text-sm font-bold shadow-2xs transition-all cursor-pointer group"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-brand-500" />
+          <span>Back to Home</span>
+        </button>
+      </div>
+
       {/* Header Banner & Profile Details */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
@@ -94,7 +106,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {email} • Phone: {phoneNumber}
+              {email}
             </p>
           </div>
         </div>
@@ -181,19 +193,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
               />
             </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="e.g. 9876543210"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-              />
-            </div>
           </div>
         </div>
 
@@ -260,6 +259,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
               />
             </div>
           </div>
+        </div>
+
+        {/* Account Session & Logout Section */}
+        <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-950/40 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+              <LogOut className="w-4 h-4 text-rose-500" />
+              <span>Account Session & Security</span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Sign out of your active Presentation Evaluator session on this browser.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              logout();
+              setCurrentView('landing');
+            }}
+            className="px-5 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 hover:bg-rose-600 hover:text-white transition-all text-xs font-bold flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout Account</span>
+          </button>
         </div>
 
         {/* Save Button */}

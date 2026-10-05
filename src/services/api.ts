@@ -1,65 +1,70 @@
-// API service for connecting React Frontend to Spring Boot + PostgreSQL pgvector backend
+// API service for connecting React Frontend to Spring Boot backend
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
 export async function loginUserApi(email: string, pass: string) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pass }),
-    });
-    if (!res.ok) throw new Error('Backend authentication failed');
-    return await res.json();
-  } catch (error) {
-    console.warn('Backend connection unavailable, using client-side auth fallback:', error);
-    return null;
+  const res = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password: pass }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Authentication failed. Please check your credentials.');
   }
+  return data;
 }
 
 export async function registerUserApi(name: string, email: string, pass: string) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password: pass }),
-    });
-    if (!res.ok) throw new Error('Backend registration failed');
-    return await res.json();
-  } catch (error) {
-    console.warn('Backend connection unavailable, using client-side registration fallback:', error);
-    return null;
+  const res = await fetch(`${API_BASE_URL}/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password: pass }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Registration failed.');
   }
+  return data;
 }
 
 export async function requestPasswordResetApi(email: string) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    if (!res.ok) throw new Error('Failed to request verification code');
-    return await res.json();
-  } catch (error) {
-    console.warn('Backend offline, using fallback password reset code generator:', error);
-    return { success: true, message: 'Verification code sent to email' };
+  const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to request verification code.');
   }
+  return data;
 }
 
-export async function confirmPasswordResetApi(email: string, otp: string, newPass: string) {
-  try {
-    const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp, newPassword: newPass }),
-    });
-    if (!res.ok) throw new Error('Failed to reset password');
-    return await res.json();
-  } catch (error) {
-    console.warn('Backend offline, applying client-side password reset fallback:', error);
-    return { success: true, message: 'Password updated successfully' };
+export async function verifyOtpApi(email: string, otp: string) {
+  const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Invalid verification code.');
   }
+  return data;
+}
+
+export async function confirmPasswordResetApi(email: string, resetToken: string, newPass: string) {
+  const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, resetToken, newPassword: newPass }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to reset password.');
+  }
+  return data;
 }
 
 export async function startAIAnalysisApi(payload: {
@@ -68,6 +73,13 @@ export async function startAIAnalysisApi(payload: {
   fileType: 'video' | 'audio' | 'slides';
   fileName: string;
   fileSize: string;
+  durationSeconds?: number;
+  wpm?: number;
+  clarityScore?: number;
+  fillerWordCount?: number;
+  fillerWordRate?: number;
+  silenceRatioPercent?: number;
+  deliveryScore?: number;
 }) {
   try {
     const res = await fetch(`${API_BASE_URL}/evaluations/analyze`, {

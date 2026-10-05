@@ -63,25 +63,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Reports Archive',
       subtitle: 'PDF reports for each evaluation',
       icon: FileText
-    },
-    {
-      id: 'settings' as AppView,
-      label: 'Settings',
-      subtitle: 'Speech goals, pacing & AI preferences',
-      icon: Settings
     }
   ];
 
   const handleNavigate = (view: AppView) => {
     setCurrentView(view);
-    if (!isDesktopStatic) {
-      onClose();
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    setCurrentView('landing');
     if (!isDesktopStatic) {
       onClose();
     }
@@ -101,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <img 
               src="/assets/logo.jpg" 
               alt="Presentation Evaluator - Analyze. Improve. Succeed." 
-              className="h-12 w-auto max-w-[200px] object-contain logo-blend transition-transform group-hover:scale-105"
+              className="h-16 sm:h-20 w-auto max-w-[240px] max-h-20 object-contain logo-blend transition-transform group-hover:scale-105"
             />
           </button>
 
@@ -180,18 +166,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
         </nav>
-      </div>
-
-      {/* Bottom Section: Logout */}
-      <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-        {/* Logout button */}
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Logout</span>
-        </button>
       </div>
 
     </div>

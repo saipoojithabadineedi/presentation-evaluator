@@ -12,11 +12,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   const { login, registeredUsers } = useAuth();
   const emailInputRef = useRef<HTMLInputElement>(null);
 
-  const [emailOrPhone, setEmailOrPhone] = useState(() => {
+  const [email, setEmail] = useState(() => {
     const remembered = localStorage.getItem('pe_remembered_credentials') || localStorage.getItem('pe_last_login_credential');
     if (remembered) return remembered;
     if (registeredUsers && registeredUsers.length > 0) {
-      return registeredUsers[0].email || registeredUsers[0].phoneNumber || '';
+      return registeredUsers[0].email || '';
     }
     return '';
   });
@@ -24,6 +24,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState(() => {
     const regMsg = localStorage.getItem('pe_reg_success_msg');
     if (regMsg) {
@@ -34,43 +35,52 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   });
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Auto-focus and select remembered email/phone if present
+  // Auto-focus and select remembered email if present
   useEffect(() => {
-    if (emailOrPhone && emailInputRef.current) {
+    if (email && emailInputRef.current) {
       emailInputRef.current.focus();
       emailInputRef.current.select();
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!emailOrPhone.trim() || !password.trim()) {
-      setErrorMessage('Please enter your Email/Phone and Password.');
+    if (!email.trim() || !password.trim()) {
+      setErrorMessage('Please enter your Email Address and Password.');
       return;
     }
 
-    const res = login(emailOrPhone, password);
-    if (!res.success) {
-      setErrorMessage(res.error || 'Login failed.');
-      return;
-    }
+    setIsLoading(true);
 
-    localStorage.setItem('pe_last_login_credential', emailOrPhone.trim());
-    if (rememberMe) {
-      localStorage.setItem('pe_remembered_credentials', emailOrPhone.trim());
-    } else {
-      localStorage.removeItem('pe_remembered_credentials');
-    }
+    try {
+      const res = await login(email, password);
+      if (!res.success) {
+        setErrorMessage(res.error || 'Login failed.');
+        return;
+      }
 
-    setCurrentView('dashboard');
+      localStorage.setItem('pe_last_login_credential', email.trim());
+      if (rememberMe) {
+        localStorage.setItem('pe_remembered_credentials', email.trim());
+      } else {
+        localStorage.removeItem('pe_remembered_credentials');
+      }
+
+      setCurrentView('dashboard');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Login failed.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleForgotPasswordSuccess = (resetCredential: string) => {
-    setEmailOrPhone(resetCredential);
+    setEmail(resetCredential);
+    setPassword('');
     setSuccessMessage('Password reset successfully! You can now log in with your new password.');
-    setTimeout(() => setSuccessMessage(''), 6000);
+    setTimeout(() => setSuccessMessage(''), 8000);
   };
 
   return (
@@ -114,10 +124,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
         {/* Login Form */}
         <form onSubmit={handleSubmit} autoComplete="off" className="space-y-5">
           
-          {/* Email or Phone Field */}
+          {/* Email Address Field */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Email Address or Phone Number
+              Email Address
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -125,12 +135,12 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
               </div>
               <input
                 ref={emailInputRef}
-                type="text"
+                type="email"
                 required
                 autoComplete="off"
-                value={emailOrPhone}
-                onChange={(e) => setEmailOrPhone(e.target.value)}
-                placeholder="Email or Phone number"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
             </div>
@@ -199,14 +209,15 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full py-3.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all mt-2"
+            disabled={isLoading}
+            className="w-full py-3.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-60"
           >
-            <span>Login</span>
+            <span>{isLoading ? 'Signing In...' : 'Login'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
 
           {/* Switch to Register */}
-          <div className="text-center pt-4 text-xs text-slate-500 dark:text-slate-400">
+          <div className="text-center pt-3 text-xs text-slate-500 dark:text-slate-400">
             Don't have an account?{' '}
             <button
               type="button"

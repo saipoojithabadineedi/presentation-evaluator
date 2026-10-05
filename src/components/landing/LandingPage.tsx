@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Sliders, Presentation, Mic, TrendingUp, CheckCircle } from 'lucide-react';
+import { ArrowRight, Sparkles, Sliders, Presentation, Mic, TrendingUp, Play } from 'lucide-react';
 import { AppView } from '../../types';
 
 interface LandingPageProps {
@@ -31,15 +31,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ setCurrentView, onQuic
 
         {/* Hero Title with Animated Gradient Text */}
         <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-6">
-          Your Perfect <br className="hidden sm:block" />
+          Analyze & Elevate Your <br className="hidden sm:block" />
           <span className="animated-gradient-text">
-            Presentation in Seconds
+            Presentation Performance
           </span>
         </h1>
 
         {/* Hero Subtitle */}
         <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto font-medium leading-relaxed mb-10">
-          Stop guessing. Get a instant speech delivery analysis built by AI, tailored to your pitch pacing, cadence, and schedule.
+          Stop guessing. Get instant AI-powered evaluation of your speech delivery, pitch pacing, filler words, and slide clarity in seconds.
         </p>
 
         {/* CTA Action Buttons with Shimmer Effects */}

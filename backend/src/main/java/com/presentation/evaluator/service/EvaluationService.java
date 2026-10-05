@@ -24,8 +24,39 @@ public class EvaluationService {
     @Transactional
     public EvaluationEntity startAnalysis(AnalysisRequest request) {
         String evalId = "eval-" + UUID.randomUUID().toString().substring(0, 8);
-        int score = 88 + (new Random().nextInt(10));
-        int cadence = 132 + (new Random().nextInt(15));
+        
+        int cadence = request.getWpm() != null ? request.getWpm() : 135;
+        int fillerCount = request.getFillerWordCount() != null ? request.getFillerWordCount() : 4;
+        int clarity = request.getClarityScore() != null ? request.getClarityScore() : 90;
+        int silenceRatio = request.getSilenceRatioPercent() != null ? request.getSilenceRatioPercent() : 15;
+        int durationSec = request.getDurationSeconds() != null ? request.getDurationSeconds() : 270;
+
+        int mins = Math.max(1, durationSec / 60);
+        int secs = durationSec % 60;
+        String formattedDuration = mins + " min " + secs + " sec";
+
+        double wpmPenalty = 0;
+        if (cadence < 125) wpmPenalty = (125 - cadence) * 0.4;
+        if (cadence > 155) wpmPenalty = (cadence - 155) * 0.4;
+
+        double fillerPenalty = Math.min(30, fillerCount * 1.5);
+        double pausePenalty = silenceRatio > 25 ? (silenceRatio - 25) * 0.5 : 0;
+
+        int overallScore = request.getDeliveryScore() != null ? request.getDeliveryScore() :
+            (int) Math.max(50, Math.min(98, Math.round(clarity * 0.5 + (100 - fillerPenalty - wpmPenalty - pausePenalty) * 0.5)));
+
+        String scoreTier = overallScore >= 90 ? "Top 5% speaker tier" : overallScore >= 80 ? "Top 15% speaker tier" : "Developing speaker tier";
+
+        String cadenceStatus = "Optimal keynote pace (125-150 WPM)";
+        if (cadence < 125) cadenceStatus = "Slow / deliberate pace (< 125 WPM)";
+        if (cadence > 155) cadenceStatus = "Rapid high-velocity pace (> 155 WPM)";
+
+        double fillerRate = request.getFillerWordRate() != null ? request.getFillerWordRate() :
+            Double.parseDouble(String.format(Locale.US, "%.1f", (double) fillerCount / mins));
+
+        String summaryText = "Performance evaluation for \"" + request.getTitle() + "\". Speaking pace measured at " 
+                + cadence + " WPM with " + fillerCount + " total filler words detected. Silence pause ratio was " 
+                + silenceRatio + "% and vocal clarity score was " + clarity + "%.";
 
         EvaluationEntity eval = EvaluationEntity.builder()
                 .id(evalId)
@@ -34,27 +65,31 @@ public class EvaluationService {
                 .title(request.getTitle() != null && !request.getTitle().isBlank() ? request.getTitle() : "Presentation Rehearsal")
                 .date(LocalDate.now().toString())
                 .formattedDate(LocalDate.now().format(DateTimeFormatter.ofPattern("MMM dd, yyyy")))
-                .duration("4 min 30 sec")
-                .durationSeconds(270)
+                .duration(formattedDuration)
+                .durationSeconds(durationSec)
                 .fileType(request.getFileType() != null ? request.getFileType() : "video")
                 .fileSize(request.getFileSize() != null ? request.getFileSize() : "45.0 MB")
-                .overallScore(score)
-                .scoreTier(score >= 90 ? "Top 5% speaker tier" : "Top 15% speaker tier")
+                .overallScore(overallScore)
+                .scoreTier(scoreTier)
                 .averageCadence(cadence)
-                .cadenceStatus("Optimal keynote pace (125-150 WPM)")
-                .fillerWordRate(0.6)
-                .fillerWordCount(4)
-                .summary("High-impact rehearsal for \"" + request.getTitle() + "\". Delivery pacing was steady at " + cadence + " WPM with minimal conversational fillers.")
+                .cadenceStatus(cadenceStatus)
+                .fillerWordRate(fillerRate)
+                .fillerWordCount(fillerCount)
+                .summary(summaryText)
                 .build();
+
+        int deliveryScore = Math.min(99, Math.max(50, Math.round(overallScore)));
+        int pacingScore = Math.min(99, Math.max(50, Math.round(100 - (int) wpmPenalty * 2)));
+        int clarityScore = Math.min(99, Math.max(50, clarity));
 
         MetricBreakdownEntity metrics = MetricBreakdownEntity.builder()
                 .evaluation(eval)
-                .delivery(score)
-                .content(score - 2)
-                .visuals(score + 1)
-                .pacing(92)
-                .clarity(94)
-                .engagement(90)
+                .delivery(deliveryScore)
+                .content(Math.max(50, overallScore - 2))
+                .visuals(Math.max(50, overallScore - 3))
+                .pacing(pacingScore)
+                .clarity(clarityScore)
+                .engagement(Math.max(50, (int) (clarity * 0.95)))
                 .build();
 
         eval.setMetrics(metrics);

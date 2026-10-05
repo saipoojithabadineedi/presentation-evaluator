@@ -17,7 +17,6 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  phoneNumber?: string;
   avatarUrl?: string;
   tier: string;
   practiceHours: number;
@@ -29,7 +28,8 @@ export interface User {
 
 export interface TranscriptSegment {
   id: string;
-  startTime: string; // e.g. "00:15"
+  startTime: string; // e.g. "00:00"
+  endTime?: string;   // e.g. "00:46"
   seconds: number;
   speaker: string;
   text: string;
@@ -75,6 +75,7 @@ export interface EvaluationData {
   durationSeconds: number;
   fileType: 'video' | 'audio' | 'slides';
   fileSize: string;
+  mediaUrl?: string; // Blob URL or media URL for authentic audio/video playback
   overallScore: number; // e.g. 92
   scoreTier: string; // e.g. "Top 5% speaker tier"
   averageCadence: number; // e.g. 138 WPM

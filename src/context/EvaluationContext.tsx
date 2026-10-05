@@ -5,6 +5,7 @@ import { startAIAnalysisApi } from '../services/api';
 import { generateDynamicEvaluation } from '../utils/dynamicEvaluation';
 import { extractRealAudioMetrics, buildAccurateEvaluationData } from '../utils/audioAnalyzer';
 import { analyzePresentationWithGeminiLLM } from '../services/geminiService';
+import { saveMediaFileToDB, getMediaFileFromDB } from '../utils/mediaStore';
 
 interface UploadPayload {
   title: string;
@@ -40,6 +41,10 @@ interface EvaluationContextType {
 }
 
 const EvaluationContext = createContext<EvaluationContextType | undefined>(undefined);
+
+export const mediaBlobRegistry = new Map<string, Blob | File>();
+// Persists blob URLs for the full tab session (not revoked on navigation)
+export const mediaBlobUrlRegistry = new Map<string, string>();
 
 export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [evaluations, setEvaluations] = useState<EvaluationData[]>(() => {
@@ -78,7 +83,34 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return defaultSettings;
   });
 
-  const [activeEvaluation, setActiveEvaluation] = useState<EvaluationData | null>(initialEvaluations[0]);
+  const [activeEvaluation, setActiveEvaluationState] = useState<EvaluationData | null>(() => {
+    const savedActiveId = localStorage.getItem('pe_active_eval_id');
+    const savedEvalsStr = localStorage.getItem('pe_evaluations');
+    let evalList = initialEvaluations;
+    if (savedEvalsStr) {
+      try {
+        const parsed = JSON.parse(savedEvalsStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          evalList = parsed;
+        }
+      } catch {}
+    }
+    if (savedActiveId) {
+      const found = evalList.find(e => e.id === savedActiveId);
+      if (found) return found;
+    }
+    return evalList.length > 0 ? evalList[0] : null;
+  });
+
+  const setActiveEvaluation = (evalData: EvaluationData | null) => {
+    setActiveEvaluationState(evalData);
+    if (evalData) {
+      localStorage.setItem('pe_active_eval_id', evalData.id);
+    } else {
+      localStorage.removeItem('pe_active_eval_id');
+    }
+  };
+
   const [activeReport, setActiveReport] = useState<ReportItem | null>(null);
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -116,6 +148,7 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setEvaluations([]);
     setActiveEvaluation(null);
     localStorage.removeItem('pe_evaluations');
+    localStorage.removeItem('pe_active_eval_id');
   };
 
   const clearAllReports = () => {
@@ -179,6 +212,9 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setProcessingStatusText('Decoding Web Audio API PCM frames & audio energy...');
       const realMetrics = await extractRealAudioMetrics(payload.fileObject);
 
+      // Create a stable blob URL that lives for the entire tab session
+      const mediaUrl = URL.createObjectURL(payload.fileObject);
+
       setProcessingStatusText('Invoking Google Gemini LLM neural evaluation engine...');
       const llmResult = await analyzePresentationWithGeminiLLM({
         title: payload.title,
@@ -198,14 +234,35 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         payload.fileName,
         payload.fileSize,
         realMetrics,
-        llmResult
+        llmResult,
+        mediaUrl
       );
+
+      // Store in both registries so playback always resolves
+      mediaBlobRegistry.set(newEval.id, payload.fileObject);
+      mediaBlobUrlRegistry.set(newEval.id, mediaUrl);
+
+      // Save to IndexedDB so playback works even after page refresh
+      saveMediaFileToDB(newEval.id, payload.fileObject).catch(err => {
+        console.warn('Failed to store media in IndexedDB:', err);
+      });
     } else {
       newEval = generateDynamicEvaluation(payload);
     }
 
-    // Attempt backend sync
-    startAIAnalysisApi(payload);
+    // Attempt backend sync with actual presentation performance metrics
+    startAIAnalysisApi({
+      title: payload.title,
+      fileType: payload.fileType,
+      fileName: payload.fileName,
+      fileSize: payload.fileSize,
+      durationSeconds: newEval.durationSeconds,
+      wpm: newEval.averageCadence,
+      clarityScore: newEval.metrics.clarity,
+      fillerWordCount: newEval.fillerWordCount,
+      fillerWordRate: newEval.fillerWordRate,
+      deliveryScore: newEval.overallScore
+    });
 
     setEvaluations(prev => [newEval, ...prev]);
     setActiveEvaluation(newEval);
