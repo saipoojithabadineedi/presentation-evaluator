@@ -2,69 +2,96 @@
 
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
-export async function loginUserApi(email: string, pass: string) {
-  const res = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password: pass }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Authentication failed. Please check your credentials.');
+function handleNetworkError(err: any, defaultMsg: string): never {
+  if (err.name === 'TypeError' || err.message?.includes('fetch') || err.message?.includes('Failed to fetch')) {
+    throw new Error('Backend server on port 8080 is unreachable. Please ensure the Spring Boot server is running.');
   }
-  return data;
+  throw err instanceof Error ? err : new Error(defaultMsg);
+}
+
+export async function loginUserApi(email: string, pass: string) {
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Authentication failed. Please check your credentials.');
+    }
+    return data;
+  } catch (err: any) {
+    handleNetworkError(err, 'Authentication failed.');
+  }
 }
 
 export async function registerUserApi(name: string, email: string, pass: string) {
-  const res = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password: pass }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Registration failed.');
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password: pass }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Registration failed.');
+    }
+    return data;
+  } catch (err: any) {
+    handleNetworkError(err, 'Registration failed.');
   }
-  return data;
 }
 
 export async function requestPasswordResetApi(email: string) {
-  const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Failed to request verification code.');
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to request verification code.');
+    }
+    return data;
+  } catch (err: any) {
+    handleNetworkError(err, 'Failed to request verification code.');
   }
-  return data;
 }
 
 export async function verifyOtpApi(email: string, otp: string) {
-  const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, otp }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Invalid verification code.');
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Invalid verification code.');
+    }
+    return data;
+  } catch (err: any) {
+    handleNetworkError(err, 'Invalid verification code.');
   }
-  return data;
 }
 
 export async function confirmPasswordResetApi(email: string, resetToken: string, newPass: string) {
-  const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, resetToken, newPassword: newPass }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.message || 'Failed to reset password.');
+  try {
+    const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, resetToken, newPassword: newPass }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || 'Failed to reset password.');
+    }
+    return data;
+  } catch (err: any) {
+    handleNetworkError(err, 'Failed to reset password.');
   }
-  return data;
 }
 
 export async function startAIAnalysisApi(payload: {

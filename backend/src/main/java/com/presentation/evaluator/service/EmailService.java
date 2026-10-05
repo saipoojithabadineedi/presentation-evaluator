@@ -19,13 +19,13 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:noreply@presentationevaluator.com}")
+    @Value("${spring.mail.username:thupakulakulayappa24@gmail.com}")
     private String fromEmail;
 
     public boolean sendOtpEmail(String recipientEmail, String otpCode) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
-        // 1. Write to local development OTP log file for instant zero-friction testing
+        // 1. Write to local development OTP log file for instant testing reference
         try (PrintWriter writer = new PrintWriter(new FileWriter(".local-otps.log", true))) {
             writer.println(String.format("[%s] REAL OTP FOR [%s]: %s (Valid for 5 minutes)", timestamp, recipientEmail, otpCode));
         } catch (Exception e) {
@@ -72,7 +72,7 @@ public class EmailService {
             log.info("Successfully dispatched SMTP email to {}", recipientEmail);
             return true;
         } catch (Exception e) {
-            log.warn("SMTP delivery to {} skipped (configure EMAIL_USER & EMAIL_PASSWORD in .env for external inbox delivery): {}", recipientEmail, e.getMessage());
+            log.error("SMTP delivery to {} failed: {}", recipientEmail, e.getMessage(), e);
             return false;
         }
     }
