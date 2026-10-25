@@ -18,7 +18,8 @@ export async function sendLiveOtp(emailOrPhone: string, otpCode: string): Promis
 
   try {
     // 1. Attempt Spring Boot Backend OTP Dispatch
-    const backendRes = await fetch('http://localhost:8080/api/v1/auth/send-otp', {
+    const apiBase = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/+$/, '');
+    const backendRes = await fetch(`${apiBase}/api/v1/auth/send-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

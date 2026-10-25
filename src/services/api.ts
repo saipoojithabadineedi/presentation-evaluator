@@ -1,10 +1,10 @@
 // API service for connecting React Frontend to Spring Boot backend
 
-const API_BASE_URL = 'http://localhost:8080/api/v1';
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/+$/, '') + '/api/v1';
 
 function handleNetworkError(err: any, defaultMsg: string): never {
   if (err.name === 'TypeError' || err.message?.includes('fetch') || err.message?.includes('Failed to fetch')) {
-    throw new Error('Backend server on port 8080 is unreachable. Please ensure the Spring Boot server is running.');
+    throw new Error('Backend server is unreachable. Please ensure the API server is running.');
   }
   throw err instanceof Error ? err : new Error(defaultMsg);
 }
