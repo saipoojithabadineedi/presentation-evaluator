@@ -1,9 +1,10 @@
 services:
-  # Spring Boot Backend Web Service (100% Free - No Credit Card Needed)
+  # Spring Boot Backend Web Service
   - type: web
     name: presentation-evaluator-backend
     runtime: docker
     dockerfilePath: backend/Dockerfile
+    plan: free
     envVars:
       - key: PORT
         value: 8080
