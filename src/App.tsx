@@ -19,11 +19,17 @@ import { SettingsView } from './components/profile/SettingsView';
 import { UploadModal } from './components/upload/UploadModal';
 import { ProcessingModal } from './components/upload/ProcessingModal';
 import { AuthToastNotification } from './components/common/AuthToastNotification';
+import { pingBackendHealth } from './services/api';
 import { AppView } from './types';
 
 const MainAppContent: React.FC = () => {
   const { isAuthenticated, login, toastState, closeToast } = useAuth();
   
+  // Warm up Render backend immediately on page load
+  React.useEffect(() => {
+    pingBackendHealth();
+  }, []);
+
   const [currentView, setCurrentView] = useState<AppView>(() => {
     const savedUser = localStorage.getItem('pe_auth_user');
     const isUserLoggedIn = !!savedUser;

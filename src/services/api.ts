@@ -1,10 +1,35 @@
 // API service for connecting React Frontend to Spring Boot backend
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').replace(/\/+$/, '') + '/api/v1';
+export const PROD_BACKEND_URL = 'https://presentation-evaluator-1.onrender.com';
+
+export function getApiBaseUrl(): string {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/+$/, '');
+  }
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return PROD_BACKEND_URL;
+  }
+  return import.meta.env.PROD ? PROD_BACKEND_URL : 'http://localhost:8080';
+}
+
+const API_BASE_URL = getApiBaseUrl() + '/api/v1';
+
+export function pingBackendHealth() {
+  try {
+    fetch(`${API_BASE_URL}/auth/login`, {
+      method: 'OPTIONS',
+      mode: 'cors',
+    }).catch(() => {
+      // Fire-and-forget background ping to warm up free tier cloud container
+    });
+  } catch {
+    // Ignore
+  }
+}
 
 function handleNetworkError(err: any, defaultMsg: string): never {
   if (err.name === 'TypeError' || err.message?.includes('fetch') || err.message?.includes('Failed to fetch')) {
-    throw new Error('Backend server is unreachable. Please ensure the API server is running.');
+    throw new Error('Unable to connect to cloud backend. The free cloud server may be waking up (Render takes ~30-45 seconds on cold start). Please wait a moment and try again.');
   }
   throw err instanceof Error ? err : new Error(defaultMsg);
 }
