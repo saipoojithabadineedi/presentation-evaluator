@@ -43,37 +43,38 @@ public class EmailService {
 
         log.info(">>> [OTP DISPATCH] Generated verification OTP [{}] for recipient [{}]", otpCode, recipientEmail);
 
-        // 3. Dispatch real SMTP email via JavaMailSender
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(recipientEmail);
-            message.setSubject("Presentation Evaluator - Password Reset OTP");
-            
-            String content = String.format("""
-                Hello,
+        // 3. Dispatch real SMTP email via JavaMailSender asynchronously to prevent blocking response
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(recipientEmail);
+                message.setSubject("Presentation Evaluator - Password Reset OTP");
+                
+                String content = String.format("""
+                    Hello,
 
-                We received a request to reset your Presentation Evaluator account password.
+                    We received a request to reset your Presentation Evaluator account password.
 
-                Your verification code is:
+                    Your verification code is:
 
-                %s
+                    %s
 
-                This code is valid for 5 minutes.
+                    This code is valid for 5 minutes.
 
-                If you did not request a password reset, you can safely ignore this email.
+                    If you did not request a password reset, you can safely ignore this email.
 
-                Regards,
-                Presentation Evaluator Team
-                """, otpCode);
+                    Regards,
+                    Presentation Evaluator Team
+                    """, otpCode);
 
-            message.setText(content);
-            mailSender.send(message);
-            log.info("Successfully dispatched SMTP email to {}", recipientEmail);
-            return true;
-        } catch (Exception e) {
-            log.error("SMTP delivery to {} failed: {}", recipientEmail, e.getMessage(), e);
-            return false;
-        }
+                message.setText(content);
+                mailSender.send(message);
+                log.info("Successfully dispatched SMTP email to {}", recipientEmail);
+            } catch (Exception e) {
+                log.error("SMTP delivery to {} failed: {}", recipientEmail, e.getMessage(), e);
+            }
+        });
+        return true;
     }
 }

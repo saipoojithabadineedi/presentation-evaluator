@@ -105,7 +105,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
       if (res && res.success) {
         setSuccessInfo(res.message || `Verification code sent to ${cleanEmail}`);
-        setInstantCodeNotice(null);
+        if (res.otp) {
+          setInstantCodeNotice(`🔑 Verification Code: ${res.otp}`);
+        } else {
+          setInstantCodeNotice(null);
+        }
       } else {
         // Fallback for deployed environments when backend is sleeping or unreachable
         const offlineOtp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -159,7 +163,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
       if (res && res.success) {
         setSuccessInfo(`New verification code sent to your email!`);
-        setInstantCodeNotice(null);
+        if (res.otp) {
+          setInstantCodeNotice(`🔑 Verification Code: ${res.otp}`);
+        } else {
+          setInstantCodeNotice(null);
+        }
       } else {
         const offlineOtp = Math.floor(100000 + Math.random() * 900000).toString();
         localStorage.setItem(`pe_reset_otp_${email.trim().toLowerCase()}`, JSON.stringify({

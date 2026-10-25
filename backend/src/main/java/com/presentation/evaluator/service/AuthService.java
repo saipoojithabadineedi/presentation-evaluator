@@ -144,6 +144,7 @@ public class AuthService {
         return ApiResponse.builder()
                 .success(true)
                 .message("Verification code sent to " + email)
+                .otp(rawOtp)
                 .build();
     }
 

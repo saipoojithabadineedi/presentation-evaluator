@@ -16,4 +16,5 @@ public class ApiResponse {
     private String message;
     private String resetToken;
     private String email;
+    private String otp;
 }
