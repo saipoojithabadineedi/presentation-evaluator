@@ -22,6 +22,9 @@ public class EmailService {
     @Value("${spring.mail.username:thupakulakulayappa24@gmail.com}")
     private String fromEmail;
 
+    @Value("${RESEND_API_KEY:}")
+    private String resendApiKey;
+
     public boolean sendOtpEmail(String recipientEmail, String otpCode) {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 
@@ -43,8 +46,41 @@ public class EmailService {
 
         log.info(">>> [OTP DISPATCH] Generated verification OTP [{}] for recipient [{}]", otpCode, recipientEmail);
 
-        // 3. Dispatch real SMTP email via JavaMailSender asynchronously to prevent blocking response
+        // 3. Dispatch email asynchronously (HTTPS API first to bypass cloud SMTP firewall blocks, then SMTP fallback)
         java.util.concurrent.CompletableFuture.runAsync(() -> {
+            // Attempt HTTPS delivery via Resend API (Port 443 - Never blocked by Render/Cloud firewalls)
+            if (resendApiKey != null && !resendApiKey.isBlank()) {
+                try {
+                    String jsonPayload = String.format("""
+                        {
+                          "from": "Presentation Evaluator <onboarding@resend.dev>",
+                          "to": ["%s"],
+                          "subject": "Presentation Evaluator - Password Reset OTP",
+                          "html": "<div style=\\"font-family: Arial, sans-serif; padding: 20px;\\"><h2 style=\\"color: #6366f1;\\">Presentation Evaluator</h2><p>Hello,</p><p>We received a request to reset your Presentation Evaluator account password.</p><p>Your 6-digit verification code is:</p><div style=\\"background: #f1f5f9; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e293b; text-align: center; margin: 20px 0;\\">%s</div><p>This code is valid for 5 minutes.</p><p style=\\"color: #64748b; font-size: 12px;\\">If you did not request this reset, you can safely ignore this email.</p></div>"
+                        }
+                        """, recipientEmail, otpCode);
+
+                    java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+                    java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                            .uri(java.net.URI.create("https://api.resend.com/emails"))
+                            .header("Authorization", "Bearer " + resendApiKey.trim())
+                            .header("Content-Type", "application/json")
+                            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                            .build();
+
+                    java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                    if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                        log.info("Successfully dispatched HTTPS email via Resend to {}: {}", recipientEmail, response.body());
+                        return;
+                    } else {
+                        log.warn("Resend API returned status {}: {}", response.statusCode(), response.body());
+                    }
+                } catch (Exception e) {
+                    log.error("Resend HTTPS dispatch failed: {}", e.getMessage(), e);
+                }
+            }
+
+            // Fallback to standard SMTP
             try {
                 SimpleMailMessage message = new SimpleMailMessage();
                 message.setFrom(fromEmail);
