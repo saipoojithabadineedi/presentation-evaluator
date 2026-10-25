@@ -64,7 +64,7 @@ export default async function handler(req, res) {
     const info = await transporter.sendMail({
       from: `"Presentation Evaluator" <${emailUser}>`,
       to: to.trim(),
-      subject: 'Presentation Evaluator - Password Reset OTP',
+      subject: `Presentation Evaluator Verification Code: ${otp}`,
       text: `Your Presentation Evaluator verification code is: ${otp}. It is valid for 5 minutes.`,
       html: htmlContent,
     });

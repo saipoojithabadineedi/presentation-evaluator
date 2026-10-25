@@ -490,12 +490,22 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               <p className="text-sm font-bold font-mono text-brand-600 dark:text-brand-400">
                 {getMaskedEmail(email)}
               </p>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 pt-0.5">
+                (Check your <strong>Spam / Junk</strong> folder if not visible in Inbox)
+              </p>
             </div>
 
-            {/* Instant Verification Code Card (if backend is offline or sleeping) */}
+            {/* Instant Verification Code Card */}
             {instantCodeNotice && (
-              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between gap-2 shadow-2xs animate-in fade-in">
-                <span className="font-mono font-bold">{instantCodeNotice}</span>
+              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-950 dark:text-amber-100 flex items-center justify-between gap-3 shadow-xs animate-in fade-in">
+                <div className="space-y-0.5">
+                  <div className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                    Your Verification Code
+                  </div>
+                  <div className="font-mono font-extrabold text-base tracking-widest text-amber-950 dark:text-amber-100">
+                    {instantCodeNotice.replace(/\D/g, '').slice(-6)}
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -504,9 +514,9 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                       setOtpDigits(code.split(''));
                     }
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-amber-200/70 hover:bg-amber-200 dark:bg-amber-900/60 dark:hover:bg-amber-800 text-amber-950 dark:text-amber-100 font-bold text-[11px] transition-colors cursor-pointer shrink-0"
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
                 >
-                  Auto-Fill Code
+                  <span>⚡ Auto-Fill</span>
                 </button>
               </div>
             )}
