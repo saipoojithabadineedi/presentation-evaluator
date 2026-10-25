@@ -2,11 +2,11 @@ services:
   # 1. Spring Boot Backend Web Service
   - type: web
     name: presentation-evaluator-backend
-    runtime: java
-    rootDir: backend
-    buildCommand: mvn clean package -DskipTests
-    startCommand: java -jar target/evaluator-backend-1.0.0.jar
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
     envVars:
+      - key: PORT
+        value: 8080
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: presentation-evaluator-db
@@ -41,5 +41,5 @@ databases:
   # 3. Free Managed PostgreSQL Database
   - name: presentation-evaluator-db
     databaseName: presentation_db
-    user: postgres
+    user: presentation_user
     plan: free
