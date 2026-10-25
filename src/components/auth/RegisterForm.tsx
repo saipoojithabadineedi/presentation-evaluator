@@ -47,10 +47,17 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
         return;
       }
 
+      // Dispatch welcome confirmation email to user's registered inbox
+      fetch('/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), name: fullName.trim() || 'User' })
+      }).catch(e => console.warn('Welcome email dispatch notice:', e));
+
       localStorage.setItem('pe_full_name_' + email.trim().toLowerCase(), fullName.trim());
       localStorage.setItem('pe_last_login_credential', email.trim());
       localStorage.setItem('pe_remembered_credentials', email.trim());
-      localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! Please sign in with your credentials.');
+      localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! A welcome confirmation has been sent to your email.');
       setCurrentView('login');
     } catch (err: any) {
       setError(err.message || 'Registration failed.');

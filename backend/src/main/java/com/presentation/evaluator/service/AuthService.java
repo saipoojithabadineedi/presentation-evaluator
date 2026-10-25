@@ -87,7 +87,9 @@ public class AuthService {
                 .avatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80")
                 .build();
 
-        return userRepository.save(newUser);
+        UserEntity savedUser = userRepository.save(newUser);
+        emailService.sendWelcomeEmail(cleanEmail, savedUser.getName());
+        return savedUser;
     }
 
     @Transactional

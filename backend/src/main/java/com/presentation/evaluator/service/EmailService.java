@@ -158,4 +158,56 @@ public class EmailService {
         });
         return true;
     }
+
+    public boolean sendWelcomeEmail(String recipientEmail, String recipientName) {
+        String cleanName = recipientName != null && !recipientName.isBlank() ? recipientName.trim() : "User";
+        log.info(">>> [WELCOME EMAIL DISPATCH] Initiating welcome email for {} ({})", cleanName, recipientEmail);
+
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            // 1. Primary: Dispatch via Vercel HTTPS Dispatcher
+            try {
+                String vercelUrl = System.getenv().getOrDefault("VERCEL_WELCOME_URL", "https://presentation-evaluator.vercel.app/api/send-welcome");
+                String jsonPayload = String.format("{\"email\": \"%s\", \"name\": \"%s\"}", recipientEmail, cleanName);
+
+                java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(vercelUrl))
+                        .header("Content-Type", "application/json")
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                        .build();
+
+                java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    log.info("Successfully dispatched welcome email via Vercel to {}: {}", recipientEmail, response.body());
+                    return;
+                }
+            } catch (Exception e) {
+                log.warn("Vercel welcome email dispatch failed: {}", e.getMessage());
+            }
+
+            // 2. Fallback to standard SMTP
+            try {
+                SimpleMailMessage message = new SimpleMailMessage();
+                message.setFrom(fromEmail);
+                message.setTo(recipientEmail);
+                message.setSubject("Welcome to Presentation Evaluator! You have registered successfully 🎉");
+                message.setText(String.format("""
+                    Hello %s,
+
+                    Welcome to Presentation Evaluator! You have successfully registered your account with this email address (%s).
+
+                    You can now sign in at any time to begin your presentation rehearsals with real-time AI coaching.
+
+                    Regards,
+                    Presentation Evaluator Team
+                    presentationevaluator2@gmail.com
+                    """, cleanName, recipientEmail));
+                mailSender.send(message);
+                log.info("Successfully dispatched SMTP welcome email to {}", recipientEmail);
+            } catch (Exception e) {
+                log.error("SMTP welcome delivery to {} failed: {}", recipientEmail, e.getMessage(), e);
+            }
+        });
+        return true;
+    }
 }
