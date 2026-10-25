@@ -80,6 +80,17 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     return `${name.substring(0, 1)}***${name.substring(name.length - 1)}@${domain}`;
   };
 
+  // Helper to dispatch real email via Vercel serverless function (bypasses Render SMTP port block & Resend domain block)
+  const dispatchRealEmail = (targetEmail: string, code: string) => {
+    fetch('/api/send-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: targetEmail, otp: code }),
+    }).catch(err => {
+      console.warn('Vercel email dispatcher notice:', err);
+    });
+  };
+
   // Step 1: Send OTP request to backend (with automatic resilient fallback)
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -103,9 +114,12 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         console.warn('Backend reset API unreachable or sleeping:', backendErr);
       }
 
+      let codeToDeliver: string | null = null;
+
       if (res && res.success) {
         setSuccessInfo(res.message || `Verification code sent to ${cleanEmail}`);
         if (res.otp) {
+          codeToDeliver = res.otp;
           setInstantCodeNotice(`🔑 Verification Code: ${res.otp}`);
         } else {
           setInstantCodeNotice(null);
@@ -113,6 +127,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       } else {
         // Fallback for deployed environments when backend is sleeping or unreachable
         const offlineOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        codeToDeliver = offlineOtp;
         localStorage.setItem(`pe_reset_otp_${cleanEmail.toLowerCase()}`, JSON.stringify({
           otp: offlineOtp,
           expiresAt: Date.now() + 5 * 60 * 1000
@@ -130,6 +145,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
             console.warn(e);
           }
         }
+      }
+
+      // Send real email via Vercel serverless function (works for ANY recipient email)
+      if (codeToDeliver) {
+        dispatchRealEmail(cleanEmail, codeToDeliver);
       }
 
       setOtpExpiryTime(300);
@@ -161,21 +181,30 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         console.warn('Backend resend API unreachable or sleeping:', backendErr);
       }
 
+      let resendCode: string | null = null;
+
       if (res && res.success) {
         setSuccessInfo(`New verification code sent to your email!`);
         if (res.otp) {
+          resendCode = res.otp;
           setInstantCodeNotice(`🔑 Verification Code: ${res.otp}`);
         } else {
           setInstantCodeNotice(null);
         }
       } else {
         const offlineOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        resendCode = offlineOtp;
         localStorage.setItem(`pe_reset_otp_${email.trim().toLowerCase()}`, JSON.stringify({
           otp: offlineOtp,
           expiresAt: Date.now() + 5 * 60 * 1000
         }));
         setSuccessInfo(`New verification code dispatched!`);
         setInstantCodeNotice(`🔑 Verification Code: ${offlineOtp}`);
+      }
+
+      // Send real email via Vercel serverless function (works for ANY recipient email)
+      if (resendCode) {
+        dispatchRealEmail(email.trim(), resendCode);
       }
 
       setOtpExpiryTime(300);
