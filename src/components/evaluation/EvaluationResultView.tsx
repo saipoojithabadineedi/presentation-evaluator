@@ -16,7 +16,9 @@ import {
   Layers, 
   AlertCircle, 
   ChevronRight,
-  Share2
+  Share2,
+  Lightbulb,
+  Check
 } from 'lucide-react';
 import { 
   ResponsiveContainer, 
@@ -75,9 +77,8 @@ interface EvaluationResultViewProps {
 
 export const EvaluationResultView: React.FC<EvaluationResultViewProps> = ({ setCurrentView }) => {
   const { activeEvaluation, generateReport, openUploadModal } = useEvaluation();
-  const [activeTab, setActiveTab] = useState<'overview' | 'transcript' | 'cadence' | 'slides'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'cadence' | 'slides'>('overview');
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [activeSegmentIndex, setActiveSegmentIndex] = useState(0);
 
   if (!activeEvaluation) {
     return (
@@ -446,17 +447,6 @@ export const EvaluationResultView: React.FC<EvaluationResultViewProps> = ({ setC
           Pacing & WPM Timeline
         </button>
 
-        <button
-          onClick={() => setActiveTab('transcript')}
-          className={`pb-3 px-2 border-b-2 transition-all whitespace-nowrap ${
-            activeTab === 'transcript'
-              ? 'border-brand-500 text-brand-600 dark:text-brand-400 font-bold'
-              : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
-        >
-          Annotated Transcript ({activeEvaluation.transcript.length} segments)
-        </button>
-
         {activeEvaluation.slides && activeEvaluation.slides.length > 0 && (
           <button
             onClick={() => setActiveTab('slides')}
@@ -742,181 +732,136 @@ export const EvaluationResultView: React.FC<EvaluationResultViewProps> = ({ setC
         </div>
       )}
 
-      {/* Tab 3: Annotated Transcript */}
-      {activeTab === 'transcript' && (
-        <div className="space-y-6">
-          
-          {/* Annotated Transcript Info Card */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>Timestamped Speech & AI Delivery Coaching</span>
-                <span className="px-2 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 text-[10px] font-bold border border-brand-200 dark:border-brand-800">
-                  FULL TIMELINE
-                </span>
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Displays the <strong>spoken speech sentences</strong> at each timestamp along with <strong>targeted AI speech coaching</strong> to improve your delivery.
-              </p>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500 shrink-0">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" />
-              <span>Optimal Rhythm</span>
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 ml-2" />
-              <span>Coaching Alert</span>
-            </div>
-          </div>
-
-          {/* Simulated Audio Player Bar */}
-          <div className="p-4 rounded-2xl bg-brand-50/60 dark:bg-brand-950/40 border border-brand-200/80 dark:border-brand-800/80 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleAudio}
-                className="w-10 h-10 rounded-xl bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center transition-colors shadow-xs"
-              >
-                {isPlayingAudio ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-              </button>
-              <div>
-                <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  Audio Rehearsal Stream
-                </div>
-                <div className="text-[11px] text-slate-500">
-                  {isPlayingAudio ? 'Playing at 1.0x • 00:42 / ' + activeEvaluation.duration : 'Click play to listen to synchronized delivery'}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <button
-                onClick={toggleMute}
-                title={isMuted || audioVolume === 0 ? "Unmute Sound" : "Mute Sound"}
-                className="p-2 rounded-xl text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition-colors cursor-pointer flex items-center justify-center"
-              >
-                {isMuted || audioVolume === 0 ? (
-                  <VolumeX className="w-5 h-5 text-rose-500" />
-                ) : audioVolume < 0.5 ? (
-                  <Volume1 className="w-5 h-5" />
-                ) : (
-                  <Volume2 className="w-5 h-5" />
-                )}
-              </button>
+      {/* Tab 3: Slide Breakdown */}
+      {activeTab === 'slides' && activeEvaluation.slides && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {activeEvaluation.slides.map((slide) => {
+            const slideScoreColors = getScoreColor(slide.score);
+            const readability = slide.readabilityScore || 90;
+            const visualBalance = slide.visualBalanceScore || 88;
+            
+            // Determine density badge
+            const isOptimalBullets = slide.bulletsCount <= 4;
+            const isHeavyBullets = slide.bulletsCount > 6;
+            
+            // Strengths and improvements
+            const strengthsList = slide.strengths && slide.strengths.length > 0
+              ? slide.strengths
+              : [slide.suggestions[0] || 'Clean slide typography and clear focal point'];
               
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={isMuted ? 0 : audioVolume}
-                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                className="w-20 sm:w-28 h-2 accent-brand-500 cursor-pointer rounded-lg bg-brand-200 dark:bg-brand-800"
-                title={`Volume: ${Math.round((isMuted ? 0 : audioVolume) * 100)}%`}
-              />
-              
-              <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300 min-w-[36px] text-right">
-                {Math.round((isMuted ? 0 : audioVolume) * 100)}%
-              </span>
-            </div>
-          </div>
+            const improvementsList = slide.improvements && slide.improvements.length > 0
+              ? slide.improvements
+              : slide.suggestions.length > 1
+                ? [slide.suggestions[1]]
+                : ['Ensure high contrast between text and background for maximum readability'];
 
-          {/* Transcript List */}
-          <div className="space-y-4">
-            {activeEvaluation.transcript.map((seg, idx) => {
-              let coachingTip = "✨ Optimal keynote rhythm and clear vocal articulation.";
-              let tipType: 'success' | 'warning' | 'info' = 'success';
-
-              if (seg.hasFiller && seg.fillerWords && seg.fillerWords.length > 0) {
-                coachingTip = `⚠️ Filler Alert: Detected conversational filler "${seg.fillerWords.join(', ')}". Replace filler words with 1-second silent pauses.`;
-                tipType = 'warning';
-              } else if (seg.wpm < 125) {
-                coachingTip = `🐢 Pacing Note: Deliberate speaking rate of ${seg.wpm} WPM. Increase vocal energy slightly to maintain audience momentum.`;
-                tipType = 'info';
-              } else if (seg.wpm > 155) {
-                coachingTip = `⚡ Pacing Note: Fast speech velocity of ${seg.wpm} WPM. Take 2-second silent pauses after key slide points.`;
-                tipType = 'warning';
-              }
-
-              return (
-                <div
-                  key={seg.id}
-                  onClick={() => setActiveSegmentIndex(idx)}
-                  className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-3 ${
-                    activeSegmentIndex === idx
-                      ? 'bg-white dark:bg-slate-900 border-brand-500 shadow-md shadow-brand-500/10'
-                      : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 font-mono font-bold text-slate-700 dark:text-slate-300">
-                        {seg.startTime}{seg.endTime ? ` - ${seg.endTime}` : (idx < activeEvaluation.transcript.length - 1 ? ` - ${activeEvaluation.transcript[idx + 1].startTime}` : '')}
+            return (
+              <div 
+                key={slide.slideNumber}
+                className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs space-y-5 flex flex-col justify-between"
+              >
+                {/* Header */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-3 py-1 rounded-xl">
+                        Slide {slide.slideNumber}
                       </span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{seg.speaker}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 font-semibold text-[11px]">
-                        {seg.wpm} WPM
+                      {/* Text Density Status Badge */}
+                      <span className={`text-[11px] font-bold px-2.5 py-1 rounded-xl border flex items-center gap-1.5 ${
+                        isOptimalBullets 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60'
+                          : isHeavyBullets
+                            ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/60'
+                            : 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/60'
+                      }`}>
+                        <Check className="w-3 h-3" />
+                        <span>
+                          {isOptimalBullets ? `Optimal Density (${slide.bulletsCount} bullets)` : isHeavyBullets ? `Dense Text (${slide.bulletsCount} bullets)` : `Moderate Density (${slide.bulletsCount} bullets)`}
+                        </span>
                       </span>
                     </div>
 
-                    {seg.hasFiller && (
-                      <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/80 text-amber-700 dark:text-amber-300 text-[11px] font-bold flex items-center gap-1">
-                        <span>Filler Detected:</span>
-                        <strong className="underline">"{seg.fillerWords?.join(', ')}"</strong>
-                      </span>
-                    )}
+                    <div className={`px-3 py-1 rounded-xl text-xs font-black ${slideScoreColors.pillBg}`}>
+                      {slide.score}% Score
+                    </div>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium">
-                    "{seg.text}"
-                  </p>
-
-                  {/* AI Segment Coaching & Improvement Advice Box */}
-                  <div className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-                    tipType === 'warning'
-                      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20'
-                      : tipType === 'info'
-                      ? 'bg-brand-50 dark:bg-brand-950/50 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800/60'
-                      : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
-                  }`}>
-                    <span>{coachingTip}</span>
+                  <div>
+                    <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                      {slide.title}
+                    </h4>
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-        </div>
-      )}
+                {/* Point 3: Metric Gauges & Progress Bars */}
+                <div className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700/70 space-y-3">
+                  {/* Visual Balance Progress */}
+                  <div>
+                    <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                      <span className="text-slate-600 dark:text-slate-300">Visual Layout & Balance</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">{visualBalance}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700/80 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full bg-gradient-to-r from-teal-500 to-emerald-500 transition-all duration-500"
+                        style={{ width: `${visualBalance}%` }}
+                      />
+                    </div>
+                  </div>
 
-      {/* Tab 4: Slide Breakdown */}
-      {activeTab === 'slides' && activeEvaluation.slides && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {activeEvaluation.slides.map((slide) => (
-            <div 
-              key={slide.slideNumber}
-              className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs space-y-4"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-brand-600 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded-lg">
-                  Slide {slide.slideNumber}
-                </span>
-                <span className="text-sm font-extrabold text-slate-800 dark:text-slate-100">
-                  {slide.score}%
-                </span>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
-                  {slide.title}
-                </h4>
-                <div className="text-xs text-slate-400">
-                  Bullets: {slide.bulletsCount} • Visual Balance: {slide.visualBalanceScore}%
+                  {/* Readability Score Progress */}
+                  <div>
+                    <div className="flex items-center justify-between text-xs font-bold mb-1.5">
+                      <span className="text-slate-600 dark:text-slate-300">Typography & Readability</span>
+                      <span className="text-brand-600 dark:text-brand-400 font-extrabold">{readability}%</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700/80 overflow-hidden">
+                      <div 
+                        className="h-full rounded-full bg-gradient-to-r from-brand-500 to-sky-500 transition-all duration-500"
+                        style={{ width: `${readability}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Point 4: Strengths & Improvement Suggestions */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* What Went Well (Strengths) */}
+                  <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/50 space-y-2">
+                    <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span className="text-[11px] font-black uppercase tracking-wider">What Went Well</span>
+                    </div>
+                    <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
+                      {strengthsList.map((item, idx) => (
+                        <li key={idx} className="leading-relaxed flex items-start gap-1.5">
+                          <span className="text-emerald-500 font-bold shrink-0">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Area for Improvement */}
+                  <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/50 space-y-2">
+                    <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
+                      <Lightbulb className="w-4 h-4 shrink-0" />
+                      <span className="text-[11px] font-black uppercase tracking-wider">What To Improve</span>
+                    </div>
+                    <ul className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
+                      {improvementsList.map((item, idx) => (
+                        <li key={idx} className="leading-relaxed flex items-start gap-1.5">
+                          <span className="text-amber-500 font-bold shrink-0">•</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                <p className="text-xs text-slate-600 dark:text-slate-300">
-                  {slide.suggestions[0]}
-                </p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -927,7 +872,7 @@ export const EvaluationResultView: React.FC<EvaluationResultViewProps> = ({ setC
             Ready to export this evaluation?
           </h3>
           <p className="text-xs sm:text-sm text-brand-100 mt-1">
-            Generate an executive-ready branded PDF report with delivery benchmarks and transcript highlights.
+            Generate an executive-ready branded PDF report with delivery benchmarks and presentation performance insights.
           </p>
         </div>
         <button

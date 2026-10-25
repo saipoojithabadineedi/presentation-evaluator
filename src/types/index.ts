@@ -24,6 +24,15 @@ export interface User {
   averageScore: number;
   averageCadence: number;
   fillerWordRate: number;
+  role?: string;
+  organization?: string;
+  experienceLevel?: string;
+  bio?: string;
+  accentBenchmark?: string;
+  notifyReportEmail?: boolean;
+  notifyStreakReminder?: boolean;
+  notifyBrowserPush?: boolean;
+  notifyInAppAlerts?: boolean;
 }
 
 export interface TranscriptSegment {
@@ -63,6 +72,8 @@ export interface SlideEvaluation {
   visualBalanceScore: number;
   bulletsCount: number;
   suggestions: string[];
+  strengths?: string[];
+  improvements?: string[];
 }
 
 export interface EvaluationData {

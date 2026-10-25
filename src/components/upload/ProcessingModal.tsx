@@ -8,7 +8,7 @@ export const ProcessingModal: React.FC = () => {
   if (!isProcessingModalOpen) return null;
 
   const steps = [
-    { id: 1, label: 'Audio Ingestion & Neural Transcription', icon: Mic },
+    { id: 1, label: 'Audio Ingestion & Audio Energy Analysis', icon: Mic },
     { id: 2, label: 'Cadence & Velocity Analysis (WPM)', icon: Activity },
     { id: 3, label: 'Filler Word & Pause Classification', icon: Sparkles },
     { id: 4, label: 'Visual Structure & Density Scoring', icon: Layers },

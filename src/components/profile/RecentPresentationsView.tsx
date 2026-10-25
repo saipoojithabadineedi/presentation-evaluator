@@ -161,7 +161,7 @@ export const RecentPresentationsView: React.FC<RecentPresentationsViewProps> = (
         <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 space-y-4">
           <p className="text-slate-500">No presentations found matching your search.</p>
           <button
-            onClick={openUploadModal}
+            onClick={() => setCurrentView('dashboard')}
             className="px-6 py-2.5 rounded-xl bg-brand-500 text-white font-bold text-xs"
           >
             Upload Presentation

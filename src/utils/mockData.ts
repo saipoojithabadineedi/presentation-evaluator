@@ -149,7 +149,9 @@ export const initialEvaluations: EvaluationData[] = [
         readabilityScore: 98,
         visualBalanceScore: 92,
         bulletsCount: 2,
-        suggestions: ['Great clean hierarchy with prominent brand gradient.']
+        suggestions: ['Great clean hierarchy with prominent brand gradient.'],
+        strengths: ['Great clean hierarchy with prominent brand gradient', 'High title-to-body contrast for effortless scanning'],
+        improvements: ['Optionally include a subtitle tagline for immediate context']
       },
       {
         slideNumber: 2,
@@ -158,7 +160,9 @@ export const initialEvaluations: EvaluationData[] = [
         readabilityScore: 90,
         visualBalanceScore: 92,
         bulletsCount: 3,
-        suggestions: ['Strong contrast ratio. Clear 2-column layout.']
+        suggestions: ['Strong contrast ratio. Clear 2-column layout.'],
+        strengths: ['Strong contrast ratio and clear 2-column comparative layout', 'Punchy bullet points with concise phrasing'],
+        improvements: ['Emphasize key TAM and growth percentages using bold callout chips']
       },
       {
         slideNumber: 3,
@@ -167,7 +171,9 @@ export const initialEvaluations: EvaluationData[] = [
         readabilityScore: 86,
         visualBalanceScore: 90,
         bulletsCount: 4,
-        suggestions: ['Consider adding a callout arrow to the feedback loop node.']
+        suggestions: ['Consider adding a callout arrow to the feedback loop node.'],
+        strengths: ['Clear system diagram hierarchy with logical left-to-right processing', 'Consistent component iconography'],
+        improvements: ['Add a callout arrow to highlight the continuous learning feedback loop']
       }
     ],
     summary: 'An outstanding, highly polished executive presentation. Pacing was exemplary throughout, and arguments were structured with clarity and conviction.'

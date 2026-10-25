@@ -196,14 +196,33 @@ export function generateDynamicEvaluation(payload: DynamicUploadPayload): Evalua
       const numSegs = Math.max(4, Math.min(10, Math.floor(durationSeconds / 45)));
       const interval = Math.floor(durationSeconds / Math.max(1, numSegs));
       const cleanT = payload.title || 'Presentation';
+      const lower = (cleanT + ' ' + payload.fileName).toLowerCase();
 
-      const templates = [
+      let templates = [
         `Good morning everyone. Today I'm pleased to share our progress on "${cleanT}", covering our key project goals and market positioning.`,
         `Examining our customer feedback and baseline requirements, we identified several critical workflow bottlenecks that needed immediate resolution.`,
         `Our team developed an automated solution designed to streamline communication and enhance team execution speed across all departments.`,
         `Reviewing our recent performance benchmarks, user engagement has increased steadily while maintaining high quality standards.`,
         `Looking ahead to our upcoming milestones, our primary focus is optimizing resource delivery and ensuring long-term project stability.`
       ];
+
+      if (lower.includes('pitch') || lower.includes('investor') || lower.includes('series')) {
+        templates = [
+          `Welcome investors. Today I'm sharing our presentation on "${cleanT}", focusing on our core target market and key financial metrics.`,
+          `Our team identified two major market gaps where current software solutions lack real-time automated delivery feedback.`,
+          `Our product addresses this directly by integrating automated voice analytics and executive presentation reporting into one tool.`,
+          `In recent trials, customer engagement increased by 38% alongside strong positive sentiment across user cohorts.`,
+          `Thank you for your time and support as we expand our market presence and scale our operations.`
+        ];
+      } else if (lower.includes('tech') || lower.includes('ai') || lower.includes('system') || lower.includes('architecture')) {
+        templates = [
+          `Hello team. Today I will present "${cleanT}", highlighting our technical architecture, algorithm performance, and design choices.`,
+          `We identified key latency spikes during heavy audio processing workloads and multi-user data decoding.`,
+          `To fix this, we implemented optimized neural model pipelines and parallelized PCM audio frame evaluation.`,
+          `Testing results show a 50% increase in execution speed and consistent response times under load.`,
+          `Thank you. I am ready to answer any questions about our technical implementation.`
+        ];
+      }
 
       const tr: import('../types').TranscriptSegment[] = [];
       for (let i = 0; i < numSegs; i++) {

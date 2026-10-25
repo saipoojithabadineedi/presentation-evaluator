@@ -1,4 +1,5 @@
-// LLM (Google Gemini AI) integration service for intelligent speech & presentation evaluation
+import { TranscriptSegment } from '../types';
+import { extractCompactWavAudio } from '../utils/audioAnalyzer';
 
 export interface GeminiLLMAnalysisRequest {
   title: string;
@@ -22,6 +23,25 @@ export interface GeminiLLMAnalysisResponse {
   clarityFeedback: string;
 }
 
+export function getGeminiApiKey(): string | null {
+  return (
+    localStorage.getItem('pe_gemini_api_key') ||
+    (import.meta as any).env?.VITE_GEMINI_API_KEY ||
+    (window as any).GEMINI_API_KEY ||
+    null
+  );
+}
+
+export function setGeminiApiKey(key: string): void {
+  if (key && key.trim()) {
+    localStorage.setItem('pe_gemini_api_key', key.trim());
+    (window as any).GEMINI_API_KEY = key.trim();
+  } else {
+    localStorage.removeItem('pe_gemini_api_key');
+    delete (window as any).GEMINI_API_KEY;
+  }
+}
+
 /**
  * Calls Google Gemini AI LLM API (gemini-1.5-flash) to perform deep neural presentation analysis.
  * Generates intelligent executive feedback, speech recommendations, and score breakdowns.
@@ -29,10 +49,10 @@ export interface GeminiLLMAnalysisResponse {
 export async function analyzePresentationWithGeminiLLM(
   req: GeminiLLMAnalysisRequest
 ): Promise<GeminiLLMAnalysisResponse | null> {
-  const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || (window as any).GEMINI_API_KEY;
+  const apiKey = getGeminiApiKey();
 
   if (!apiKey) {
-    console.log('[LLM INTEGRATION] Gemini API Key not set in VITE_GEMINI_API_KEY. Using built-in dynamic neural AI inference fallback.');
+    console.log('[LLM INTEGRATION] Gemini API Key not set. Using built-in dynamic neural AI inference fallback.');
     return null;
   }
 
@@ -115,3 +135,127 @@ Respond strictly with a valid JSON object matching this schema:
     return null;
   }
 }
+
+/**
+ * Transcribes real voice audio into structured timestamped text segments using Google Gemini 1.5 Flash multimodal capabilities.
+ * Sends the audio/video base64 payload to Gemini 1.5 Flash to perform exact voice-to-text transcription.
+ */
+export async function transcribeAudioWithGeminiLLM(
+  file: File | Blob,
+  title: string,
+  durationSeconds: number
+): Promise<TranscriptSegment[] | null> {
+  const apiKey = getGeminiApiKey();
+
+  if (!apiKey) {
+    console.log('[LLM TRANSCRIPTION] Gemini API Key not set. Using intelligent topic-aware voice-to-text fallback engine.');
+    return null;
+  }
+
+  try {
+    // Extract compact 16kHz mono WAV audio track using browser Web Audio API
+    let audioBlob: Blob | File = file;
+    let mimeType = 'audio/wav';
+
+    try {
+      const wav = await extractCompactWavAudio(file, durationSeconds);
+      if (wav) {
+        audioBlob = wav;
+        mimeType = 'audio/wav';
+      }
+    } catch {
+      mimeType = file.type || 'audio/mp3';
+      const fileName = (file as any).name || '';
+      if (fileName.endsWith('.mp4')) mimeType = 'video/mp4';
+      if (fileName.endsWith('.webm')) mimeType = 'video/webm';
+      if (fileName.endsWith('.wav')) mimeType = 'audio/wav';
+      if (fileName.endsWith('.mp3')) mimeType = 'audio/mp3';
+      if (fileName.endsWith('.m4a')) mimeType = 'audio/mp4';
+    }
+
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const resultStr = reader.result as string;
+        resolve(resultStr.split(',')[1] || '');
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(audioBlob);
+    });
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+    const prompt = `
+You are an expert AI speech transcriber and presentation audio voice-to-text engine.
+Listen carefully to the audio/voice in this presentation recording titled "${title}" (Duration: ${durationSeconds} seconds).
+
+CRITICAL INSTRUCTIONS:
+1. Transcribe the ACTUAL spoken voice speech from the presentation audio into verbatim text.
+2. Divide the speech into chronological timestamped segments covering the whole presentation duration (${durationSeconds} seconds).
+3. Detect any conversational filler words (e.g. "um", "like", "uh", "you know", "actually", "so") spoken in each segment.
+4. Estimate words per minute (WPM) for each segment.
+5. Assign a vocal tone ("enthusiastic", "confident", "neutral", "hesitant") to each segment.
+
+Respond strictly with a JSON array of segment objects matching this schema:
+[
+  {
+    "id": "t-gem-1",
+    "startTime": "0:00",
+    "endTime": "0:45",
+    "seconds": 0,
+    "speaker": "Presenter",
+    "text": "Verbatim transcript text of the spoken voice...",
+    "hasFiller": false,
+    "fillerWords": ["um"],
+    "wpm": 135,
+    "tone": "enthusiastic"
+  }
+]
+`;
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: base64Data
+                }
+              },
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          response_mime_type: 'application/json',
+          temperature: 0.2
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini LLM Audio Transcription API error: status ${response.status}`);
+    }
+
+    const data = await response.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!rawText) return null;
+
+    const parsed: TranscriptSegment[] = JSON.parse(rawText);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      console.log('[LLM TRANSCRIPTION] Successfully transcribed presentation voice to text via Gemini LLM:', parsed);
+      return parsed;
+    }
+    return null;
+  } catch (error) {
+    console.warn('[LLM TRANSCRIPTION] Gemini audio transcription fallback:', error);
+    return null;
+  }
+}
+

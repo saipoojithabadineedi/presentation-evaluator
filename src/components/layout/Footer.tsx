@@ -14,7 +14,7 @@ export const Footer: React.FC = () => {
               <img 
                 src="/assets/logo.jpg" 
                 alt="Presentation Evaluator" 
-                className="h-10 w-auto object-contain logo-blend"
+                className="h-14 sm:h-16 w-auto object-contain logo-blend"
               />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
@@ -46,14 +46,14 @@ export const Footer: React.FC = () => {
             </h4>
             <div className="space-y-2 text-xs">
               <a 
-                href="mailto:presentationevaluator@gmail.com" 
+                href="mailto:presentationevaluator2@gmail.com" 
                 className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors font-medium group"
-                title="Send email to presentationevaluator@gmail.com"
+                title="Send email to presentationevaluator2@gmail.com"
               >
                 <div className="p-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
                   <Mail className="w-3.5 h-3.5" />
                 </div>
-                <span className="underline decoration-brand-500/30 underline-offset-2">presentationevaluator@gmail.com</span>
+                <span className="underline decoration-brand-500/30 underline-offset-2">presentationevaluator2@gmail.com</span>
               </a>
 
               <a 

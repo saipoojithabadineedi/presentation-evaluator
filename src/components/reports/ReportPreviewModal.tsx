@@ -374,42 +374,6 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
 
         </div>
 
-        {/* Full Annotated Spoken Speech Transcript & Coaching Notes */}
-        {activeEvaluation.transcript.length > 0 && (
-          <div className="pt-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Annotated Spoken Speech Transcript & Delivery Coaching
-            </h3>
-            <div className="space-y-3">
-              {activeEvaluation.transcript.map((seg, idx) => {
-                let coaching = "Optimal keynote rhythm and clear vocal articulation.";
-                if (seg.hasFiller && seg.fillerWords && seg.fillerWords.length > 0) {
-                  coaching = `Filler Alert: Replace "${seg.fillerWords.join(', ')}" with 1-second silent pauses.`;
-                } else if (seg.wpm < 125) {
-                  coaching = `Deliberate pace of ${seg.wpm} WPM. Increase vocal energy to maintain momentum.`;
-                } else if (seg.wpm > 155) {
-                  coaching = `Fast speech velocity of ${seg.wpm} WPM. Pause 2 seconds after key points.`;
-                }
-
-                return (
-                  <div key={seg.id || idx} className="p-4 rounded-xl border border-slate-100 bg-slate-50/40 text-xs space-y-2">
-                    <div className="flex items-center justify-between gap-2 text-slate-500 font-mono">
-                      <span className="font-bold text-slate-700">{seg.startTime} • {seg.speaker}</span>
-                      <span className="text-brand-600 font-semibold">{seg.wpm} WPM</span>
-                    </div>
-                    <p className="text-slate-900 font-medium italic leading-relaxed">
-                      "{seg.text}"
-                    </p>
-                    <div className="text-[11px] font-semibold text-teal-700 bg-teal-50 border border-teal-100 p-2 rounded-lg">
-                      💡 AI Coaching: {coaching}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* PDF Footer & Certification */}
         <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-4">
           <div>

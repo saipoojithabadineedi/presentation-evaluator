@@ -19,12 +19,10 @@ import { SettingsView } from './components/profile/SettingsView';
 import { UploadModal } from './components/upload/UploadModal';
 import { ProcessingModal } from './components/upload/ProcessingModal';
 import { AuthToastNotification } from './components/common/AuthToastNotification';
-import { StartingIntroAnimation } from './components/common/StartingIntroAnimation';
 import { AppView } from './types';
 
 const MainAppContent: React.FC = () => {
   const { isAuthenticated, login, toastState, closeToast } = useAuth();
-  const [showIntroAnimation, setShowIntroAnimation] = useState(true);
   
   const [currentView, setCurrentView] = useState<AppView>(() => {
     const savedUser = localStorage.getItem('pe_auth_user');
@@ -171,11 +169,6 @@ const MainAppContent: React.FC = () => {
         </div>
 
       </div>
-
-      {/* Starting 5-second Intro Video Animation */}
-      {showIntroAnimation && (
-        <StartingIntroAnimation onComplete={() => setShowIntroAnimation(false)} />
-      )}
 
       {/* Modals for Upload, AI Processing Pipeline & Auth Popups */}
       <UploadModal onEvaluationComplete={handleEvaluationComplete} />

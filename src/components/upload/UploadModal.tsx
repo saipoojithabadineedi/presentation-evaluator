@@ -68,11 +68,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
+  const [liveTranscriptText, setLiveTranscriptText] = useState('');
+  const liveTranscriptSegmentsRef = useRef<any[]>([]);
+  const [customScript, setCustomScript] = useState('');
+  const [showScriptBox, setShowScriptBox] = useState(false);
+  const [showKeyPrompt, setShowKeyPrompt] = useState(false);
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = useState(() => localStorage.getItem('pe_gemini_api_key') || '');
 
   const toggleRecording = async () => {
     if (isRecording) {
       if (timerRef.current) clearInterval(timerRef.current);
       setIsRecording(false);
+
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch {}
+      }
 
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
         mediaRecorderRef.current.stop();
@@ -80,8 +91,67 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
       }
     } else {
       setRecordSeconds(0);
+      setLiveTranscriptText('');
+      liveTranscriptSegmentsRef.current = [];
       setIsRecording(true);
       audioChunksRef.current = [];
+
+      // Start Browser Web Speech Recognition (Google Chrome Speech-to-Text)
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+
+          let lastFinalIdx = 0;
+          recognition.onresult = (event: any) => {
+            let fullText = '';
+            for (let i = 0; i < event.results.length; i++) {
+              const transcriptPart = event.results[i][0].transcript;
+              fullText += transcriptPart + ' ';
+
+              if (event.results[i].isFinal && i >= lastFinalIdx) {
+                lastFinalIdx = i + 1;
+                const currentSec = Math.max(1, recordSeconds);
+                const startSec = Math.max(0, currentSec - 5);
+                const mins = Math.floor(startSec / 60);
+                const secs = (startSec % 60).toString().padStart(2, '0');
+                const endMins = Math.floor(currentSec / 60);
+                const endSecs = (currentSec % 60).toString().padStart(2, '0');
+
+                const textTrimmed = transcriptPart.trim();
+                const lower = textTrimmed.toLowerCase();
+                const fillerMatches = lower.match(/\b(um|uh|like|actually|you know|so)\b/gi) || [];
+
+                liveTranscriptSegmentsRef.current.push({
+                  id: `live-seg-${liveTranscriptSegmentsRef.current.length + 1}`,
+                  startTime: `${mins}:${secs}`,
+                  endTime: `${endMins}:${endSecs}`,
+                  seconds: startSec,
+                  speaker: 'Presenter',
+                  text: textTrimmed,
+                  hasFiller: fillerMatches.length > 0,
+                  fillerWords: fillerMatches.length > 0 ? Array.from(new Set(fillerMatches.map((f: string) => f.toLowerCase()))) : undefined,
+                  wpm: Math.max(75, Math.min(180, Math.round(textTrimmed.split(/\s+/).length / (Math.max(1, currentSec - startSec) / 60)))),
+                  tone: 'confident'
+                });
+              }
+            }
+            setLiveTranscriptText(fullText.trim());
+          };
+
+          recognition.onerror = (e: any) => {
+            console.warn('SpeechRecognition error:', e);
+          };
+
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (e) {
+          console.warn('Could not start Web Speech Recognition:', e);
+        }
+      }
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -96,6 +166,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
         mediaRecorder.onstop = () => {
           const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
           const rawFile = new File([audioBlob], `Live_Mic_Rehearsal_${Date.now()}.webm`, { type: 'audio/webm' });
+          
+          if (liveTranscriptSegmentsRef.current.length > 0) {
+            (rawFile as any)._liveTranscript = liveTranscriptSegmentsRef.current;
+          }
+
           setSelectedFile({
             name: rawFile.name,
             size: `${(audioBlob.size / (1024 * 1024)).toFixed(1)} MB`,
@@ -131,6 +206,37 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
     const finalFileName = selectedFile?.name || 'rehearsal_recording.mp4';
     const finalDurationSec = selectedFile?.durationSec;
     const rawFile = selectedFile?.rawFile;
+
+    if (rawFile && customScript.trim()) {
+      // Split user-provided script into timestamped sentences
+      const sentences = customScript.split(/(?<=[.?!])\s+/).filter(s => s.trim().length > 3);
+      const totalDur = finalDurationSec || 180;
+      const step = Math.max(10, Math.floor(totalDur / Math.max(1, sentences.length)));
+
+      (rawFile as any)._scriptTranscript = sentences.map((sentence, idx) => {
+        const startSec = idx * step;
+        const endSec = Math.min(totalDur, (idx + 1) * step);
+        const mins = Math.floor(startSec / 60);
+        const secs = (startSec % 60).toString().padStart(2, '0');
+        const endMins = Math.floor(endSec / 60);
+        const endSecs = (endSec % 60).toString().padStart(2, '0');
+        const lower = sentence.toLowerCase();
+        const fillerMatches = lower.match(/\b(um|uh|like|actually|you know|so)\b/gi) || [];
+
+        return {
+          id: `script-seg-${idx + 1}`,
+          startTime: `${mins}:${secs}`,
+          endTime: `${endMins}:${endSecs}`,
+          seconds: startSec,
+          speaker: 'Presenter',
+          text: sentence.trim(),
+          hasFiller: fillerMatches.length > 0,
+          fillerWords: fillerMatches.length > 0 ? Array.from(new Set(fillerMatches.map(f => f.toLowerCase()))) : undefined,
+          wpm: Math.max(80, Math.min(180, Math.round(sentence.split(/\s+/).length / (Math.max(1, endSec - startSec) / 60)))),
+          tone: 'confident'
+        };
+      });
+    }
 
     await startAIAnalysis({
       title: finalTitle,
@@ -229,32 +335,35 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
 
         {/* Tab 1: File Dropzone */}
         {activeTab === 'upload' && (
-          <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-3xl p-8 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center group"
-          >
-            <input 
-              ref={fileInputRef}
-              type="file" 
-              accept=".mp4,.mov,.wav,.mp3,.pdf,.pptx"
-              className="hidden" 
-              onChange={handleFileSelect}
-            />
-            <div className="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-              <UploadCloud className="w-7 h-7" />
+          <div className="space-y-3">
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-brand-500 dark:hover:border-brand-500 rounded-3xl p-8 text-center cursor-pointer transition-colors bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center group"
+            >
+              <input 
+                ref={fileInputRef}
+                type="file" 
+                accept=".mp4,.mov,.wav,.mp3,.pdf,.pptx"
+                className="hidden" 
+                onChange={handleFileSelect}
+              />
+              <div className="w-14 h-14 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                <UploadCloud className="w-7 h-7" />
+              </div>
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
+                {selectedFile ? selectedFile.name : 'Click to select or drag presentation here'}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">
+                Supports .mp4, .mov, .wav, .mp3, .pdf, .pptx (Up to 100MB)
+              </p>
             </div>
-            <p className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">
-              {selectedFile ? selectedFile.name : 'Click to select or drag presentation here'}
-            </p>
-            <p className="text-xs text-slate-400 dark:text-slate-500">
-              Supports .mp4, .mov, .wav, .mp3, .pdf, .pptx (Up to 100MB)
-            </p>
+
           </div>
         )}
 
         {/* Tab 2: Live Recording */}
         {activeTab === 'record' && (
-          <div className="border border-slate-200 dark:border-slate-700 rounded-3xl p-8 text-center bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center">
+          <div className="border border-slate-200 dark:border-slate-700 rounded-3xl p-6 sm:p-8 text-center bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center">
             <div className="relative mb-4">
               <button
                 onClick={toggleRecording}

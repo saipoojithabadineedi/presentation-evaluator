@@ -25,7 +25,10 @@ import {
   Users,
   GraduationCap,
   Briefcase,
-  Presentation
+  Presentation,
+  Activity,
+  Volume2,
+  FileCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluation } from '../../context/EvaluationContext';
@@ -63,12 +66,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const type: 'video' | 'audio' | 'slides' = file.type.includes('video') 
-        ? 'video' 
-        : file.type.includes('pdf') || file.name.endsWith('.pptx') 
-        ? 'slides' 
-        : 'audio';
-      
+
+      // Reject PDF and PPTX — only video and audio are supported
+      const isVideo = file.type.includes('video') || ['.mp4', '.mov', '.webm'].some(ext => file.name.toLowerCase().endsWith(ext));
+      const isAudio = file.type.includes('audio') || ['.mp3', '.wav', '.m4a', '.ogg'].some(ext => file.name.toLowerCase().endsWith(ext));
+
+      if (!isVideo && !isAudio) {
+        setUploadError('Only video (MP4, MOV, WEBM) and audio (MP3, WAV, M4A) files are supported. PDFs and slide files are not accepted.');
+        e.target.value = '';
+        return;
+      }
+
+      const type: 'video' | 'audio' = isVideo ? 'video' : 'audio';
       const sizeMb = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
       setSelectedFile({ name: file.name, size: sizeMb, type, rawFile: file });
       setPresentationTitle(file.name.replace(/\.[^/.]+$/, ""));
@@ -306,7 +315,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
               <input 
                 ref={fileInputRef}
                 type="file" 
-                accept=".mp4,.mov,.wav,.mp3,.pdf,.pptx"
+                accept=".mp4,.mov,.webm,.mp3,.wav,.m4a,.ogg"
                 className="hidden" 
                 onChange={handleFileChange}
               />
@@ -317,7 +326,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
                 {selectedFile ? selectedFile.name : 'Click to select or drop presentation video/audio file'}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Selected: <span className="font-bold text-brand-600">{selectedFile ? `${selectedFile.type.toUpperCase()} • ${selectedFile.size}` : 'None'}</span> — Supports MP4, MOV, WAV, MP3, PDF, PPTX
+                Selected: <span className="font-bold text-brand-600">{selectedFile ? `${selectedFile.type.toUpperCase()} • ${selectedFile.size}` : 'None'}</span> — Supports MP4, MOV, WEBM, MP3, WAV, M4A
               </p>
             </div>
           )}
@@ -440,42 +449,112 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
 
       </div>
 
-      {/* Guidance Cards for Presentation Evaluation */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600">
-              <Zap className="w-5 h-5" />
-            </div>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Instant AI Signal Decoding</h3>
+      {/* SECTION: FEATURES */}
+      <div id="features" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-8 space-y-6 scroll-mt-24">
+        <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div className="p-3 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600">
+            <Sparkles className="w-6 h-6" />
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Extract pitch, tone, filler words ("um", "like", "actually"), and WPM cadence automatically from audio tracks.
-          </p>
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/60 px-2.5 py-1 rounded-md">
+              Core Capabilities
+            </span>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
+              Platform Features
+            </h2>
+          </div>
         </div>
 
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
-              <ShieldCheck className="w-5 h-5" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Feature 1 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 hover:border-brand-300 dark:hover:border-brand-700 transition-all">
+            <div>
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-brand-600 w-fit mb-3 shadow-2xs">
+                <Activity className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                Real-Time Speech Cadence & Tone
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Measures words-per-minute (WPM), speech rhythm, pauses, and pitch stability to ensure dynamic, engaging vocal delivery.
+              </p>
             </div>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Google Gemini LLM Analysis</h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Multimodal analysis evaluates slide content balance, bullet density, speech structure, and persuasion tactics.
-          </p>
-        </div>
 
-        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600">
-              <Info className="w-5 h-5" />
+          {/* Feature 2 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 hover:border-amber-300 dark:hover:border-amber-700 transition-all">
+            <div>
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-amber-500 w-fit mb-3 shadow-2xs">
+                <Volume2 className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                Filler Word & Hesitation Detection
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Pinpoints filler words like "um", "uh", "like", and "actually" with exact counts and timestamped alerts to sharpen verbal clarity.
+              </p>
             </div>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Profile Dashboard</h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-            Want to view your overall evaluation scores and performance charts? Click on <span className="font-bold text-brand-600 hover:underline cursor-pointer" onClick={() => setCurrentView('profile')}>Profile Dashboard</span> anytime.
-          </p>
+
+          {/* Feature 3 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 hover:border-purple-300 dark:hover:border-purple-700 transition-all">
+            <div>
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-purple-500 w-fit mb-3 shadow-2xs">
+                <Layers className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                Slide & Visual Synchronization
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Evaluates slide density, bullet point structure, visual balance, and alignment between what you say and what you show.
+              </p>
+            </div>
+          </div>
+
+          {/* Feature 4 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
+            <div>
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-emerald-500 w-fit mb-3 shadow-2xs">
+                <BarChart2 className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                360° Multi-Metric Scoring
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Granular scoring across Clarity, Engagement, Content Structure, and Delivery with percentile ranking against industry benchmarks.
+              </p>
+            </div>
+          </div>
+
+          {/* Feature 5 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 hover:border-sky-300 dark:hover:border-sky-700 transition-all">
+            <div>
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-sky-500 w-fit mb-3 shadow-2xs">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                Progress & Speaker Tier Growth
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Track historical improvements across multiple presentations and advance through speaker tiers with personalized milestones.
+              </p>
+            </div>
+          </div>
+
+          {/* Feature 6 */}
+          <div className="p-6 rounded-2xl bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 flex flex-col justify-between space-y-3 hover:border-rose-300 dark:hover:border-rose-700 transition-all">
+            <div>
+              <div className="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-rose-500 w-fit mb-3 shadow-2xs">
+                <FileCheck className="w-5 h-5" />
+              </div>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white mb-1.5">
+                Executive PDF Reports & Actionable Coaching
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Generate exportable PDF audit summaries and receive concrete, step-by-step coaching tips powered by Gemini AI.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

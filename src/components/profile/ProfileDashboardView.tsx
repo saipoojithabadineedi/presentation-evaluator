@@ -36,18 +36,47 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
   const { user } = useAuth();
   const { evaluations, reports, setActiveEvaluation, clearAllEvaluations } = useEvaluation();
 
-  // Performance history trend data
-  const performanceHistory = [
-    { session: 'S1', score: 82, wpm: 120 },
-    { session: 'S2', score: 85, wpm: 126 },
-    { session: 'S3', score: 84, wpm: 130 },
-    { session: 'S4', score: 88, wpm: 132 },
-    { session: 'S5', score: 87, wpm: 136 },
-    { session: 'S6', score: 91, wpm: 135 },
-    { session: 'S7', score: 89, wpm: 138 },
-    { session: 'S8', score: 94, wpm: 141 },
-    { session: 'S9', score: 92, wpm: 138 }
-  ];
+  // ---------------------------------------------------------------------------
+  // Compute all stats live from the evaluations array (single source of truth).
+  // Never trust stale user-object fields which may contain old cached values.
+  // ---------------------------------------------------------------------------
+  const totalRehearsals = evaluations.length;
+
+  const avgScore = totalRehearsals > 0
+    ? Math.round(evaluations.reduce((sum, e) => sum + e.overallScore, 0) / totalRehearsals)
+    : 0;
+
+  const avgCadence = totalRehearsals > 0
+    ? Math.round(evaluations.reduce((sum, e) => sum + e.averageCadence, 0) / totalRehearsals)
+    : 0;
+
+  const avgFillerRate = totalRehearsals > 0
+    ? parseFloat((evaluations.reduce((sum, e) => sum + e.fillerWordRate, 0) / totalRehearsals).toFixed(1))
+    : 0;
+
+  // Practice hours = total seconds spoken across all evaluations
+  const practiceHours = totalRehearsals > 0
+    ? parseFloat((evaluations.reduce((sum, e) => sum + (e.durationSeconds || 0), 0) / 3600).toFixed(1))
+    : 0;
+
+  // Tier label derived from real average score
+  const tierLabel = avgScore >= 90
+    ? 'Top 5% speaker tier'
+    : avgScore >= 80
+      ? 'Top 15% speaker tier'
+      : avgScore > 0
+        ? 'Developing speaker tier'
+        : 'New speaker';
+
+  // Performance history chart — built from real evaluations (most recent 9, oldest first)
+  const performanceHistory = evaluations.length > 0
+    ? [...evaluations]
+        .slice(0, 9)
+        .reverse()
+        .map((e, i) => ({ session: `S${i + 1}`, score: e.overallScore, wpm: e.averageCadence }))
+    : [
+        { session: 'S1', score: 0, wpm: 0 },
+      ];
 
   const handleViewExistingReport = (item: EvaluationData) => {
     setActiveEvaluation(item);
@@ -91,7 +120,7 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
               </h1>
               <span className="px-3 py-0.5 rounded-full bg-brand-50 dark:bg-brand-950/60 border border-brand-200 dark:border-brand-800 text-brand-700 dark:text-brand-300 text-xs font-bold flex items-center gap-1">
                 <Award className="w-3.5 h-3.5" />
-                {user?.tier || "Top 5% speaker tier"}
+                {tierLabel}
               </span>
             </div>
             <p className="text-xs text-slate-400">
@@ -119,7 +148,7 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
         </div>
       </div>
 
-      {/* Summary Score Boxes */}
+      {/* Summary Score Boxes — all values computed from real evaluations */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         
         <div 
@@ -131,9 +160,11 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
             <Clock className="w-4 h-4 text-brand-500" />
           </div>
           <div className="text-3xl font-black text-slate-900 dark:text-white mt-1">
-            {user?.totalEvaluations || 14}
+            {totalRehearsals}
           </div>
-          <div className="text-[11px] text-brand-600 font-bold mt-1">5.4 Practice Hours →</div>
+          <div className="text-[11px] text-brand-600 font-bold mt-1">
+            {practiceHours > 0 ? `${practiceHours} Practice Hours →` : 'Upload a presentation →'}
+          </div>
         </div>
 
         <div 
@@ -145,9 +176,11 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
             <TrendingUp className="w-4 h-4 text-brand-500" />
           </div>
           <div className="text-3xl font-black text-brand-600 dark:text-brand-400 mt-1">
-            {user?.averageScore || 92}%
+            {avgScore > 0 ? `${avgScore}%` : '—'}
           </div>
-          <div className="text-[11px] text-brand-600 font-bold mt-1">+8.4% improvement →</div>
+          <div className="text-[11px] text-brand-600 font-bold mt-1">
+            {totalRehearsals > 0 ? `${totalRehearsals} evaluations →` : 'No evaluations yet'}
+          </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs">
@@ -156,7 +189,7 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
             <Mic className="w-4 h-4 text-sky-500" />
           </div>
           <div className="text-3xl font-black text-slate-900 dark:text-white mt-1">
-            {user?.averageCadence || 135} <span className="text-xs text-slate-400">WPM</span>
+            {avgCadence > 0 ? <>{avgCadence} <span className="text-xs text-slate-400">WPM</span></> : '—'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">Target: 125–150 WPM</div>
         </div>
@@ -170,12 +203,13 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
             <FileText className="w-4 h-4 text-emerald-500" />
           </div>
           <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
-            {user?.fillerWordRate || 0.8}%
+            {totalRehearsals > 0 ? `${avgFillerRate}%` : '—'}
           </div>
           <div className="text-[11px] text-emerald-600 font-bold mt-1">View {reports.length} PDF Reports →</div>
         </div>
 
       </div>
+
 
       {/* Performance Overview Section */}
       <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xs space-y-6">
@@ -235,7 +269,7 @@ export const ProfileDashboardView: React.FC<ProfileDashboardViewProps> = ({ setC
               Recent Speech Evaluations
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              Detailed AI-generated reports with transcript and delivery breakdowns
+              Detailed AI-generated reports with speech cadence and delivery breakdowns
             </p>
           </div>
           <div className="flex items-center gap-3">

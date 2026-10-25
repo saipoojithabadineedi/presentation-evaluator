@@ -11,7 +11,13 @@ import {
   Award,
   BarChart2,
   LogOut,
-  ArrowLeft
+  ArrowLeft,
+  RotateCcw,
+  CheckCircle2,
+  Globe,
+  Briefcase,
+  Building,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluation } from '../../context/EvaluationContext';
@@ -27,9 +33,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
   const { settings, updateSettings } = useEvaluation();
   const { theme, toggleTheme } = useTheme();
 
-  const [name, setName] = useState(user?.name || 'User');
+  // Resolve true full name from signup
+  const getInitialFullName = () => {
+    if (!user) return 'User';
+    const emailKey = (user.email || '').toLowerCase();
+    const savedName = localStorage.getItem('pe_full_name_' + emailKey);
+    if (savedName && savedName.trim()) return savedName.trim();
+    if (user.name && user.name !== emailKey.split('@')[0]) return user.name;
+    return user.name || 'User';
+  };
+
+  const [name, setName] = useState(getInitialFullName);
   const [email, setEmail] = useState(user?.email || 'name@example.com');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80');
+  const [role, setRole] = useState(user?.role || '');
+  const [organization, setOrganization] = useState(user?.organization || '');
+  const [experienceLevel, setExperienceLevel] = useState(user?.experienceLevel || 'intermediate');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [accentBenchmark, setAccentBenchmark] = useState(user?.accentBenchmark || 'indian');
+
   const [minWpm, setMinWpm] = useState(settings.targetMinWpm);
   const [maxWpm, setMaxWpm] = useState(settings.targetMaxWpm);
   const [aiStrictness, setAiStrictness] = useState(settings.aiStrictness);
@@ -58,9 +80,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
     }
   };
 
+  const handleResetAvatar = () => {
+    setAvatarUrl('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80');
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUserProfile({ name, email, avatarUrl });
+    updateUserProfile({ 
+      name, 
+      email, 
+      avatarUrl,
+      role,
+      organization,
+      experienceLevel,
+      bio,
+      accentBenchmark
+    });
     updateSettings({
       targetMinWpm: minWpm,
       targetMaxWpm: maxWpm,
@@ -151,6 +186,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
                     className="hidden" 
                   />
                 </label>
+
+                {/* Point 5: Reset Profile Photo */}
+                <button
+                  type="button"
+                  onClick={handleResetAvatar}
+                  className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-rose-400 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5"
+                  title="Reset to default avatar"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset Default</span>
+                </button>
+
                 <span className="text-xs text-slate-400">or pick preset:</span>
                 <div className="flex items-center gap-1.5">
                   {sampleAvatars.map((url, idx) => (
@@ -169,6 +216,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
             </div>
           </div>
 
+          {/* Point 1: Additional Speaker Details (3 columns row 1, 2 columns row 2, bio row 3) */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
@@ -178,6 +226,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="Your Full Name"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
               />
             </div>
@@ -193,6 +242,66 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
               />
             </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Briefcase className="w-3.5 h-3.5 text-brand-500" />
+                <span>Speaker Role / Profession</span>
+              </label>
+              <input
+                type="text"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                placeholder="e.g. Student / Product Manager / Founder"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Building className="w-3.5 h-3.5 text-brand-500" />
+                <span>Organization / University</span>
+              </label>
+              <input
+                type="text"
+                value={organization}
+                onChange={(e) => setOrganization(e.target.value)}
+                placeholder="e.g. RGUKT / TechCorp"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <GraduationCap className="w-3.5 h-3.5 text-brand-500" />
+                <span>Speaker Experience Level</span>
+              </label>
+              <select
+                value={experienceLevel}
+                onChange={(e) => setExperienceLevel(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              >
+                <option value="beginner">Beginner Speaker (Developing Confidence)</option>
+                <option value="intermediate">Intermediate Presenter (Regular Pitches & Team Talks)</option>
+                <option value="advanced">Advanced Speaker (Keynotes & Large Audiences)</option>
+                <option value="executive">Executive / TED Speaker (High-Stakes Leadership)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Speaker Bio (Included in exported presentation report cover pages)
+            </label>
+            <textarea
+              rows={2}
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Brief bio or public speaking statement for presentation evaluation certificates..."
+              className="w-full px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 resize-none"
+            />
           </div>
         </div>
 
@@ -203,7 +312,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
             <h2>Speech Cadence & AI Benchmarks</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Target Rehearsal Goal
@@ -234,6 +343,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
                 <option value="rigorous">Rigorous (Executive / TED Style)</option>
               </select>
             </div>
+
+            {/* Point 3: Language & Accent Benchmark */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-brand-500" />
+                <span>Speaking Accent Benchmark</span>
+              </label>
+              <select
+                value={accentBenchmark}
+                onChange={(e) => setAccentBenchmark(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none"
+              >
+                <option value="indian">English (Indian) - Technical & Conversational (120-150 WPM)</option>
+                <option value="us">English (US) - Standard Keynote Pacing (130-160 WPM)</option>
+                <option value="uk">English (UK) - Formal & Measured Cadence (125-155 WPM)</option>
+                <option value="global">English (Global) - Cross-Cultural Neutral Cadence (120-145 WPM)</option>
+              </select>
+            </div>
           </div>
 
           <div className="pt-2">
@@ -260,6 +387,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ setCurrentView }) =>
             </div>
           </div>
         </div>
+
 
         {/* Account Session & Logout Section */}
         <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-rose-100 dark:border-rose-950/40 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">

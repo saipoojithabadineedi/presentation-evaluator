@@ -1,11 +1,18 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { EvaluationData, ReportItem, UserSettings } from '../types';
+import { EvaluationData, ReportItem, UserSettings, TranscriptSegment } from '../types';
 import { initialEvaluations, initialReports, defaultSettings } from '../utils/mockData';
 import { startAIAnalysisApi } from '../services/api';
 import { generateDynamicEvaluation } from '../utils/dynamicEvaluation';
 import { extractRealAudioMetrics, buildAccurateEvaluationData } from '../utils/audioAnalyzer';
-import { analyzePresentationWithGeminiLLM } from '../services/geminiService';
+import { analyzePresentationWithGeminiLLM, transcribeAudioWithGeminiLLM } from '../services/geminiService';
 import { saveMediaFileToDB, getMediaFileFromDB } from '../utils/mediaStore';
+import { useAuth } from './AuthContext';
+
+// The built-in demo user ID that gets seeded with mock data
+const DEMO_USER_ID = 'usr-101';
+
+// Returns a user-scoped localStorage key so each account has its own isolated data
+const uKey = (base: string, userId: string) => `${base}_${userId}`;
 
 interface UploadPayload {
   title: string;
@@ -36,6 +43,7 @@ interface EvaluationContextType {
   generateReport: (evaluation: EvaluationData) => ReportItem;
   updateSettings: (newSettings: Partial<UserSettings>) => void;
   deleteEvaluation: (id: string) => void;
+  updateEvaluationTranscript: (evaluationId: string, transcript: TranscriptSegment[]) => void;
   clearAllEvaluations: () => void;
   clearAllReports: () => void;
 }
@@ -47,91 +55,114 @@ export const mediaBlobRegistry = new Map<string, Blob | File>();
 export const mediaBlobUrlRegistry = new Map<string, string>();
 
 export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [evaluations, setEvaluations] = useState<EvaluationData[]>(() => {
-    const saved = localStorage.getItem('pe_evaluations');
+  const { user } = useAuth();
+  // Use a stable user ID; fall back to 'guest' when logged out
+  const userId = user?.id || 'guest';
+
+  // ---------------------------------------------------------------------------
+  // Helpers: load data from user-scoped localStorage keys
+  // ---------------------------------------------------------------------------
+  const loadEvaluations = (uid: string): EvaluationData[] => {
+    const saved = localStorage.getItem(uKey('pe_evaluations', uid));
     if (saved) {
       try {
-        return JSON.parse(saved);
-      } catch {
-        return initialEvaluations;
-      }
-    }
-    return initialEvaluations;
-  });
-
-  const [reports, setReports] = useState<ReportItem[]>(() => {
-    const saved = localStorage.getItem('pe_reports');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return initialReports;
-      }
-    }
-    return initialReports;
-  });
-
-  const [settings, setSettingsState] = useState<UserSettings>(() => {
-    const saved = localStorage.getItem('pe_settings');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        return defaultSettings;
-      }
-    }
-    return defaultSettings;
-  });
-
-  const [activeEvaluation, setActiveEvaluationState] = useState<EvaluationData | null>(() => {
-    const savedActiveId = localStorage.getItem('pe_active_eval_id');
-    const savedEvalsStr = localStorage.getItem('pe_evaluations');
-    let evalList = initialEvaluations;
-    if (savedEvalsStr) {
-      try {
-        const parsed = JSON.parse(savedEvalsStr);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          evalList = parsed;
-        }
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
       } catch {}
     }
-    if (savedActiveId) {
-      const found = evalList.find(e => e.id === savedActiveId);
-      if (found) return found;
-    }
-    return evalList.length > 0 ? evalList[0] : null;
-  });
-
-  const setActiveEvaluation = (evalData: EvaluationData | null) => {
-    setActiveEvaluationState(evalData);
-    if (evalData) {
-      localStorage.setItem('pe_active_eval_id', evalData.id);
-    } else {
-      localStorage.removeItem('pe_active_eval_id');
-    }
+    // Only seed mock demo data for the built-in demo account
+    if (uid === DEMO_USER_ID) return initialEvaluations;
+    return [];
   };
 
+  const loadReports = (uid: string): ReportItem[] => {
+    const saved = localStorage.getItem(uKey('pe_reports', uid));
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+    }
+    if (uid === DEMO_USER_ID) return initialReports;
+    return [];
+  };
+
+  const loadSettings = (uid: string): UserSettings => {
+    const saved = localStorage.getItem(uKey('pe_settings', uid));
+    if (saved) {
+      try { return JSON.parse(saved); } catch {}
+    }
+    return defaultSettings;
+  };
+
+  const loadActiveEvaluation = (uid: string, evals: EvaluationData[]): EvaluationData | null => {
+    const savedActiveId = localStorage.getItem(uKey('pe_active_eval_id', uid));
+    if (savedActiveId) {
+      const found = evals.find(e => e.id === savedActiveId);
+      if (found) return found;
+    }
+    return evals.length > 0 ? evals[0] : null;
+  };
+
+  // ---------------------------------------------------------------------------
+  // State — initialised for the user present at first render
+  // ---------------------------------------------------------------------------
+  const [evaluations, setEvaluations] = useState<EvaluationData[]>(() => loadEvaluations(userId));
+  const [reports, setReports] = useState<ReportItem[]>(() => loadReports(userId));
+  const [settings, setSettingsState] = useState<UserSettings>(() => loadSettings(userId));
+  const [activeEvaluation, setActiveEvaluationState] = useState<EvaluationData | null>(() => {
+    const evals = loadEvaluations(userId);
+    return loadActiveEvaluation(userId, evals);
+  });
+
   const [activeReport, setActiveReport] = useState<ReportItem | null>(null);
-  
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isProcessingModalOpen, setIsProcessingModalOpen] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
   const [processingStatusText, setProcessingStatusText] = useState('');
 
+  // ---------------------------------------------------------------------------
+  // When the logged-in user changes (login / logout / account switch),
+  // reload all data from that user's scoped localStorage keys.
+  // ---------------------------------------------------------------------------
   useEffect(() => {
-    localStorage.setItem('pe_evaluations', JSON.stringify(evaluations));
-  }, [evaluations]);
+    const evals = loadEvaluations(userId);
+    setEvaluations(evals);
+    setActiveEvaluationState(loadActiveEvaluation(userId, evals));
+    setReports(loadReports(userId));
+    setSettingsState(loadSettings(userId));
+    setActiveReport(null);
+  }, [userId]);
+
+  // ---------------------------------------------------------------------------
+  // Persist state to user-scoped keys whenever it changes
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    localStorage.setItem(uKey('pe_evaluations', userId), JSON.stringify(evaluations));
+  }, [evaluations, userId]);
 
   useEffect(() => {
-    localStorage.setItem('pe_reports', JSON.stringify(reports));
-  }, [reports]);
+    localStorage.setItem(uKey('pe_reports', userId), JSON.stringify(reports));
+  }, [reports, userId]);
 
   useEffect(() => {
-    localStorage.setItem('pe_settings', JSON.stringify(settings));
-  }, [settings]);
+    localStorage.setItem(uKey('pe_settings', userId), JSON.stringify(settings));
+  }, [settings, userId]);
 
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
   const openUploadModal = () => setIsUploadModalOpen(true);
   const closeUploadModal = () => setIsUploadModalOpen(false);
+
+  const setActiveEvaluation = (evalData: EvaluationData | null) => {
+    setActiveEvaluationState(evalData);
+    if (evalData) {
+      localStorage.setItem(uKey('pe_active_eval_id', userId), evalData.id);
+    } else {
+      localStorage.removeItem(uKey('pe_active_eval_id', userId));
+    }
+  };
 
   const updateSettings = (newSettings: Partial<UserSettings>) => {
     setSettingsState(prev => ({ ...prev, ...newSettings }));
@@ -147,14 +178,14 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const clearAllEvaluations = () => {
     setEvaluations([]);
     setActiveEvaluation(null);
-    localStorage.removeItem('pe_evaluations');
-    localStorage.removeItem('pe_active_eval_id');
+    localStorage.removeItem(uKey('pe_evaluations', userId));
+    localStorage.removeItem(uKey('pe_active_eval_id', userId));
   };
 
   const clearAllReports = () => {
     setReports([]);
     setActiveReport(null);
-    localStorage.removeItem('pe_reports');
+    localStorage.removeItem(uKey('pe_reports', userId));
   };
 
   const generateReport = (evaluation: EvaluationData): ReportItem => {
@@ -228,6 +259,25 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         silenceRatioPercent: realMetrics.silenceRatioPercent
       });
 
+      setProcessingStatusText('Analyzing vocal dynamics & speech cadence metrics...');
+      const liveTranscript = (payload.fileObject as any)?._liveTranscript;
+      const scriptTranscript = (payload.fileObject as any)?._scriptTranscript;
+
+      let finalTranscript: TranscriptSegment[] | null = null;
+      if (liveTranscript && Array.isArray(liveTranscript) && liveTranscript.length > 0) {
+        console.log('[EVALUATION] Using real-time live microphone voice-to-text transcript!');
+        finalTranscript = liveTranscript;
+      } else if (scriptTranscript && Array.isArray(scriptTranscript) && scriptTranscript.length > 0) {
+        console.log('[EVALUATION] Using user-provided presentation speech script!');
+        finalTranscript = scriptTranscript;
+      } else {
+        finalTranscript = await transcribeAudioWithGeminiLLM(
+          payload.fileObject,
+          payload.title,
+          realMetrics.durationSeconds
+        );
+      }
+
       newEval = buildAccurateEvaluationData(
         payload.title,
         payload.fileType,
@@ -235,7 +285,8 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         payload.fileSize,
         realMetrics,
         llmResult,
-        mediaUrl
+        mediaUrl,
+        finalTranscript
       );
 
       // Store in both registries so playback always resolves
@@ -267,7 +318,34 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setEvaluations(prev => [newEval, ...prev]);
     setActiveEvaluation(newEval);
     setIsProcessingModalOpen(false);
+
+    // Trigger browser desktop notification if permission is granted
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification('🎉 Presentation Evaluation Ready', {
+          body: `"${newEval.title}" scored ${newEval.overallScore}% (${newEval.averageCadence} WPM cadence). Tap to view detailed insights.`,
+          icon: '/favicon.ico'
+        });
+      } catch (err) {
+        console.warn('Could not dispatch browser notification:', err);
+      }
+    }
+
     return newEval;
+  };
+
+  const updateEvaluationTranscript = (evaluationId: string, transcript: TranscriptSegment[]) => {
+    setEvaluations(prev => {
+      const updated = prev.map(ev => ev.id === evaluationId ? { ...ev, transcript } : ev);
+      localStorage.setItem(uKey('pe_evaluations', userId), JSON.stringify(updated));
+      return updated;
+    });
+    setActiveEvaluationState(prev => {
+      if (prev && prev.id === evaluationId) {
+        return { ...prev, transcript };
+      }
+      return prev;
+    });
   };
 
   return (
@@ -289,6 +367,7 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       generateReport,
       updateSettings,
       deleteEvaluation,
+      updateEvaluationTranscript,
       clearAllEvaluations,
       clearAllReports
     }}>

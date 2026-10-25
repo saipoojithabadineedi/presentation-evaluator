@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, ArrowRight, Check, AlertCircle } from 'lucide-react';
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, ArrowRight, Check, AlertCircle, Users, Lightbulb, TrendingUp } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AppView } from '../../types';
 
@@ -34,7 +34,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
     }
 
     if (!agreeTerms) {
-      setError('Please agree to the Terms & Conditions.');
+      setError('Please agree to the Terms of Service and Privacy Policy.');
       return;
     }
 
@@ -47,6 +47,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
         return;
       }
 
+      localStorage.setItem('pe_full_name_' + email.trim().toLowerCase(), fullName.trim());
       localStorage.setItem('pe_last_login_credential', email.trim());
       localStorage.setItem('pe_remembered_credentials', email.trim());
       localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! Please sign in with your credentials.');
@@ -59,189 +60,266 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
   };
 
   return (
-    <div className="min-h-[calc(100vh-140px)] flex items-center justify-center py-12 px-4 sm:px-6">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-none p-8 sm:p-10 transition-all">
+    <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center p-3 sm:p-6 lg:p-8 bg-[#032a21] dark:bg-slate-950 transition-colors">
+      
+      {/* Subscreen Frame (Matches Image Right Card) */}
+      <div className="w-full max-w-6xl bg-gradient-to-br from-[#064e3b] via-[#044c3c] to-[#022c22] rounded-[32px] sm:rounded-[40px] border border-emerald-800/80 shadow-2xl overflow-hidden relative p-6 sm:p-8 lg:p-10">
         
-        {/* Card Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-1.5">
-            Create Account
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Register to get started with speech evaluations
-          </p>
-        </div>
+        {/* Decorative Forest Glow Shapes */}
+        <div className="absolute -top-16 -right-16 w-64 h-64 bg-[#10b981]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-[#059669]/20 rounded-full blur-3xl pointer-events-none" />
 
-        {/* Centered Brand Logo */}
-        <div className="flex justify-center mb-6">
-          <img 
-            src="/assets/logo.jpg" 
-            alt="Presentation Evaluator - Analyze. Improve. Succeed." 
-            className="h-16 sm:h-20 max-w-full w-auto object-contain logo-blend drop-shadow-sm"
-          />
-        </div>
-
-        {/* Error Banner */}
-        {error && (
-          <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
           
-          {/* Full Name */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Full Name
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <UserIcon className="w-4 h-4" />
-              </div>
-              <input
-                type="text"
-                required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
-                autoComplete="off"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+          {/* Left Side: Community Narrative, Value Pillars & Learner Illustration */}
+          <div className="lg:col-span-7 flex flex-col justify-between space-y-5">
+            
+            {/* Brand Logo */}
+            <div className="flex items-center">
+              <img 
+                src="/assets/auth_logo_dark.png" 
+                alt="Presentation Evaluator - Analyze. Improve. Succeed." 
+                className="h-11 sm:h-13 w-auto object-contain"
               />
+            </div>
+
+            {/* Headline & Description */}
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+                Join Our <br />
+                <span className="text-[#6ee7b7]">Community</span>
+              </h1>
+              <p className="text-xs sm:text-sm text-emerald-100/90 max-w-md leading-relaxed">
+                Create an account and start improving your presentation skills with AI-powered evaluation.
+              </p>
+            </div>
+
+            {/* 3 Pillars */}
+            <div className="space-y-3 max-w-md">
+              
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-800/80 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-600/40 shadow-2xs">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">Join a Growing Community</h4>
+                  <p className="text-[11px] sm:text-xs text-emerald-200/80">Connect with learners worldwide</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-800/80 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-600/40 shadow-2xs">
+                  <Lightbulb className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">Get Personalized Feedback</h4>
+                  <p className="text-[11px] sm:text-xs text-emerald-200/80">AI insights tailored to you</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-800/80 text-emerald-300 flex items-center justify-center shrink-0 border border-emerald-600/40 shadow-2xs">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">Track Your Growth</h4>
+                  <p className="text-[11px] sm:text-xs text-emerald-200/80">See your improvement journey</p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Learner Illustration (User Full HD Artwork) */}
+            <div className="hidden sm:flex items-center justify-start pt-2 -mb-6 sm:-mb-8 lg:-mb-10 w-full overflow-hidden">
+              <img 
+                src="/assets/auth_signup_fullhd.png?v=2" 
+                alt="Join Our Community" 
+                className="w-full max-w-[560px] lg:max-w-[620px] h-auto object-contain object-bottom rounded-2xl shadow-sm"
+              />
+            </div>
+
+          </div>
+
+          {/* Right Side: Clean White Form Card */}
+          <div className="lg:col-span-5 flex justify-center">
+            <div className="w-full max-w-[420px] bg-white dark:bg-slate-900 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-2xl p-7 sm:p-9 transition-all">
+              
+              {/* Form Title */}
+              <div className="mb-5 text-center">
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                  Create Account
+                </h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Join Presentation Evaluator and start your learning journey
+                </p>
+              </div>
+
+              {/* Error Banner */}
+              {error && (
+                <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Form */}
+              <form onSubmit={handleSubmit} className="space-y-3.5">
+                
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <UserIcon className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      readOnly
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      autoComplete="off"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your full name"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="email"
+                      required
+                      readOnly
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      autoComplete="off"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter your email"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      readOnly
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Create a password"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] transition-all placeholder:text-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <Lock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      required
+                      readOnly
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm your password"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#059669]/20 focus:border-[#059669] transition-all placeholder:text-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Terms Checkbox */}
+                <div className="flex items-start gap-2 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setAgreeTerms(!agreeTerms)}
+                    className={`mt-0.5 w-4 h-4 rounded-sm flex items-center justify-center transition-colors ${
+                      agreeTerms 
+                        ? 'bg-[#059669] text-white' 
+                        : 'border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                    }`}
+                  >
+                    {agreeTerms && <Check className="w-3 h-3 stroke-[3]" />}
+                  </button>
+                  <span 
+                    onClick={() => setAgreeTerms(!agreeTerms)}
+                    className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 leading-snug cursor-pointer select-none"
+                  >
+                    I agree to the <span className="text-[#059669] dark:text-emerald-400 font-semibold hover:underline">Terms of Service</span> and <span className="text-[#059669] dark:text-emerald-400 font-semibold hover:underline">Privacy Policy</span>
+                  </span>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full py-3 sm:py-3.5 px-4 rounded-xl bg-[#059669] hover:bg-[#047857] active:bg-[#065f46] text-white font-bold text-sm shadow-md shadow-[#059669]/20 flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-60 cursor-pointer"
+                >
+                  <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                {/* Switch to Login */}
+                <div className="text-center pt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentView('login')}
+                    className="text-[#059669] dark:text-emerald-400 font-bold hover:underline"
+                  >
+                    Sign In
+                  </button>
+                </div>
+
+              </form>
             </div>
           </div>
 
-          {/* Email */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Email Address
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Mail className="w-4 h-4" />
-              </div>
-              <input
-                type="email"
-                required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
-                autoComplete="off"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@example.com"
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
-              />
-            </div>
-          </div>
+        </div>
 
-          {/* Password */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-4 h-4" />
-              </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Create strong password"
-                className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Confirm Password */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <Lock className="w-4 h-4" />
-              </div>
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm strong password"
-                className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-              >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Terms Checkbox */}
-          <div className="flex items-start gap-2.5 pt-1.5">
-            <button
-              type="button"
-              onClick={() => setAgreeTerms(!agreeTerms)}
-              className={`mt-0.5 w-4 h-4 rounded-sm flex items-center justify-center transition-colors ${
-                agreeTerms 
-                  ? 'bg-brand-500 text-white' 
-                  : 'border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
-              }`}
-            >
-              {agreeTerms && <Check className="w-3 h-3 stroke-[3]" />}
-            </button>
-            <span 
-              onClick={() => setAgreeTerms(!agreeTerms)}
-              className="text-xs text-slate-600 dark:text-slate-400 leading-snug cursor-pointer select-none"
-            >
-              I agree to the <span className="text-brand-600 font-semibold">Terms & Conditions</span> and <span className="text-brand-600 font-semibold">Privacy Policy</span>
-            </span>
-          </div>
-
-          {/* Register Button */}
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold text-sm shadow-md shadow-brand-500/20 flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-60"
-          >
-            <span>{isLoading ? 'Creating Account...' : 'Register'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-
-          {/* Switch to Login */}
-          <div className="text-center pt-3 text-xs text-slate-500 dark:text-slate-400">
-            Already have an account?{' '}
-            <button
-              type="button"
-              onClick={() => setCurrentView('login')}
-              className="text-brand-600 dark:text-brand-400 font-bold hover:underline"
-            >
-              Login
-            </button>
-          </div>
-
-        </form>
       </div>
     </div>
   );

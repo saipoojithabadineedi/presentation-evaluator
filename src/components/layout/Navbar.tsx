@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, BarChart2, Bell, LogOut, CheckCircle2, Award } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useEvaluation } from '../../context/EvaluationContext';
 import { AppView } from '../../types';
 
 interface NavbarProps {
@@ -11,7 +12,9 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onOpenSidebar }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const { evaluations, setActiveEvaluation } = useEvaluation();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [hasUnread, setHasUnread] = useState(true);
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const isAuthPage = currentView === 'login' || currentView === 'register';
@@ -49,24 +52,89 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
     }, 80);
   };
 
-  const notificationsList = [
-    {
-      id: 1,
-      title: 'Speech Evaluation Complete',
-      desc: 'testpresentation evaluated with 92% overall score.',
-      time: '10m ago',
-      icon: CheckCircle2,
-      color: 'text-emerald-500'
-    },
-    {
-      id: 2,
-      title: 'Cadence Milestone',
-      desc: 'Optimal keynote speaking pace (135 WPM) maintained.',
-      time: '1h ago',
-      icon: Award,
-      color: 'text-brand-500'
+  const notificationsList = evaluations.length > 0 
+    ? evaluations.slice(0, 5).map((ev, idx) => ({
+        id: ev.id,
+        title: idx === 0 ? 'Latest Presentation Ready' : 'Rehearsal Analyzed',
+        desc: `"${ev.title}" scored ${ev.overallScore}% (${ev.averageCadence} WPM cadence).`,
+        time: ev.formattedDate || 'Recently',
+        icon: CheckCircle2,
+        color: 'text-emerald-500',
+        evalData: ev
+      }))
+    : [
+        {
+          id: 'preset-1',
+          title: 'Speech Coach Active',
+          desc: 'Upload a rehearsal recording or use live mic to view AI benchmarks.',
+          time: 'Ready',
+          icon: Award,
+          color: 'text-brand-500',
+          evalData: null
+        }
+      ];
+
+  const handleNotificationClick = (item: any) => {
+    if (item.evalData) {
+      setActiveEvaluation(item.evalData);
+      setCurrentView('evaluation');
     }
-  ];
+    setShowNotifications(false);
+  };
+
+  const handleMarkAllRead = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setHasUnread(false);
+  };
+
+  const renderNotificationsPopover = () => (
+    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+        <div className="flex items-center gap-1.5">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Notifications</h4>
+          {hasUnread && (
+            <span className="text-[10px] font-bold text-brand-600 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded-full">
+              {notificationsList.length} New
+            </span>
+          )}
+        </div>
+        {hasUnread && (
+          <button 
+            type="button"
+            onClick={handleMarkAllRead}
+            className="text-[11px] text-brand-600 dark:text-brand-400 hover:underline font-semibold cursor-pointer"
+          >
+            Mark all read
+          </button>
+        )}
+      </div>
+      <div className="space-y-2 max-h-64 overflow-y-auto">
+        {notificationsList.map((n: any) => {
+          const Icon = n.icon;
+          return (
+            <div 
+              key={n.id} 
+              onClick={() => handleNotificationClick(n)}
+              className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-brand-50/60 dark:hover:bg-slate-800 transition-colors flex items-start gap-3 text-xs cursor-pointer group"
+            >
+              <Icon className={`w-4 h-4 ${n.color} shrink-0 mt-0.5 group-hover:scale-110 transition-transform`} />
+              <div className="space-y-0.5">
+                <div className="font-bold text-slate-800 dark:text-slate-100 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                  {n.title}
+                </div>
+                <div className="text-slate-500 dark:text-slate-400 text-[11px] leading-tight">
+                  {n.desc}
+                </div>
+                <div className="text-[9px] font-mono text-slate-400 mt-1">
+                  {n.time}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 transition-colors">
@@ -108,6 +176,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
               }`}
             >
               Home
+            </button>
+            <button
+              onClick={() => navigateAndScroll('features')}
+              className="px-3 py-1.5 rounded-xl hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-100/70 dark:hover:bg-slate-800/60 transition-all cursor-pointer whitespace-nowrap"
+            >
+              Features
             </button>
             <button
               onClick={() => navigateAndScroll('how-it-works')}
@@ -204,32 +278,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
+                  {hasUnread && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+                  )}
                 </button>
 
-                {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Notifications</h4>
-                      <span className="text-[10px] font-bold text-brand-600 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded-full">2 New</span>
-                    </div>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {notificationsList.map((n) => {
-                        const Icon = n.icon;
-                        return (
-                          <div key={n.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-start gap-3 text-xs">
-                            <Icon className={`w-4 h-4 ${n.color} shrink-0 mt-0.5`} />
-                            <div className="space-y-0.5">
-                              <div className="font-bold text-slate-800 dark:text-slate-100">{n.title}</div>
-                              <div className="text-slate-500 dark:text-slate-400 text-[11px] leading-tight">{n.desc}</div>
-                              <div className="text-[9px] font-mono text-slate-400 mt-1">{n.time}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {showNotifications && renderNotificationsPopover()}
               </div>
 
               {/* 3. Profile Settings Circle Button */}
@@ -284,32 +338,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
+                  {hasUnread && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+                  )}
                 </button>
 
-                {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Notifications</h4>
-                      <span className="text-[10px] font-bold text-brand-600 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded-full">2 New</span>
-                    </div>
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {notificationsList.map((n) => {
-                        const Icon = n.icon;
-                        return (
-                          <div key={n.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-start gap-3 text-xs">
-                            <Icon className={`w-4 h-4 ${n.color} shrink-0 mt-0.5`} />
-                            <div className="space-y-0.5">
-                              <div className="font-bold text-slate-800 dark:text-slate-100">{n.title}</div>
-                              <div className="text-slate-500 dark:text-slate-400 text-[11px] leading-tight">{n.desc}</div>
-                              <div className="text-[9px] font-mono text-slate-400 mt-1">{n.time}</div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {showNotifications && renderNotificationsPopover()}
               </div>
 
               {/* 3. Profile Settings Circle Button */}
