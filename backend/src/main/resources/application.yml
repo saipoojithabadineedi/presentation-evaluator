@@ -44,3 +44,6 @@ logging:
   level:
     com.presentation.evaluator: DEBUG
     org.hibernate.SQL: DEBUG
+
+resend:
+  api-key: ${RESEND_API_KEY:}

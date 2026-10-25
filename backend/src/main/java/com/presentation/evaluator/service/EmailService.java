@@ -22,7 +22,7 @@ public class EmailService {
     @Value("${spring.mail.username:thupakulakulayappa24@gmail.com}")
     private String fromEmail;
 
-    @Value("${RESEND_API_KEY:}")
+    @Value("${resend.api-key:${RESEND_API_KEY:}}")
     private String resendApiKey;
 
     public boolean sendOtpEmail(String recipientEmail, String otpCode) {
@@ -51,9 +51,10 @@ public class EmailService {
             // Attempt HTTPS delivery via Resend API (Port 443 - Never blocked by Render/Cloud firewalls)
             if (resendApiKey != null && !resendApiKey.isBlank()) {
                 try {
+                    System.out.println(">>> [RESEND DISPATCH] Connecting to api.resend.com for " + recipientEmail);
                     String jsonPayload = String.format("""
                         {
-                          "from": "Presentation Evaluator <onboarding@resend.dev>",
+                          "from": "onboarding@resend.dev",
                           "to": ["%s"],
                           "subject": "Presentation Evaluator - Password Reset OTP",
                           "html": "<div style=\\"font-family: Arial, sans-serif; padding: 20px;\\"><h2 style=\\"color: #6366f1;\\">Presentation Evaluator</h2><p>Hello,</p><p>We received a request to reset your Presentation Evaluator account password.</p><p>Your 6-digit verification code is:</p><div style=\\"background: #f1f5f9; padding: 15px; border-radius: 8px; font-size: 24px; font-weight: bold; letter-spacing: 5px; color: #1e293b; text-align: center; margin: 20px 0;\\">%s</div><p>This code is valid for 5 minutes.</p><p style=\\"color: #64748b; font-size: 12px;\\">If you did not request this reset, you can safely ignore this email.</p></div>"
@@ -69,6 +70,7 @@ public class EmailService {
                             .build();
 
                     java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                    System.out.println(">>> [RESEND RESPONSE STATUS " + response.statusCode() + "]: " + response.body());
                     if (response.statusCode() >= 200 && response.statusCode() < 300) {
                         log.info("Successfully dispatched HTTPS email via Resend to {}: {}", recipientEmail, response.body());
                         return;
@@ -76,8 +78,11 @@ public class EmailService {
                         log.warn("Resend API returned status {}: {}", response.statusCode(), response.body());
                     }
                 } catch (Exception e) {
+                    System.err.println(">>> [RESEND DISPATCH ERROR]: " + e.getMessage());
                     log.error("Resend HTTPS dispatch failed: {}", e.getMessage(), e);
                 }
+            } else {
+                System.out.println(">>> [RESEND NOTICE] No RESEND_API_KEY detected in environment. Attempting SMTP...");
             }
 
             // Fallback to standard SMTP
