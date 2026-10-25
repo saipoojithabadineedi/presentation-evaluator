@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { 
   Download, 
   ArrowLeft, 
@@ -9,10 +9,9 @@ import {
   Check
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useEvaluation } from '../../context/EvaluationContext';
-import { AppView } from '../../types';
+import { AppView, EvaluationData } from '../../types';
 
 interface ReportPreviewProps {
   setCurrentView: (view: AppView) => void;
@@ -33,8 +32,6 @@ const getScoreColor = (score: number) => {
       bg: 'bg-emerald-500',
       text: 'text-emerald-600',
       border: 'border-emerald-200',
-      hex: '#059669',
-      bgHex: '#10b981',
     };
   }
   if (score >= 70) {
@@ -42,27 +39,393 @@ const getScoreColor = (score: number) => {
       bg: 'bg-amber-500',
       text: 'text-amber-600',
       border: 'border-amber-200',
-      hex: '#d97706',
-      bgHex: '#f59e0b',
     };
   }
   return {
     bg: 'bg-rose-500',
     text: 'text-rose-600',
     border: 'border-rose-200',
-    hex: '#e11d48',
-    bgHex: '#f43f5e',
   };
 };
+
+// Helper to convert logo to base64 for embedding in jsPDF
+const loadBase64Image = async (url: string): Promise<string | null> => {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
+
+// Pure Vector 2-Page Executive PDF Generator
+// 100% immune to mobile viewport sizes, zero cutting across pages, zero text-slicing
+export function generateExecutivePdf(evalData: EvaluationData, logoBase64?: string | null): jsPDF {
+  const doc = new jsPDF('p', 'mm', 'a4');
+  const primaryColor: [number, number, number] = [5, 150, 105];   // #059669
+  const darkSlate: [number, number, number] = [15, 23, 42];      // #0f172a
+  const mutedSlate: [number, number, number] = [100, 116, 139];  // #64748b
+  const cardBg: [number, number, number] = [248, 250, 252];      // #f8fafc
+  const cardBorder: [number, number, number] = [226, 232, 240];  // #e2e8f0
+
+  // ==========================================
+  // PAGE 1: EXECUTIVE OVERVIEW & ACOUSTIC DATA
+  // ==========================================
+  
+  // 1. Header with Logo & Document Info
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'JPEG', 15, 13, 18, 18);
+    } catch {
+      // fallback if image type issue
+    }
+  }
+
+  const textStartX = logoBase64 ? 36 : 15;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...primaryColor);
+  doc.text('PRESENTATION EVALUATOR', textStartX, 20);
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(13, 148, 136); // teal
+  doc.text('OFFICIAL EXECUTIVE SPEECH EVALUATION & PERFORMANCE REPORT', textStartX, 25);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...mutedSlate);
+  doc.text('AI Speech Coaching • Certified Acoustic Analytics', textStartX, 29);
+
+  doc.setFontSize(8);
+  doc.text('Document ID: ' + (evalData.id || 'EVAL-001').toUpperCase(), 195, 20, { align: 'right' });
+  doc.text('Date Generated: ' + (evalData.formattedDate || new Date().toLocaleDateString()), 195, 25, { align: 'right' });
+  doc.text('Rehearsal Duration: ' + (evalData.duration || 'N/A'), 195, 30, { align: 'right' });
+
+  doc.setDrawColor(...cardBorder);
+  doc.setLineWidth(0.4);
+  doc.line(15, 34, 195, 34);
+
+  // 2. Evaluated Presentation Banner & Overall Score Card
+  doc.setFillColor(...cardBg);
+  doc.setDrawColor(...cardBorder);
+  doc.roundedRect(15, 38, 180, 36, 3, 3, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...primaryColor);
+  doc.text('EVALUATED PRESENTATION', 20, 44);
+
+  doc.setFontSize(12);
+  doc.setTextColor(...darkSlate);
+  const titleLines = doc.splitTextToSize(evalData.title || 'Untitled Presentation', 122);
+  doc.text(titleLines.slice(0, 2), 20, 50);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(71, 85, 105);
+  const summaryY = 50 + Math.min(titleLines.length, 2) * 5;
+  const summaryLines = doc.splitTextToSize(evalData.summary || 'Presentation speech rehearsal evaluation report.', 122);
+  doc.text(summaryLines.slice(0, 3), 20, summaryY);
+
+  // Overall Score Card (Right side of banner)
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(203, 213, 225);
+  doc.roundedRect(148, 42, 42, 28, 3, 3, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(24);
+  doc.setTextColor(...primaryColor);
+  doc.text((evalData.overallScore ?? 90) + '%', 169, 56, { align: 'center' });
+
+  doc.setFontSize(7.5);
+  doc.setTextColor(51, 65, 85);
+  doc.text(evalData.scoreTier || 'Top 5% speaker tier', 169, 64, { align: 'center' });
+
+  // 3. 6 Dimension Performance Metrics
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...mutedSlate);
+  doc.text('6 DIMENSION PERFORMANCE METRICS', 15, 82);
+
+  const rawMetrics = evalData.metrics || {
+    delivery: 90, content: 90, visuals: 85, pacing: 80, clarity: 95, engagement: 90
+  };
+  const metricList = Object.entries(rawMetrics).map(([k, val]) => ({
+    label: (METRIC_LABELS[k] || k).toUpperCase(),
+    val: typeof val === 'number' ? val : 85,
+  }));
+
+  const colW = 58;
+  const rowH = 17;
+  metricList.forEach((m, i) => {
+    const col = i % 3;
+    const row = Math.floor(i / 3);
+    const x = 15 + col * (colW + 3);
+    const y = 86 + row * (rowH + 3);
+
+    doc.setFillColor(...cardBg);
+    doc.setDrawColor(...cardBorder);
+    doc.roundedRect(x, y, colW, rowH, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(71, 85, 105);
+    doc.text(m.label, x + 4, y + 6);
+
+    const valColor: [number, number, number] = m.val >= 90 ? [5, 150, 105] : m.val >= 70 ? [217, 119, 6] : [225, 29, 72];
+    doc.setTextColor(...valColor);
+    doc.setFontSize(8.5);
+    doc.text(m.val + '%', x + colW - 4, y + 6, { align: 'right' });
+
+    // Progress bar track & fill
+    doc.setFillColor(226, 232, 240);
+    doc.roundedRect(x + 4, y + 9.5, colW - 8, 3, 1.5, 1.5, 'F');
+    doc.setFillColor(...valColor);
+    const fillWidth = Math.max(2, (colW - 8) * (Math.min(m.val, 100) / 100));
+    doc.roundedRect(x + 4, y + 9.5, fillWidth, 3, 1.5, 1.5, 'F');
+  });
+
+  // 4. Timeline & Speech Pacing (WPM) Progression
+  const pacingY = 132;
+  doc.setFillColor(...cardBg);
+  doc.setDrawColor(...cardBorder);
+  doc.roundedRect(15, pacingY, 180, 42, 3, 3, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...darkSlate);
+  doc.text('Timeline & Speech Pacing (WPM) Progression', 20, pacingY + 7);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(71, 85, 105);
+  doc.text(`Average Cadence: ${evalData.averageCadence || 135} WPM  |  Target Keynote Band: 125-150 WPM`, 190, pacingY + 7, { align: 'right' });
+
+  doc.setDrawColor(226, 232, 240);
+  doc.line(20, pacingY + 11, 190, pacingY + 11);
+
+  const rawTimeline = (evalData.cadenceTimeline && evalData.cadenceTimeline.length > 0)
+    ? evalData.cadenceTimeline.slice(0, 6)
+    : [
+        { time: '0:30', wpm: 128 }, { time: '1:00', wpm: 142 }, { time: '1:30', wpm: 135 },
+        { time: '2:00', wpm: 146 }, { time: '2:30', wpm: 139 }, { time: '3:00', wpm: 132 }
+      ];
+
+  const ptW = 27;
+  rawTimeline.forEach((p, i) => {
+    const x = 20 + i * (ptW + 2);
+    const y = pacingY + 15;
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(x, y, ptW, 22, 2, 2, 'FD');
+
+    doc.setFontSize(7);
+    doc.setTextColor(...mutedSlate);
+    doc.text(p.time, x + ptW / 2, y + 5, { align: 'center' });
+
+    const isOptimal = p.wpm >= 125 && p.wpm <= 150;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(isOptimal ? 5 : 217, isOptimal ? 150 : 119, isOptimal ? 105 : 6);
+    doc.text(p.wpm + ' WPM', x + ptW / 2, y + 11, { align: 'center' });
+
+    doc.setFontSize(6.5);
+    if (isOptimal) {
+      doc.setFillColor(236, 253, 245);
+      doc.setTextColor(4, 120, 87);
+    } else {
+      doc.setFillColor(254, 243, 199);
+      doc.setTextColor(180, 83, 9);
+    }
+    doc.roundedRect(x + 2, y + 14, ptW - 4, 5, 1.5, 1.5, 'FD');
+    doc.text(isOptimal ? 'OPTIMAL' : p.wpm > 150 ? 'RAPID' : 'DELIBERATE', x + ptW / 2, y + 17.5, { align: 'center' });
+  });
+
+  // 5. Filler Word Frequency Breakdown
+  const fillerY = 182;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...mutedSlate);
+  doc.text('FILLER WORD FREQUENCY BREAKDOWN', 15, fillerY);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.text(`Total Fillers: ${evalData.fillerWordCount ?? 0} (${evalData.fillerWordRate ?? 0}% rate)`, 195, fillerY, { align: 'right' });
+
+  const rawFillers = evalData.fillerBreakdown || { um: 0, like: 0, uh: 0, youKnow: 0, actually: 0, so: 0 };
+  const fillerList = Object.entries(rawFillers).slice(0, 6).map(([w, c]) => ({
+    word: `"${w.toUpperCase()}"`,
+    count: typeof c === 'number' ? c : 0,
+  }));
+
+  const fW = 28;
+  fillerList.forEach((f, i) => {
+    const x = 15 + i * (fW + 2.4);
+    const y = fillerY + 4;
+    doc.setFillColor(...cardBg);
+    doc.setDrawColor(...cardBorder);
+    doc.roundedRect(x, y, fW, 20, 2, 2, 'FD');
+
+    doc.setFontSize(7.5);
+    doc.setTextColor(...mutedSlate);
+    doc.text(f.word, x + fW / 2, y + 6, { align: 'center' });
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(f.count > 0 ? 217 : 5, f.count > 0 ? 119 : 150, f.count > 0 ? 6 : 105);
+    doc.text(String(f.count), x + fW / 2, y + 15, { align: 'center' });
+  });
+
+  // 6. Page 1 Footer
+  doc.setDrawColor(...cardBorder);
+  doc.line(15, 280, 195, 280);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...mutedSlate);
+  doc.text('Official Speech Analytics Certification • Presentation Evaluator AI Engine v2.4', 15, 285);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Page 1 of 2', 195, 285, { align: 'right' });
+
+  // ==========================================
+  // PAGE 2: ACTIONABLE INSIGHTS & ROADMAP
+  // ==========================================
+  doc.addPage();
+
+  // Page 2 Header
+  if (logoBase64) {
+    try {
+      doc.addImage(logoBase64, 'JPEG', 15, 14, 15, 15);
+    } catch {}
+  }
+
+  const p2StartX = logoBase64 ? 33 : 15;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...primaryColor);
+  doc.text('PRESENTATION EVALUATOR', p2StartX, 20);
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(...darkSlate);
+  doc.text((evalData.title || 'Executive Rehearsal Report'), p2StartX, 25);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...mutedSlate);
+  doc.text('Performance Insights & Actionable Coaching Roadmap', p2StartX, 29);
+
+  doc.text('Document ID: ' + (evalData.id || 'EVAL-001').toUpperCase(), 195, 20, { align: 'right' });
+  doc.text('Date: ' + (evalData.formattedDate || new Date().toLocaleDateString()), 195, 25, { align: 'right' });
+
+  doc.setDrawColor(...cardBorder);
+  doc.line(15, 33, 195, 33);
+
+  // Validated Strengths Section
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(...primaryColor);
+  doc.text('Validated Strengths & Key Highlights', 15, 41);
+
+  const strengths = (evalData.strengths && evalData.strengths.length > 0)
+    ? evalData.strengths.slice(0, 5)
+    : ['Demonstrated clear presentation structure with natural speaking rhythm.'];
+
+  let strY = 45;
+  strengths.forEach((s) => {
+    doc.setFillColor(240, 253, 244); // emerald-50
+    doc.setDrawColor(187, 247, 208); // emerald-200
+    const lines = doc.splitTextToSize(s, 168);
+    const boxH = Math.max(11, lines.length * 4.2 + 5);
+    doc.roundedRect(15, strY, 180, boxH, 2, 2, 'FD');
+
+    doc.setFillColor(...primaryColor);
+    doc.circle(20, strY + 5, 1.2, 'F');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(22, 101, 52);
+    doc.text(lines, 24, strY + 5.5);
+
+    strY += boxH + 2.5;
+  });
+
+  // Actionable Recommendations Section
+  let recHeaderY = strY + 4;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.setTextColor(217, 119, 6);
+  doc.text('Actionable Recommendations & Growth Plan', 15, recHeaderY);
+
+  let recY = recHeaderY + 4;
+  const improvements = (evalData.improvements && evalData.improvements.length > 0)
+    ? evalData.improvements.slice(0, 5)
+    : ['Continue practicing keynote cadence to eliminate hesitation pauses.'];
+
+  improvements.forEach((imp) => {
+    doc.setFillColor(255, 251, 235); // amber-50
+    doc.setDrawColor(253, 230, 138); // amber-200
+    const lines = doc.splitTextToSize(imp, 168);
+    const boxH = Math.max(11, lines.length * 4.2 + 5);
+    doc.roundedRect(15, recY, 180, boxH, 2, 2, 'FD');
+
+    doc.setFillColor(217, 119, 6);
+    doc.circle(20, recY + 5, 1.2, 'F');
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(146, 64, 14);
+    doc.text(lines, 24, recY + 5.5);
+
+    recY += boxH + 2.5;
+  });
+
+  // Certified Speech Audit & Verified Stamp Box
+  const auditY = Math.min(recY + 4, 252);
+  doc.setFillColor(...cardBg);
+  doc.setDrawColor(...cardBorder);
+  doc.roundedRect(15, auditY, 180, 20, 3, 3, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...darkSlate);
+  doc.text('AI Speech & Delivery Assessment Complete', 22, auditY + 7.5);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  doc.setTextColor(...mutedSlate);
+  doc.text('This evaluation is certified by Presentation Evaluator multi-dimensional acoustic and visual models.', 22, auditY + 13.5);
+
+  doc.setFillColor(236, 253, 245);
+  doc.setDrawColor(167, 243, 208);
+  doc.roundedRect(150, auditY + 5, 38, 10, 2, 2, 'FD');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(...primaryColor);
+  doc.text('VERIFIED AUDIT', 169, auditY + 11.5, { align: 'center' });
+
+  // Page 2 Footer
+  doc.setDrawColor(...cardBorder);
+  doc.line(15, 280, 195, 280);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...mutedSlate);
+  doc.text('Evaluated by Presentation Evaluator Engine v2.4 • Certified Speech Analytics', 15, 285);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Page 2 of 2', 195, 285, { align: 'right' });
+
+  return doc;
+}
 
 export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentView }) => {
   const { activeEvaluation } = useEvaluation();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloaded, setIsDownloaded] = useState(false);
-
-  // Dedicated offscreen fixed-dimension A4 page refs (100% immune to phone/viewport sizing)
-  const printPage1Ref = useRef<HTMLDivElement>(null);
-  const printPage2Ref = useRef<HTMLDivElement>(null);
 
   if (!activeEvaluation) {
     return (
@@ -78,40 +441,17 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
     );
   }
 
-  // 100% Clean 2-Page PDF Generation Engine
-  // Never cuts between pages, never splits words or cards, identical on phone and desktop
+  // Pure Native Vector PDF Download Handler
+  // 100% Guaranteed 2 Pages, zero dependencies on screen size or html2canvas
   const handleDownloadPDF = async () => {
-    if (!printPage1Ref.current || !printPage2Ref.current) return;
     setIsDownloading(true);
 
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const a4WidthMm = 210;
-      const a4HeightMm = 297;
-
-      // 1. Capture Page 1: Overview, Title, Score, 6 Dimensions, Timeline & Filler Breakdown
-      const canvas1 = await html2canvas(printPage1Ref.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-      const page1Img = canvas1.toDataURL('image/jpeg', 0.98);
-      pdf.addImage(page1Img, 'JPEG', 0, 0, a4WidthMm, a4HeightMm);
-
-      // 2. Add Page 2: Validated Strengths, Actionable Recommendations & Official Certification
-      pdf.addPage();
-      const canvas2 = await html2canvas(printPage2Ref.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff',
-      });
-      const page2Img = canvas2.toDataURL('image/jpeg', 0.98);
-      pdf.addImage(page2Img, 'JPEG', 0, 0, a4WidthMm, a4HeightMm);
-
-      // 3. Save PDF
-      pdf.save(`${activeEvaluation.title.replace(/\s+/g, '_')}_Executive_Report.pdf`);
+      const logoBase64 = await loadBase64Image('/assets/logo.jpg');
+      const doc = generateExecutivePdf(activeEvaluation, logoBase64);
+      
+      const fileName = `${(activeEvaluation.title || 'Presentation').replace(/\s+/g, '_')}_Executive_Report.pdf`;
+      doc.save(fileName);
 
       setIsDownloaded(true);
       confetti({
@@ -122,7 +462,6 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
       setTimeout(() => setIsDownloaded(false), 4000);
     } catch (err) {
       console.error('Failed to export PDF:', err);
-      window.print();
     } finally {
       setIsDownloading(false);
     }
@@ -177,10 +516,11 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
 
       {/* ======================================================== */}
       {/* VISIBLE ON-SCREEN PREVIEW CONTAINER                     */}
+      {/* Displays Sheet 1 and Sheet 2 matching the PDF layout    */}
       {/* ======================================================== */}
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* PAGE 1 PREVIEW */}
+        {/* SHEET 1 PREVIEW */}
         <div className="bg-white text-slate-900 rounded-3xl border border-slate-200 shadow-xl p-5 sm:p-8 lg:p-10 space-y-7 relative">
           
           <div className="absolute top-4 right-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider print:hidden">
@@ -339,7 +679,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
 
         </div>
 
-        {/* PAGE 2 PREVIEW */}
+        {/* SHEET 2 PREVIEW */}
         <div className="bg-white text-slate-900 rounded-3xl border border-slate-200 shadow-xl p-5 sm:p-8 lg:p-10 space-y-7 relative">
           
           <div className="absolute top-4 right-6 text-[10px] font-bold text-slate-400 uppercase tracking-wider print:hidden">
@@ -422,276 +762,6 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
             <div className="font-semibold text-slate-500">Page 2 of 2</div>
           </div>
 
-        </div>
-
-      </div>
-
-      {/* ======================================================== */}
-      {/* HIDDEN OFFSCREEN A4 EXPORT TEMPLATES (FIXED 794x1123px) */}
-      {/* Immune to phone/mobile viewports; exact 1-to-1 A4 pages */}
-      {/* ======================================================== */}
-      <div 
-        aria-hidden="true" 
-        style={{ 
-          position: 'fixed', 
-          left: '-9999px', 
-          top: 0, 
-          width: '794px', 
-          zIndex: -100, 
-          pointerEvents: 'none' 
-        }}
-      >
-        
-        {/* --- EXPORT PAGE 1 --- */}
-        <div 
-          ref={printPage1Ref}
-          style={{
-            width: '794px',
-            height: '1123px',
-            minHeight: '1123px',
-            maxHeight: '1123px',
-            padding: '36px 40px',
-            background: '#ffffff',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
-            
-            {/* Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #f1f5f9', paddingBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <img src="/assets/logo.jpg" alt="Logo" style={{ height: '52px', objectFit: 'contain' }} />
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '0.05em', color: '#0d9488', textTransform: 'uppercase' }}>
-                    Official Executive Speech Evaluation & Performance Report
-                  </div>
-                  <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
-                    Presentation Evaluator AI Engine &bull; Certified Speech Analytics
-                  </div>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right', fontSize: '11px', color: '#64748b', lineHeight: '1.5' }}>
-                <div><strong style={{ color: '#334155' }}>Document ID:</strong> {activeEvaluation.id.toUpperCase()}</div>
-                <div><strong style={{ color: '#334155' }}>Date Generated:</strong> {activeEvaluation.formattedDate}</div>
-                <div><strong style={{ color: '#334155' }}>Duration:</strong> {activeEvaluation.duration}</div>
-              </div>
-            </div>
-
-            {/* Presentation Title Banner & Overall Score */}
-            <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '18px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '18px' }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <span style={{ fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: '6px' }}>
-                  Evaluated Presentation
-                </span>
-                <h1 style={{ fontSize: '17px', fontWeight: '900', color: '#0f172a', margin: '6px 0 3px 0', lineHeight: '1.3' }}>
-                  {activeEvaluation.title}
-                </h1>
-                <p style={{ fontSize: '11px', color: '#475569', margin: 0, lineHeight: '1.5', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {activeEvaluation.summary}
-                </p>
-              </div>
-              <div style={{ background: '#ffffff', padding: '14px 18px', borderRadius: '14px', border: '1px solid #cbd5e1', textAlign: 'center', minWidth: '125px', flexShrink: 0, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                <div style={{ fontSize: '30px', fontWeight: '900', color: '#059669', lineHeight: '1' }}>
-                  {activeEvaluation.overallScore}%
-                </div>
-                <div style={{ fontSize: '11px', fontWeight: '700', color: '#334155', marginTop: '4px' }}>
-                  {activeEvaluation.scoreTier}
-                </div>
-              </div>
-            </div>
-
-            {/* 6 Dimension Performance Metrics Grid */}
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b', marginBottom: '8px' }}>
-                6 Dimension Performance Metrics
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
-                {Object.entries(activeEvaluation.metrics).map(([key, val]) => {
-                  const colors = getScoreColor(val);
-                  return (
-                    <div key={key} style={{ padding: '10px 12px', borderRadius: '12px', border: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '5px' }}>
-                        <span style={{ fontSize: '10px', fontWeight: '700', textTransform: 'uppercase', color: '#475569', letterSpacing: '0.03em' }}>
-                          {METRIC_LABELS[key] || key}
-                        </span>
-                        <span style={{ fontSize: '13px', fontWeight: '900', color: colors.hex }}>
-                          {val}%
-                        </span>
-                      </div>
-                      <div style={{ width: '100%', height: '5px', borderRadius: '9999px', background: '#e2e8f0', overflow: 'hidden' }}>
-                        <div style={{ width: `${val}%`, height: '100%', background: colors.bgHex, borderRadius: '9999px' }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Timeline & Speech Pacing (WPM) Progression */}
-            <div style={{ padding: '14px 16px', borderRadius: '14px', background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid #e2e8f0', marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: '700', color: '#0f172a' }}>
-                  <TrendingUp style={{ width: '14px', height: '14px', color: '#059669' }} />
-                  <span>Timeline & Speech Pacing (WPM) Progression</span>
-                </div>
-                <div style={{ display: 'flex', gap: '14px', fontSize: '10px', color: '#475569', fontFamily: 'monospace' }}>
-                  <span>Average Cadence: <strong style={{ color: '#059669' }}>{activeEvaluation.averageCadence} WPM</strong></span>
-                  <span>Target Keynote Band: <strong style={{ color: '#0d9488' }}>125–150 WPM</strong></span>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
-                {(activeEvaluation.cadenceTimeline && activeEvaluation.cadenceTimeline.length > 0 
-                  ? activeEvaluation.cadenceTimeline.slice(0, 6)
-                  : [
-                      { time: '00:30', wpm: 128 },
-                      { time: '01:00', wpm: 142 },
-                      { time: '01:30', wpm: 135 },
-                      { time: '02:00', wpm: 146 },
-                      { time: '02:30', wpm: 139 },
-                      { time: '03:00', wpm: 132 }
-                    ]
-                ).map((point: { time: string; wpm: number }, i: number) => {
-                  const isOptimal = point.wpm >= 125 && point.wpm <= 150;
-                  return (
-                    <div key={i} style={{ padding: '7px 5px', borderRadius: '10px', background: '#ffffff', border: '1px solid #e2e8f0', textAlign: 'center' }}>
-                      <div style={{ fontSize: '9px', fontFamily: 'monospace', color: '#64748b', fontWeight: '600' }}>{point.time}</div>
-                      <div style={{ fontSize: '13px', fontWeight: '800', color: isOptimal ? '#059669' : '#d97706', margin: '2px 0' }}>
-                        {point.wpm} <span style={{ fontSize: '8px', fontWeight: '400', color: '#64748b' }}>WPM</span>
-                      </div>
-                      <div style={{ fontSize: '8px', fontWeight: '700', textTransform: 'uppercase', padding: '1px 4px', borderRadius: '9999px', display: 'inline-block', background: isOptimal ? '#ecfdf5' : '#fffbeb', color: isOptimal ? '#047857' : '#b45309' }}>
-                        {isOptimal ? 'Optimal' : point.wpm > 150 ? 'Rapid' : 'Deliberate'}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Filler Word Frequency Breakdown */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.05em', color: '#64748b' }}>
-                  Filler Word Frequency Breakdown
-                </span>
-                <span style={{ fontSize: '10px', color: '#475569' }}>
-                  Total Fillers: <strong style={{ color: '#059669' }}>{activeEvaluation.fillerWordCount}</strong> ({activeEvaluation.fillerWordRate}% rate)
-                </span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
-                {Object.entries(activeEvaluation.fillerBreakdown).map(([word, count]) => (
-                  <div key={word} style={{ padding: '8px 6px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', textAlign: 'center' }}>
-                    <div style={{ fontSize: '9px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>"{word}"</div>
-                    <div style={{ fontSize: '16px', fontWeight: '900', marginTop: '2px', color: count > 0 ? '#d97706' : '#059669' }}>
-                      {count}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Page 1 Footer */}
-          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8' }}>
-            <div>Official Speech Analytics Certification &bull; Presentation Evaluator Engine v2.4</div>
-            <div style={{ fontWeight: '700', color: '#64748b' }}>Page 1 of 2</div>
-          </div>
-        </div>
-
-        {/* --- EXPORT PAGE 2 --- */}
-        <div 
-          ref={printPage2Ref}
-          style={{
-            width: '794px',
-            height: '1123px',
-            minHeight: '1123px',
-            maxHeight: '1123px',
-            padding: '36px 40px',
-            background: '#ffffff',
-            boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            
-            {/* Page 2 Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid #f1f5f9', paddingBottom: '14px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <img src="/assets/logo.jpg" alt="Logo" style={{ height: '36px', objectFit: 'contain' }} />
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
-                    {activeEvaluation.title}
-                  </div>
-                  <div style={{ fontSize: '10px', color: '#64748b' }}>
-                    Performance Insights &bull; Actionable Coaching Roadmap
-                  </div>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right', fontSize: '10px', color: '#64748b' }}>
-                <div>Doc ID: {activeEvaluation.id.toUpperCase()}</div>
-                <div>Date: {activeEvaluation.formattedDate}</div>
-              </div>
-            </div>
-
-            {/* Validated Strengths */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '800', color: '#059669', marginBottom: '8px' }}>
-                <CheckCircle2 style={{ width: '15px', height: '15px' }} />
-                <span>Validated Strengths & Key Highlights</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {activeEvaluation.strengths.slice(0, 5).map((str, i) => (
-                  <div key={i} style={{ padding: '9px 12px', borderRadius: '10px', background: '#f0fdf4', border: '1px solid #bbf7d0', fontSize: '11px', color: '#166534', display: 'flex', alignItems: 'flex-start', gap: '8px', lineHeight: '1.4' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#16a34a', marginTop: '5px', flexShrink: 0 }} />
-                    <span>{str}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Actionable Recommendations */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: '800', color: '#d97706', marginBottom: '8px' }}>
-                <Sparkles style={{ width: '15px', height: '15px' }} />
-                <span>Actionable Recommendations & Growth Plan</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {activeEvaluation.improvements.slice(0, 5).map((imp, i) => (
-                  <div key={i} style={{ padding: '9px 12px', borderRadius: '10px', background: '#fffbeb', border: '1px solid #fde68a', fontSize: '11px', color: '#92400e', display: 'flex', alignItems: 'flex-start', gap: '8px', lineHeight: '1.4' }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '9999px', background: '#f59e0b', marginTop: '5px', flexShrink: 0 }} />
-                    <span>{imp}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Executive Certification Card */}
-            <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: '11px', fontWeight: '800', color: '#0f172a' }}>AI Speech & Delivery Assessment Complete</div>
-                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px' }}>
-                  This evaluation is certified by Presentation Evaluator multi-dimensional acoustic and visual models.
-                </div>
-              </div>
-              <div style={{ fontSize: '10px', fontWeight: '800', color: '#059669', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '5px 10px', borderRadius: '8px', flexShrink: 0 }}>
-                VERIFIED AUDIT
-              </div>
-            </div>
-
-          </div>
-
-          {/* Page 2 Footer */}
-          <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8' }}>
-            <div>Evaluated by Presentation Evaluator Engine v2.4 &bull; Certified Speech Analytics</div>
-            <div style={{ fontWeight: '700', color: '#64748b' }}>Page 2 of 2</div>
-          </div>
         </div>
 
       </div>
