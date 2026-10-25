@@ -76,6 +76,14 @@ public class AuthService {
             throw new IllegalArgumentException("An account with this email address is already registered.");
         }
 
+        if (request.getPassword() == null || request.getPassword().length() < 8 ||
+            !request.getPassword().matches(".*[A-Z].*") ||
+            !request.getPassword().matches(".*[a-z].*") ||
+            !request.getPassword().matches(".*[0-9].*") ||
+            !request.getPassword().matches(".*[@$!%*?&#^()_+\\-=\\[\\]{}|;:',.<>/~`].*")) {
+            throw new IllegalArgumentException("Password must be at least 8 characters long and include uppercase, lowercase, number, and special character.");
+        }
+
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
         UserEntity newUser = UserEntity.builder()

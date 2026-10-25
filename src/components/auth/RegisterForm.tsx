@@ -19,12 +19,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Password Strength Criteria Evaluation
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[@$!%*?&#^()_+\-=\[\]{}|;:',.<>/~`]/.test(password);
+  const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (!isPasswordValid) {
+      setError('Password does not meet all security rules. Please follow the checklist below.');
       return;
     }
 
@@ -48,16 +56,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
       }
 
       // Dispatch welcome confirmation email to user's registered inbox
-      fetch('/api/send-welcome', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), name: fullName.trim() || 'User' })
-      }).catch(e => console.warn('Welcome email dispatch notice:', e));
+      try {
+        await fetch('/api/send-welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim().toLowerCase(), name: fullName.trim() || 'User' })
+        });
+      } catch (welcomeErr) {
+        console.warn('Welcome email dispatch notice:', welcomeErr);
+      }
 
       localStorage.setItem('pe_full_name_' + email.trim().toLowerCase(), fullName.trim());
       localStorage.setItem('pe_last_login_credential', email.trim());
       localStorage.setItem('pe_remembered_credentials', email.trim());
-      localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! A welcome confirmation has been sent to your email.');
+      localStorage.setItem('pe_reg_success_msg', 'Account registered successfully! A welcome confirmation has been sent to your email (check your Spam/Updates folder if not in Inbox).');
       setCurrentView('login');
     } catch (err: any) {
       setError(err.message || 'Registration failed.');
@@ -278,6 +290,35 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
                   </div>
                 </div>
 
+                {/* Password Strength Checklist */}
+                <div className="p-3 rounded-xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/90 dark:border-slate-700/80 space-y-1.5 shadow-2xs">
+                  <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                    Password Security Rules:
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
+                    <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {hasMinLength ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                      <span>At least 8 chars</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${hasUppercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {hasUppercase ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                      <span>Uppercase (A-Z)</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${hasLowercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {hasLowercase ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                      <span>Lowercase (a-z)</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {hasNumber ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                      <span>Number (0-9)</span>
+                    </div>
+                    <div className={`flex items-center gap-1.5 col-span-2 ${hasSpecialChar ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                      {hasSpecialChar ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                      <span>Special char (@, $, !, %, &, #, etc.)</span>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Terms Checkbox */}
                 <div className="flex items-start gap-2 pt-0.5">
                   <button
@@ -302,7 +343,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || !isPasswordValid || password !== confirmPassword}
                   className="w-full py-3 sm:py-3.5 px-4 rounded-xl bg-[#059669] hover:bg-[#047857] active:bg-[#065f46] text-white font-bold text-sm shadow-md shadow-[#059669]/20 flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-60 cursor-pointer"
                 >
                   <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>

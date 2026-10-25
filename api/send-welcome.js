@@ -87,7 +87,7 @@ presentationevaluator2@gmail.com`;
     const info = await transporter.sendMail({
       from: emailUser,
       to: email.trim(),
-      subject: 'Welcome to Presentation Evaluator! You have registered successfully 🎉',
+      subject: 'Welcome to Presentation Evaluator - Registration Successful',
       text: textContent,
       html: htmlContent,
     });
