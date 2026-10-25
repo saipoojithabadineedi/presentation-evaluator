@@ -25,8 +25,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Recipient email and OTP are required' });
     }
 
-    const emailUser = process.env.EMAIL_USER || 'thupakulakulayappa24@gmail.com';
-    const emailPassword = process.env.EMAIL_PASSWORD || 'blxwhvqotlyrthbr';
+    const emailUser = process.env.EMAIL_USER || 'presentationevaluator2@gmail.com';
+    const emailPassword = process.env.EMAIL_PASSWORD || 'oqifftiejiinklwd';
 
     // Port 465 with SSL/TLS directly to Gmail (Never blocked on Vercel)
     const transporter = nodemailer.createTransport({

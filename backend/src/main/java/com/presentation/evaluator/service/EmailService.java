@@ -19,7 +19,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username:thupakulakulayappa24@gmail.com}")
+    @Value("${spring.mail.username:presentationevaluator2@gmail.com}")
     private String fromEmail;
 
     @Value("${resend.api-key:${RESEND_API_KEY:}}")
