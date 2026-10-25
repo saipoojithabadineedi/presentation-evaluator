@@ -1,5 +1,5 @@
 services:
-  # 1. Spring Boot Backend Web Service
+  # Spring Boot Backend Web Service (100% Free - No Credit Card Needed)
   - type: web
     name: presentation-evaluator-backend
     runtime: docker
@@ -7,39 +7,7 @@ services:
     envVars:
       - key: PORT
         value: 8080
-      - key: SPRING_DATASOURCE_URL
-        fromDatabase:
-          name: presentation-evaluator-db
-          property: connectionString
-      - key: SPRING_DATASOURCE_USERNAME
-        fromDatabase:
-          name: presentation-evaluator-db
-          property: user
-      - key: SPRING_DATASOURCE_PASSWORD
-        fromDatabase:
-          name: presentation-evaluator-db
-          property: password
-
-  # 2. React Vite Frontend Static Site
-  - type: web
-    name: presentation-evaluator-frontend
-    runtime: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: presentation-evaluator-backend
-          property: host
-
-databases:
-  # 3. Free Managed PostgreSQL Database
-  - name: presentation-evaluator-db
-    databaseName: presentation_db
-    user: presentation_user
-    plan: free
+      - key: EMAIL_USER
+        value: thupakulakulayappa24@gmail.com
+      - key: EMAIL_PASSWORD
+        value: blxwhvqotlyrthbr
