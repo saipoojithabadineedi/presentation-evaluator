@@ -46,9 +46,34 @@ public class EmailService {
 
         log.info(">>> [OTP DISPATCH] Generated verification OTP [{}] for recipient [{}]", otpCode, recipientEmail);
 
-        // 3. Dispatch email asynchronously (HTTPS API first to bypass cloud SMTP firewall blocks, then SMTP fallback)
+        // 3. Dispatch email asynchronously (Vercel HTTPS dispatcher first to bypass Render SMTP block and Resend domain limits)
         java.util.concurrent.CompletableFuture.runAsync(() -> {
-            // Attempt HTTPS delivery via Resend API (Port 443 - Never blocked by Render/Cloud firewalls)
+            // 1. Primary: Dispatch via Vercel HTTPS Email Dispatcher (Sends to ANY email via authenticated Gmail port 465)
+            try {
+                String vercelUrl = System.getenv().getOrDefault("VERCEL_MAIL_URL", "https://presentation-evaluator.vercel.app/api/send-otp");
+                System.out.println(">>> [VERCEL DISPATCH] Connecting to " + vercelUrl + " for recipient " + recipientEmail);
+
+                String jsonPayload = String.format("{\"to\": \"%s\", \"otp\": \"%s\"}", recipientEmail, otpCode);
+
+                java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+                java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                        .uri(java.net.URI.create(vercelUrl))
+                        .header("Content-Type", "application/json")
+                        .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
+                        .build();
+
+                java.net.http.HttpResponse<String> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofString());
+                System.out.println(">>> [VERCEL DISPATCH STATUS " + response.statusCode() + "]: " + response.body());
+                if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                    log.info("Successfully dispatched email via Vercel dispatcher to {}: {}", recipientEmail, response.body());
+                    return;
+                }
+            } catch (Exception e) {
+                System.err.println(">>> [VERCEL DISPATCH ERROR]: " + e.getMessage());
+                log.warn("Vercel mail dispatcher attempt failed: {}", e.getMessage());
+            }
+
+            // 2. Secondary: Attempt HTTPS delivery via Resend API (Port 443)
             if (resendApiKey != null && !resendApiKey.isBlank()) {
                 try {
                     String cleanKey = resendApiKey.trim();
