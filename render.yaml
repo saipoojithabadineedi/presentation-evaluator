@@ -12,3 +12,5 @@ services:
         value: thupakulakulayappa24@gmail.com
       - key: EMAIL_PASSWORD
         value: blxwhvqotlyrthbr
+      - key: RESEND_API_KEY
+        sync: false

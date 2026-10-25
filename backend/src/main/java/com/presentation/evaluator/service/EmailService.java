@@ -51,7 +51,22 @@ public class EmailService {
             // Attempt HTTPS delivery via Resend API (Port 443 - Never blocked by Render/Cloud firewalls)
             if (resendApiKey != null && !resendApiKey.isBlank()) {
                 try {
-                    System.out.println(">>> [RESEND DISPATCH] Connecting to api.resend.com for " + recipientEmail);
+                    String cleanKey = resendApiKey.trim();
+                    // Strip accidental wrapping quotes ("re_..." or 're_...')
+                    if ((cleanKey.startsWith("\"") && cleanKey.endsWith("\"")) || 
+                        (cleanKey.startsWith("'") && cleanKey.endsWith("'"))) {
+                        cleanKey = cleanKey.substring(1, cleanKey.length() - 1).trim();
+                    }
+                    // Strip accidental 'Bearer ' prefix
+                    if (cleanKey.toLowerCase().startsWith("bearer ")) {
+                        cleanKey = cleanKey.substring(7).trim();
+                    }
+
+                    String maskedKey = cleanKey.length() > 6 
+                            ? cleanKey.substring(0, 3) + "..." + cleanKey.substring(cleanKey.length() - 3)
+                            : "(too short: " + cleanKey.length() + " chars)";
+                    System.out.println(">>> [RESEND DISPATCH] Connecting to api.resend.com for " + recipientEmail + " using key [" + maskedKey + "]");
+
                     String jsonPayload = String.format("""
                         {
                           "from": "onboarding@resend.dev",
@@ -64,7 +79,7 @@ public class EmailService {
                     java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
                     java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
                             .uri(java.net.URI.create("https://api.resend.com/emails"))
-                            .header("Authorization", "Bearer " + resendApiKey.trim())
+                            .header("Authorization", "Bearer " + cleanKey)
                             .header("Content-Type", "application/json")
                             .POST(java.net.http.HttpRequest.BodyPublishers.ofString(jsonPayload))
                             .build();
