@@ -13,6 +13,7 @@ import confetti from 'canvas-confetti';
 import { useEvaluation } from '../../context/EvaluationContext';
 import { ProfileSubNav } from './ProfileSubNav';
 import { AppView, ReportItem } from '../../types';
+import { generateExecutivePdf } from '../reports/ReportPreviewModal';
 
 interface ReportsArchiveViewProps {
   setCurrentView: (view: AppView) => void;
@@ -35,22 +36,26 @@ export const ReportsArchiveView: React.FC<ReportsArchiveViewProps> = ({ setCurre
     }
   };
 
-  const handleInstantDownload = (report: ReportItem) => {
+  const handleInstantDownload = async (report: ReportItem) => {
     setDownloadingId(report.id);
     const matchingEval = evaluations.find(e => e.id === report.evaluationId) || evaluations[0];
     setActiveEvaluation(matchingEval);
     setActiveReport(report);
 
-    setTimeout(() => {
-      setDownloadingId(null);
+    try {
+      const doc = generateExecutivePdf(matchingEval);
+      doc.save(`${(matchingEval.title || 'Presentation').replace(/\s+/g, '_')}_Executive_Report.pdf`);
       confetti({
         particleCount: 70,
         spread: 60,
         origin: { y: 0.7 }
       });
-      // Navigate to report view to preview/download
+    } catch (err) {
+      console.error('Instant download error:', err);
       setCurrentView('report');
-    }, 600);
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
