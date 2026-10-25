@@ -190,7 +190,7 @@ public class EmailService {
                 SimpleMailMessage message = new SimpleMailMessage();
                 message.setFrom(fromEmail);
                 message.setTo(recipientEmail);
-                message.setSubject("Welcome to Presentation Evaluator! You have registered successfully 🎉");
+                message.setSubject("Welcome to Presentation Evaluator - Registration Successful");
                 message.setText(String.format("""
                     Hello %s,
 
