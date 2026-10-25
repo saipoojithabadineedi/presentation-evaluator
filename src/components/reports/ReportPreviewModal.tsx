@@ -82,26 +82,90 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
 
     try {
       const element = reportRef.current;
+      let sectionOffsets: { top: number; bottom: number }[] = [];
+      let renderedWidth = 900;
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: 1200, // Forces desktop layout evaluation on all devices including mobile phones
+        onclone: (clonedDoc) => {
+          const target = clonedDoc.querySelector('[data-report-container="true"]') as HTMLElement;
+          if (target) {
+            target.style.width = '900px';
+            target.style.minWidth = '900px';
+            target.style.maxWidth = '900px';
+            target.style.padding = '32px';
+            target.style.margin = '0 auto';
+            target.style.borderRadius = '0px';
+            target.style.border = 'none';
+            target.style.boxShadow = 'none';
+
+            renderedWidth = target.offsetWidth || 900;
+
+            const sections = Array.from(target.querySelectorAll('[data-pdf-section="true"]')) as HTMLElement[];
+            sectionOffsets = sections.map((sec) => ({
+              top: sec.offsetTop,
+              bottom: sec.offsetTop + sec.offsetHeight + 16,
+            }));
+          }
+        },
       });
 
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const scaledImgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdfWidthMm = 210;
+      const pdfHeightMm = 297;
       
-      // Calculate total A4 pages required for full content
-      const totalPages = Math.ceil(scaledImgHeight / pageHeight);
-      const canvasPageHeight = (canvas.width * pageHeight) / imgWidth;
+      const scale = canvas.width / (renderedWidth || 900);
+      const canvasPageMaxHeight = (canvas.width * pdfHeightMm) / pdfWidthMm;
 
-      for (let i = 0; i < totalPages; i++) {
+      // Map section offsets to canvas coordinate system
+      const bounds = sectionOffsets.map((s) => ({
+        top: s.top * scale,
+        bottom: s.bottom * scale,
+      }));
+
+      // Calculate clean page split boundaries that never cut through any text or cards
+      let currentSplit = 0;
+      const pageSplits: number[] = [0];
+
+      while (currentSplit < canvas.height) {
+        const maxNextSplit = currentSplit + canvasPageMaxHeight;
+        if (maxNextSplit >= canvas.height - 20) {
+          pageSplits.push(canvas.height);
+          break;
+        }
+
+        // Find the last complete section that finishes before the page bottom
+        let bestSplit = 0;
+        for (const b of bounds) {
+          if (b.bottom > currentSplit && b.bottom <= maxNextSplit) {
+            bestSplit = b.bottom;
+          }
+        }
+
+        // Fallback for safety if a single section exceeds an entire page
+        if (bestSplit <= currentSplit) {
+          bestSplit = maxNextSplit;
+        }
+
+        pageSplits.push(bestSplit);
+        currentSplit = bestSplit;
+      }
+
+      // Render each page slice cleanly without splitting text lines
+      for (let i = 0; i < pageSplits.length - 1; i++) {
+        const startY = pageSplits[i];
+        const endY = pageSplits[i + 1];
+        const sliceHeight = endY - startY;
+
+        if (sliceHeight <= 0) continue;
+
         const pageCanvas = document.createElement('canvas');
         pageCanvas.width = canvas.width;
-        pageCanvas.height = Math.min(canvasPageHeight, canvas.height - i * canvasPageHeight);
+        pageCanvas.height = sliceHeight;
 
         const ctx = pageCanvas.getContext('2d');
         if (ctx) {
@@ -110,22 +174,22 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
           ctx.drawImage(
             canvas,
             0,
-            i * canvasPageHeight,
+            startY,
             canvas.width,
-            pageCanvas.height,
+            sliceHeight,
             0,
             0,
             canvas.width,
-            pageCanvas.height
+            sliceHeight
           );
 
           const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.98);
-          const pageImgHeight = (pageCanvas.height * imgWidth) / canvas.width;
+          const pageImgHeightMm = (sliceHeight * pdfWidthMm) / canvas.width;
 
           if (i > 0) {
             pdf.addPage();
           }
-          pdf.addImage(pageImgData, 'JPEG', 0, 0, imgWidth, pageImgHeight);
+          pdf.addImage(pageImgData, 'JPEG', 0, 0, pdfWidthMm, Math.min(pageImgHeightMm, pdfHeightMm));
         }
       }
 
@@ -135,7 +199,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
       confetti({
         particleCount: 80,
         spread: 60,
-        origin: { y: 0.7 }
+        origin: { y: 0.7 },
       });
       setTimeout(() => setIsDownloaded(false), 4000);
     } catch (err) {
@@ -196,11 +260,12 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
       {/* Printable PDF Report Container (Full Width, Zero Side Margin Clutter) */}
       <div 
         ref={reportRef}
+        data-report-container="true"
         className="bg-white text-slate-900 rounded-3xl border border-slate-200 shadow-2xl p-4 sm:p-6 md:p-8 space-y-8 print:p-2 print:border-none print:shadow-none w-full max-w-7xl mx-auto"
       >
         
         {/* Header with Official Logo & Document Info */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b-2 border-slate-100 gap-6">
+        <div data-pdf-section="true" className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b-2 border-slate-100 gap-6">
           <div>
             <img 
               src="/assets/logo.jpg" 
@@ -220,7 +285,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
         </div>
 
         {/* Presentation Title Banner */}
-        <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div data-pdf-section="true" className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1 max-w-3xl">
             <span className="text-[11px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-md">
               Evaluated Presentation
@@ -244,7 +309,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
         </div>
 
         {/* 6 Dimension Score Metrics Grid */}
-        <div className="space-y-3">
+        <div data-pdf-section="true" className="space-y-3">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
             6 Dimension Performance Metrics
           </h3>
@@ -274,7 +339,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
         </div>
 
         {/* Timeline & Speech Pacing (WPM) Progression Section */}
-        <div className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4">
+        <div data-pdf-section="true" className="p-6 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
             <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
               <TrendingUp className="w-4 h-4 text-brand-600" />
@@ -318,7 +383,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
         </div>
 
         {/* Filler Word Distribution Breakdown */}
-        <div className="space-y-3">
+        <div data-pdf-section="true" className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Filler Word Frequency Breakdown
@@ -340,7 +405,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
         </div>
 
         {/* Strengths & Improvements */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div data-pdf-section="true" className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-brand-600 font-bold text-sm">
@@ -375,7 +440,7 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
         </div>
 
         {/* PDF Footer & Certification */}
-        <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-4">
+        <div data-pdf-section="true" className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-4">
           <div>
             Evaluated by Presentation Evaluator Engine v2.4 • Certified Speech Analytics
           </div>

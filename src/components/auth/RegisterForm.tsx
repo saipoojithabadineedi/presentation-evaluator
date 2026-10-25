@@ -24,7 +24,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) =>
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
   const hasNumber = /\d/.test(password);
-  const hasSpecialChar = /[@$!%*?&#^()_+\-=\[\]{}|;:',.<>/~`]/.test(password);
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
   const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
 
   const handleSubmit = async (e: React.FormEvent) => {

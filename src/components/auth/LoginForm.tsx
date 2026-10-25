@@ -35,6 +35,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
   });
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Password Security Rules Evaluation for Sign In
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[^A-Za-z0-9]/.test(password);
+  const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+
   // Auto-focus and select remembered email if present
   useEffect(() => {
     if (email && emailInputRef.current) {
@@ -49,6 +57,11 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
 
     if (!email.trim() || !password.trim()) {
       setErrorMessage('Please enter your Email Address and Password.');
+      return;
+    }
+
+    if (!isPasswordValid) {
+      setErrorMessage('Password must satisfy all security rules (at least 8 characters, uppercase, lowercase, number, and special character).');
       return;
     }
 
@@ -245,6 +258,48 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
+                  </div>
+
+                  {/* Password Security Rules Dynamic Checklist */}
+                  <div className={`mt-2 p-3 rounded-xl border transition-all ${
+                    password.length > 0
+                      ? isPasswordValid
+                        ? 'bg-emerald-50/90 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800'
+                        : 'bg-slate-50 dark:bg-slate-800/60 border-slate-200/90 dark:border-slate-700/80'
+                      : 'bg-slate-50/70 dark:bg-slate-800/40 border-slate-200/60 dark:border-slate-800'
+                  }`}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                        Password Security Rules:
+                      </p>
+                      {password.length > 0 && isPasswordValid && (
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <Check className="w-3 h-3 stroke-[3]" /> All rules satisfied
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px]">
+                      <div className={`flex items-center gap-1.5 ${hasMinLength ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {hasMinLength ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                        <span>At least 8 chars</span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${hasUppercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {hasUppercase ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                        <span>Uppercase (A-Z)</span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${hasLowercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {hasLowercase ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                        <span>Lowercase (a-z)</span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 ${hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {hasNumber ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                        <span>Number (0-9)</span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 col-span-2 ${hasSpecialChar ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {hasSpecialChar ? <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> : <span className="w-3.5 text-center text-slate-400 shrink-0">•</span>}
+                        <span>Special char (@, $, !, %, &, #, etc.)</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
