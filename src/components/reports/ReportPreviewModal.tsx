@@ -31,20 +31,26 @@ const getScoreColor = (score: number) => {
     return {
       bg: 'bg-emerald-500',
       text: 'text-emerald-600',
+      textDark: 'text-emerald-700',
       border: 'border-emerald-200',
+      pillBg: 'bg-emerald-50 text-emerald-700',
     };
   }
   if (score >= 70) {
     return {
       bg: 'bg-amber-500',
       text: 'text-amber-600',
+      textDark: 'text-amber-700',
       border: 'border-amber-200',
+      pillBg: 'bg-amber-50 text-amber-700',
     };
   }
   return {
     bg: 'bg-rose-500',
     text: 'text-rose-600',
+    textDark: 'text-rose-700',
     border: 'border-rose-200',
+    pillBg: 'bg-rose-50 text-rose-700',
   };
 };
 
@@ -112,91 +118,154 @@ export function generateExecutivePdf(evalData: EvaluationData, logoBase64?: stri
   doc.setLineWidth(0.4);
   doc.line(15, 34, 195, 34);
 
-  // 2. Evaluated Presentation Banner & Overall Score Card
+  // 2. Evaluated Presentation Banner
   doc.setFillColor(...cardBg);
   doc.setDrawColor(...cardBorder);
-  doc.roundedRect(15, 38, 180, 36, 3, 3, 'FD');
+  doc.setLineWidth(0.3);
+  doc.roundedRect(15, 36, 180, 24, 3, 3, 'FD');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(7.5);
   doc.setTextColor(...primaryColor);
-  doc.text('EVALUATED PRESENTATION', 20, 44);
+  doc.text('EVALUATED PRESENTATION', 20, 42);
 
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setTextColor(...darkSlate);
-  const titleLines = doc.splitTextToSize(evalData.title || 'Untitled Presentation', 122);
-  doc.text(titleLines.slice(0, 2), 20, 50);
+  const titleLines = doc.splitTextToSize(evalData.title || 'Untitled Presentation', 170);
+  doc.text(titleLines.slice(0, 1), 20, 48);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(71, 85, 105);
-  const summaryY = 50 + Math.min(titleLines.length, 2) * 5;
-  const summaryLines = doc.splitTextToSize(evalData.summary || 'Presentation speech rehearsal evaluation report.', 122);
-  doc.text(summaryLines.slice(0, 3), 20, summaryY);
+  const summaryLines = doc.splitTextToSize(evalData.summary || 'Presentation speech rehearsal evaluation report.', 170);
+  doc.text(summaryLines.slice(0, 2), 20, 54);
 
-  // Overall Score Card (Right side of banner)
+  // 3. OVERALL SCORE CIRCULAR RING CARD (Left Column - Matches Live Screen)
+  const scoreCardX = 15;
+  const scoreCardY = 63;
+  const scoreCardW = 60;
+  const scoreCardH = 70;
+
   doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(203, 213, 225);
-  doc.roundedRect(148, 42, 42, 28, 3, 3, 'FD');
+  doc.setDrawColor(...cardBorder);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(scoreCardX, scoreCardY, scoreCardW, scoreCardH, 3, 3, 'FD');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(24);
-  doc.setTextColor(...primaryColor);
-  doc.text((evalData.overallScore ?? 90) + '%', 169, 56, { align: 'center' });
-
   doc.setFontSize(7.5);
-  doc.setTextColor(51, 65, 85);
-  doc.text(evalData.scoreTier || 'Top 5% speaker tier', 169, 64, { align: 'center' });
+  doc.setTextColor(71, 85, 105);
+  doc.text('OVERALL PRESENTATION SCORE', scoreCardX + scoreCardW / 2, scoreCardY + 8, { align: 'center' });
 
-  // 3. 6 Dimension Performance Metrics
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
   doc.setTextColor(...mutedSlate);
-  doc.text('6 DIMENSION PERFORMANCE METRICS', 15, 82);
+  doc.text('Combined average across all 6 core metrics', scoreCardX + scoreCardW / 2, scoreCardY + 12, { align: 'center' });
+
+  // Circular Ring Gauge
+  const cx = scoreCardX + scoreCardW / 2;
+  const cy = scoreCardY + 34;
+  const r = 16;
+  const scoreVal = evalData.overallScore ?? 92;
+
+  // Track circle (background)
+  doc.setDrawColor(241, 245, 249);
+  doc.setLineWidth(2.5);
+  doc.circle(cx, cy, r, 'S');
+
+  // Colored Progress Arc
+  const isHigh = scoreVal >= 90;
+  const arcColor: [number, number, number] = isHigh ? [5, 150, 105] : scoreVal >= 70 ? [217, 119, 6] : [225, 29, 72];
+  doc.setDrawColor(...arcColor);
+  doc.setLineWidth(2.5);
+
+  const steps = 60;
+  const pct = Math.min(Math.max(scoreVal, 0), 100) / 100;
+  const startAngle = -Math.PI / 2;
+  const endAngle = startAngle + 2 * Math.PI * pct;
+  for (let i = 0; i < steps; i++) {
+    const a1 = startAngle + (endAngle - startAngle) * (i / steps);
+    const a2 = startAngle + (endAngle - startAngle) * ((i + 1) / steps);
+    const x1 = cx + r * Math.cos(a1);
+    const y1 = cy + r * Math.sin(a1);
+    const x2 = cx + r * Math.cos(a2);
+    const y2 = cy + r * Math.sin(a2);
+    doc.line(x1, y1, x2, y2);
+  }
+
+  // Center Score Text
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.setTextColor(...darkSlate);
+  doc.text(`${scoreVal}%`, cx, cy + 2, { align: 'center' });
+
+  doc.setFontSize(6.5);
+  doc.setTextColor(...mutedSlate);
+  doc.text('OVERALL', cx, cy + 7, { align: 'center' });
+
+  // Speaker Tier Pill Badge
+  const pillW = 44;
+  const pillH = 6.5;
+  const pillX = cx - pillW / 2;
+  const pillY = scoreCardY + 57;
+
+  doc.setFillColor(isHigh ? 236 : 254, isHigh ? 253 : 243, isHigh ? 245 : 199);
+  doc.setDrawColor(isHigh ? 167 : 253, isHigh ? 243 : 230, isHigh ? 208 : 138);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(pillX, pillY, pillW, pillH, 3.25, 3.25, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(isHigh ? 4 : 180, isHigh ? 120 : 83, isHigh ? 87 : 9);
+  doc.text(evalData.scoreTier || 'Top 5% speaker tier', cx, pillY + 4.5, { align: 'center' });
+
+  // 4. 6 DIMENSION METRIC CARDS (Right Column)
+  const metricsX = 78;
+  const metricsY = 63;
+  const colW = 57;
+  const rowH = 21;
 
   const rawMetrics = evalData.metrics || {
-    delivery: 90, content: 90, visuals: 85, pacing: 80, clarity: 95, engagement: 90
+    delivery: 98, content: 98, visuals: 87, pacing: 76, clarity: 97, engagement: 93
   };
   const metricList = Object.entries(rawMetrics).map(([k, val]) => ({
     label: (METRIC_LABELS[k] || k).toUpperCase(),
     val: typeof val === 'number' ? val : 85,
   }));
 
-  const colW = 58;
-  const rowH = 17;
   metricList.forEach((m, i) => {
-    const col = i % 3;
-    const row = Math.floor(i / 3);
-    const x = 15 + col * (colW + 3);
-    const y = 86 + row * (rowH + 3);
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    const x = metricsX + col * (colW + 3);
+    const y = metricsY + row * (rowH + 3.5);
 
-    doc.setFillColor(...cardBg);
+    doc.setFillColor(255, 255, 255);
     doc.setDrawColor(...cardBorder);
-    doc.roundedRect(x, y, colW, rowH, 2, 2, 'FD');
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x, y, colW, rowH, 2.5, 2.5, 'FD');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(6.8);
     doc.setTextColor(71, 85, 105);
-    doc.text(m.label, x + 4, y + 6);
+    doc.text(m.label, x + 4, y + 6.5);
 
     const valColor: [number, number, number] = m.val >= 90 ? [5, 150, 105] : m.val >= 70 ? [217, 119, 6] : [225, 29, 72];
     doc.setTextColor(...valColor);
     doc.setFontSize(8.5);
-    doc.text(m.val + '%', x + colW - 4, y + 6, { align: 'right' });
+    doc.text(m.val + '%', x + colW - 4, y + 6.5, { align: 'right' });
 
     // Progress bar track & fill
-    doc.setFillColor(226, 232, 240);
-    doc.roundedRect(x + 4, y + 9.5, colW - 8, 3, 1.5, 1.5, 'F');
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(x + 4, y + 11.5, colW - 8, 3.2, 1.6, 1.6, 'F');
     doc.setFillColor(...valColor);
     const fillWidth = Math.max(2, (colW - 8) * (Math.min(m.val, 100) / 100));
-    doc.roundedRect(x + 4, y + 9.5, fillWidth, 3, 1.5, 1.5, 'F');
+    doc.roundedRect(x + 4, y + 11.5, fillWidth, 3.2, 1.6, 1.6, 'F');
   });
 
-  // 4. Timeline & Speech Pacing (WPM) Progression
-  const pacingY = 132;
+  // 5. Timeline & Speech Pacing (WPM) Progression
+  const pacingY = 138;
   doc.setFillColor(...cardBg);
   doc.setDrawColor(...cardBorder);
-  doc.roundedRect(15, pacingY, 180, 42, 3, 3, 'FD');
+  doc.roundedRect(15, pacingY, 180, 41, 3, 3, 'FD');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
@@ -209,6 +278,7 @@ export function generateExecutivePdf(evalData: EvaluationData, logoBase64?: stri
   doc.text(`Average Cadence: ${evalData.averageCadence || 135} WPM  |  Target Keynote Band: 125-150 WPM`, 190, pacingY + 7, { align: 'right' });
 
   doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
   doc.line(20, pacingY + 11, 190, pacingY + 11);
 
   const rawTimeline = (evalData.cadenceTimeline && evalData.cadenceTimeline.length > 0)
@@ -221,7 +291,7 @@ export function generateExecutivePdf(evalData: EvaluationData, logoBase64?: stri
   const ptW = 27;
   rawTimeline.forEach((p, i) => {
     const x = 20 + i * (ptW + 2);
-    const y = pacingY + 15;
+    const y = pacingY + 14.5;
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(226, 232, 240);
     doc.roundedRect(x, y, ptW, 22, 2, 2, 'FD');
@@ -248,8 +318,8 @@ export function generateExecutivePdf(evalData: EvaluationData, logoBase64?: stri
     doc.text(isOptimal ? 'OPTIMAL' : p.wpm > 150 ? 'RAPID' : 'DELIBERATE', x + ptW / 2, y + 17.5, { align: 'center' });
   });
 
-  // 5. Filler Word Frequency Breakdown
-  const fillerY = 182;
+  // 6. Filler Word Frequency Breakdown
+  const fillerY = 184;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(...mutedSlate);
@@ -259,28 +329,38 @@ export function generateExecutivePdf(evalData: EvaluationData, logoBase64?: stri
   doc.setFontSize(7.5);
   doc.text(`Total Fillers: ${evalData.fillerWordCount ?? 0} (${evalData.fillerWordRate ?? 0}% rate)`, 195, fillerY, { align: 'right' });
 
-  const rawFillers = evalData.fillerBreakdown || { um: 0, like: 0, uh: 0, youKnow: 0, actually: 0, so: 0 };
-  const fillerList = Object.entries(rawFillers).slice(0, 6).map(([w, c]) => ({
-    word: `"${w.toUpperCase()}"`,
-    count: typeof c === 'number' ? c : 0,
-  }));
+  const rawFillers = evalData.fillerBreakdown || { um: 0, like: 0, uh: 0, youKnow: 0 };
+  const fillerEntries = Object.entries(rawFillers).filter(([_, c]) => typeof c === 'number');
+  const fillerList = fillerEntries.length >= 4 
+    ? fillerEntries.slice(0, 4).map(([w, c]) => ({ word: `"${w.toUpperCase()}"`, count: c }))
+    : [
+        { word: '"UM"', count: evalData.fillerBreakdown?.um ?? 0 },
+        { word: '"UH"', count: evalData.fillerBreakdown?.uh ?? 0 },
+        { word: '"LIKE"', count: evalData.fillerBreakdown?.like ?? 0 },
+        { word: '"YOU KNOW"', count: evalData.fillerBreakdown?.youKnow ?? 0 },
+      ];
 
-  const fW = 28;
+  const fW = 43.5;
   fillerList.forEach((f, i) => {
-    const x = 15 + i * (fW + 2.4);
+    const x = 15 + i * (fW + 2);
     const y = fillerY + 4;
-    doc.setFillColor(...cardBg);
-    doc.setDrawColor(...cardBorder);
-    doc.roundedRect(x, y, fW, 20, 2, 2, 'FD');
-
-    doc.setFontSize(7.5);
-    doc.setTextColor(...mutedSlate);
-    doc.text(f.word, x + fW / 2, y + 6, { align: 'center' });
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(x, y, fW, 22, 2, 2, 'FD');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
+    doc.setFontSize(8.5);
+    doc.setTextColor(...darkSlate);
+    doc.text(f.word, x + fW / 2, y + 6, { align: 'center' });
+
+    doc.setFontSize(10);
     doc.setTextColor(f.count > 0 ? 217 : 5, f.count > 0 ? 119 : 150, f.count > 0 ? 6 : 105);
-    doc.text(String(f.count), x + fW / 2, y + 15, { align: 'center' });
+    doc.text(f.count + ' occurrences', x + fW / 2, y + 12.5, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.5);
+    doc.setTextColor(...mutedSlate);
+    doc.text(f.count === 0 ? 'Audience Impact: Zero' : f.count > 4 ? 'Audience Impact: High' : 'Audience Impact: Mild', x + fW / 2, y + 17.5, { align: 'center' });
   });
 
   // 6. Page 1 Footer
@@ -552,59 +632,102 @@ export const ReportPreviewModal: React.FC<ReportPreviewProps> = ({ setCurrentVie
             </div>
           </div>
 
-          {/* Presentation Title Banner & Score */}
-          <div className="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-            <div className="space-y-1.5 max-w-2xl">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-md">
-                Evaluated Presentation
-              </span>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
-                {activeEvaluation.title}
-              </h1>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                {activeEvaluation.summary}
-              </p>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl border border-slate-200 text-center min-w-[140px] shadow-2xs shrink-0">
-              <div className="text-3xl font-black text-brand-600">
-                {activeEvaluation.overallScore}%
-              </div>
-              <div className="text-[11px] font-bold text-slate-700 mt-0.5">
-                {activeEvaluation.scoreTier}
-              </div>
-            </div>
+          {/* Presentation Title Banner */}
+          <div className="bg-slate-50 rounded-2xl p-5 sm:p-6 border border-slate-100 space-y-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-md">
+              Evaluated Presentation
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
+              {activeEvaluation.title}
+            </h1>
+            <p className="text-xs text-slate-600 leading-relaxed max-w-4xl">
+              {activeEvaluation.summary}
+            </p>
           </div>
 
-          {/* 6 Dimension Score Metrics Grid */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              6 Dimension Performance Metrics
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-              {Object.entries(activeEvaluation.metrics).map(([key, val]) => {
-                const colors = getScoreColor(val);
-                return (
-                  <div key={key} className={`p-3.5 sm:p-4 rounded-2xl border ${colors.border} bg-slate-50/50 space-y-2`}>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600">
-                        {METRIC_LABELS[key] || key}
-                      </span>
-                      <span className={`text-sm sm:text-base font-black ${colors.text}`}>
-                        {val}%
-                      </span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
-                      <div 
-                        className={`h-full ${colors.bg} rounded-full transition-all duration-500`}
-                        style={{ width: `${val}%` }}
+          {/* Overall Score Circular Ring Card & 6 Dimension Score Metrics Grid */}
+          {(() => {
+            const overallColors = getScoreColor(activeEvaluation.overallScore);
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                {/* Left: Overall Presentation Score Card */}
+                <div className="lg:col-span-4 p-5 sm:p-6 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center space-y-3">
+                  <div>
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                      Overall Presentation Score
+                    </span>
+                    <p className="text-[10px] text-slate-400 mt-0.5">
+                      Combined average across all 6 core metrics
+                    </p>
+                  </div>
+
+                  {/* Circular Ring Gauge SVG */}
+                  <div className="relative w-36 h-36 flex items-center justify-center my-1">
+                    <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        className="text-slate-100"
+                        fill="transparent"
                       />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="currentColor"
+                        strokeWidth="8"
+                        className={`transition-all duration-1000 ${overallColors.text}`}
+                        strokeDasharray={251.2}
+                        strokeDashoffset={251.2 - (251.2 * activeEvaluation.overallScore) / 100}
+                        strokeLinecap="round"
+                        fill="transparent"
+                      />
+                    </svg>
+                    <div className="absolute flex flex-col items-center justify-center">
+                      <span className={`text-4xl font-black tracking-tight ${overallColors.textDark}`}>
+                        {activeEvaluation.overallScore}%
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                        OVERALL
+                      </span>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+
+                  <div className={`px-3.5 py-1.5 rounded-full border text-xs font-bold ${overallColors.pillBg} ${overallColors.border}`}>
+                    {activeEvaluation.scoreTier}
+                  </div>
+                </div>
+
+                {/* Right: 6 Dimension Score Metrics Grid */}
+                <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(activeEvaluation.metrics).map(([key, val]) => {
+                    const colors = getScoreColor(val);
+                    return (
+                      <div key={key} className={`p-3.5 sm:p-4 rounded-2xl border ${colors.border} bg-slate-50/50 flex flex-col justify-center space-y-2`}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-600">
+                            {METRIC_LABELS[key] || key}
+                          </span>
+                          <span className={`text-sm sm:text-base font-black ${colors.text}`}>
+                            {val}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-slate-200 overflow-hidden">
+                          <div 
+                            className={`h-full ${colors.bg} rounded-full transition-all duration-500`}
+                            style={{ width: `${val}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Timeline & Speech Pacing Section */}
           <div className="p-4 sm:p-6 rounded-2xl bg-slate-50/80 border border-slate-200/80 space-y-4">
