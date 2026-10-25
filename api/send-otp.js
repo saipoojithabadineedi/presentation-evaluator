@@ -61,11 +61,20 @@ export default async function handler(req, res) {
       </div>
     `;
 
+    const textContent = `Hello,
+
+Your verification code is: ${otp}
+
+This code is valid for 5 minutes. If you did not request this code, you can safely ignore this email.
+
+Regards,
+Presentation Evaluator Team`;
+
     const info = await transporter.sendMail({
-      from: `"Presentation Evaluator" <${emailUser}>`,
+      from: emailUser,
       to: to.trim(),
-      subject: `Presentation Evaluator Verification Code: ${otp}`,
-      text: `Your Presentation Evaluator verification code is: ${otp}. It is valid for 5 minutes.`,
+      subject: `Your verification code is ${otp}`,
+      text: textContent,
       html: htmlContent,
     });
 
