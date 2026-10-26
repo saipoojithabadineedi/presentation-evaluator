@@ -495,32 +495,6 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               </p>
             </div>
 
-            {/* Instant Verification Code Card */}
-            {instantCodeNotice && (
-              <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-950 dark:text-amber-100 flex items-center justify-between gap-3 shadow-xs animate-in fade-in">
-                <div className="space-y-0.5">
-                  <div className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
-                    Your Verification Code
-                  </div>
-                  <div className="font-mono font-extrabold text-base tracking-widest text-amber-950 dark:text-amber-100">
-                    {instantCodeNotice.replace(/\D/g, '').slice(-6)}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const code = instantCodeNotice.replace(/\D/g, '').slice(-6);
-                    if (code.length === 6) {
-                      setOtpDigits(code.split(''));
-                    }
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0 flex items-center gap-1.5"
-                >
-                  <span>⚡ Auto-Fill</span>
-                </button>
-              </div>
-            )}
-
             {/* 6-Digit Inputs */}
             <div>
               <div className="flex justify-between items-center gap-2 max-w-xs mx-auto">

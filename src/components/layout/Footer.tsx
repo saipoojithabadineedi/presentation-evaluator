@@ -53,7 +53,7 @@ export const Footer: React.FC = () => {
                 <div className="p-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 group-hover:scale-110 transition-transform">
                   <Mail className="w-3.5 h-3.5" />
                 </div>
-                <span className="underline decoration-brand-500/30 underline-offset-2">presentationevaluator2@gmail.com</span>
+                <span className="underline decoration-brand-500/30 underline-offset-2 break-all">presentationevaluator2@gmail.com</span>
               </a>
 
               <a 

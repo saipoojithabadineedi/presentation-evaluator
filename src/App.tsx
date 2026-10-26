@@ -81,7 +81,7 @@ const MainAppContent: React.FC = () => {
                            currentView === 'reports-archive';
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 transition-colors duration-200 flex flex-col">
+    <div className="min-h-screen bg-[#f8fafc] dark:bg-[#090d16] text-slate-800 dark:text-slate-100 transition-colors duration-200 flex flex-col w-full max-w-full overflow-x-hidden">
       
       {/* Top Navbar */}
       <Navbar 
@@ -91,7 +91,7 @@ const MainAppContent: React.FC = () => {
       />
 
       {/* Main Layout Container */}
-      <div className="flex-1 flex w-full">
+      <div className="flex-1 flex w-full max-w-full min-w-0 overflow-x-hidden">
         
         {/* Left Side Profile Dashboard Sidebar (Shown ONLY when viewing Profile Dashboard sections) */}
         {isAuthenticated && isProfileSection && (
@@ -117,7 +117,7 @@ const MainAppContent: React.FC = () => {
         )}
 
         {/* Main Content Pane */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           <main className="flex-1 page-fade-enter" key={currentView}>
             {currentView === 'landing' && (
               <LandingPage 

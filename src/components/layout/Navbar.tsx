@@ -88,7 +88,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
   };
 
   const renderNotificationsPopover = () => (
-    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+    <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-sm bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-4 z-50 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
         <div className="flex items-center gap-1.5">
           <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">Notifications</h4>
@@ -138,14 +138,14 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
 
   return (
     <header className="sticky top-0 z-30 w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-22 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-22 flex items-center justify-between gap-2 sm:gap-4 w-full">
         
         {/* Left Side: Mobile Menu Button + Brand Logo */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {isInApp && isProfileSection && (
             <button
               onClick={onOpenSidebar}
-              className="md:hidden p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-brand-500 transition-colors"
+              className="md:hidden p-1.5 sm:p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-brand-500 transition-colors"
               title="Open Navigation"
             >
               <Menu className="w-5 h-5" />
@@ -154,12 +154,12 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
 
           <button 
             onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'landing')}
-            className="flex items-center gap-3 text-left focus:outline-none group py-1"
+            className="flex items-center gap-2 text-left focus:outline-none group py-1"
           >
             <img 
               src="/assets/logo.jpg" 
               alt="Presentation Evaluator - Analyze. Improve. Succeed." 
-              className="h-16 sm:h-20 lg:h-22 w-auto max-h-20 sm:max-h-22 object-contain logo-blend transition-transform group-hover:scale-105"
+              className="h-10 sm:h-16 lg:h-20 w-auto max-h-12 sm:max-h-20 object-contain logo-blend transition-transform group-hover:scale-105"
             />
           </button>
         </div>
@@ -252,29 +252,31 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
 
           {/* Authenticated Controls on Landing Page */}
           {isAuthenticated && isLandingPage && (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               <button
                 onClick={() => setCurrentView('dashboard')}
-                className="px-4 py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-xs transition-all"
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs font-bold shadow-xs transition-all shrink-0"
               >
-                Go to Upload
+                <span className="hidden sm:inline">Go to Upload</span>
+                <span className="inline sm:hidden">Upload</span>
               </button>
               
               {/* 1. Profile Dashboard Button */}
               <button
                 onClick={() => setCurrentView('profile')}
-                className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 text-xs font-black transition-all cursor-pointer flex items-center gap-2 shadow-xs group"
+                className="px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400 text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 shadow-xs group shrink-0"
                 title="View Profile Performance Analytics & Overall Scores"
               >
-                <BarChart2 className="w-4 h-4 text-brand-500 group-hover:scale-110 transition-transform" />
-                <span>Profile Dashboard</span>
+                <BarChart2 className="w-4 h-4 text-brand-500 group-hover:scale-110 transition-transform shrink-0" />
+                <span className="hidden sm:inline">Profile Dashboard</span>
+                <span className="inline sm:hidden text-xs">Profile</span>
               </button>
 
               {/* 2. Notification Symbol Button */}
-              <div className="relative" ref={notificationRef}>
+              <div className="relative shrink-0" ref={notificationRef}>
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 transition-all cursor-pointer relative shadow-2xs group"
+                  className="p-1.5 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 transition-all cursor-pointer relative shadow-2xs group"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors" />
@@ -289,7 +291,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
               {/* 3. Profile Settings Circle Button */}
               <button
                 onClick={() => setCurrentView('settings')}
-                className="w-9 h-9 rounded-full border border-brand-500/40 hover:border-brand-500 ring-2 ring-brand-500/20 shadow-2xs hover:scale-105 transition-all cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shrink-0"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-brand-500/40 hover:border-brand-500 ring-2 ring-brand-500/20 shadow-2xs hover:scale-105 transition-all cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shrink-0"
                 title="Profile Settings"
               >
                 <img 
@@ -305,7 +307,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
                   logout();
                   setCurrentView('landing');
                 }}
-                className="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer shadow-2xs group shrink-0"
+                className="p-1.5 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer shadow-2xs group shrink-0"
                 title="Logout of account"
               >
                 <LogOut className="w-4 h-4 transition-transform group-hover:scale-110" />
@@ -315,26 +317,27 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
 
           {/* Authenticated Controls In-App: Profile Dashboard -> Notification -> Profile Settings -> Logout (Symbol Only) */}
           {isInApp && (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               {/* 1. Profile Dashboard Button */}
               <button
                 onClick={() => setCurrentView('profile')}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold tracking-wide transition-all cursor-pointer flex items-center gap-2 border shadow-xs group ${
+                className={`px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-extrabold tracking-wide transition-all cursor-pointer flex items-center gap-1.5 sm:gap-2 border shadow-xs group shrink-0 ${
                   isProfileSection
                     ? 'bg-brand-500 text-white border-brand-500 shadow-brand-500/30'
                     : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 hover:border-brand-500 hover:text-brand-600 dark:hover:text-brand-400'
                 }`}
                 title="View Profile Performance Analytics & Overall Scores"
               >
-                <BarChart2 className={`w-4 h-4 ${isProfileSection ? 'text-white' : 'text-brand-500 group-hover:scale-110'} transition-transform`} />
-                <span>Profile Dashboard</span>
+                <BarChart2 className={`w-4 h-4 shrink-0 ${isProfileSection ? 'text-white' : 'text-brand-500 group-hover:scale-110'} transition-transform`} />
+                <span className="hidden sm:inline">Profile Dashboard</span>
+                <span className="inline sm:hidden text-xs">Profile</span>
               </button>
 
               {/* 2. Notification Symbol Button (Between Profile Dashboard and Profile Settings) */}
-              <div className="relative" ref={notificationRef}>
+              <div className="relative shrink-0" ref={notificationRef}>
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 transition-all cursor-pointer relative shadow-2xs group"
+                  className="p-1.5 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-brand-500 transition-all cursor-pointer relative shadow-2xs group"
                   title="Notifications"
                 >
                   <Bell className="w-4 h-4 text-slate-600 dark:text-slate-300 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors" />
@@ -349,7 +352,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
               {/* 3. Profile Settings Circle Button */}
               <button
                 onClick={() => setCurrentView('settings')}
-                className={`w-9 h-9 rounded-full border ring-2 shadow-2xs hover:scale-105 transition-all cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shrink-0 ${
+                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full border ring-2 shadow-2xs hover:scale-105 transition-all cursor-pointer overflow-hidden bg-white dark:bg-slate-800 shrink-0 ${
                   currentView === 'settings'
                     ? 'border-brand-500 ring-brand-500/50 scale-105'
                     : 'border-brand-500/40 hover:border-brand-500 ring-brand-500/20'
@@ -369,7 +372,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentView, setCurrentView, onO
                   logout();
                   setCurrentView('landing');
                 }}
-                className="p-2 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer shadow-2xs group shrink-0"
+                className="p-1.5 sm:p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer shadow-2xs group shrink-0"
                 title="Logout of account"
               >
                 <LogOut className="w-4 h-4 transition-transform group-hover:scale-110" />

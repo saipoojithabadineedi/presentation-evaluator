@@ -189,10 +189,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
   };
 
   return (
-    <div id="home" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-in fade-in duration-300">
+    <div id="home" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10 animate-in fade-in duration-300 w-full max-w-full overflow-x-hidden">
       
       {/* UNIFIED HERO & UPLOAD SECTION (Combined Banner + Upload & Video Analysis Hub) */}
-      <div id="upload-hub" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-6 sm:p-10 lg:p-12 space-y-8 scroll-mt-24 relative overflow-hidden">
+      <div id="upload-hub" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-2xl p-5 sm:p-10 lg:p-12 space-y-8 scroll-mt-24 relative overflow-hidden w-full max-w-full">
         
         {/* Background Subtle Gradient Blobs */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -245,41 +245,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
             </div>
 
             {/* Mode Switcher */}
-            <div className="flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">
+            <div className="flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 text-xs font-bold overflow-x-auto max-w-full">
               <button
                 onClick={() => setActiveUploadTab('upload')}
-                className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${
+                className={`px-3 sm:px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
                   activeUploadTab === 'upload' 
                     ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-xs' 
                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                <UploadCloud className="w-4 h-4" />
-                <span>Upload Video/File</span>
+                <UploadCloud className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">Upload Video/File</span>
+                <span className="inline sm:hidden">Upload</span>
               </button>
 
               <button
                 onClick={() => setActiveUploadTab('record')}
-                className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${
+                className={`px-3 sm:px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
                   activeUploadTab === 'record' 
                     ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-xs' 
                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                <Mic className="w-4 h-4" />
-                <span>Live Mic</span>
+                <Mic className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">Live Mic</span>
+                <span className="inline sm:hidden">Mic</span>
               </button>
 
               <button
                 onClick={() => setActiveUploadTab('samples')}
-                className={`px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all ${
+                className={`px-3 sm:px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all whitespace-nowrap shrink-0 ${
                   activeUploadTab === 'samples' 
                     ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-300 shadow-xs' 
                     : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                <Play className="w-4 h-4" />
-                <span>Sample Presets</span>
+                <Play className="w-4 h-4 shrink-0" />
+                <span className="hidden sm:inline">Sample Presets</span>
+                <span className="inline sm:hidden">Samples</span>
               </button>
             </div>
           </div>
@@ -450,7 +453,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
       </div>
 
       {/* SECTION: FEATURES */}
-      <div id="features" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-8 space-y-6 scroll-mt-24">
+      <div id="features" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-5 sm:p-8 space-y-6 scroll-mt-24 w-full max-w-full overflow-hidden">
         <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="p-3 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600">
             <Sparkles className="w-6 h-6" />
@@ -559,7 +562,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
       </div>
 
       {/* SECTION 1: HOW THE PRESENTATION IS PROCESSED (STEP-BY-STEP AI PIPELINE) */}
-      <div id="how-it-works" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-8 space-y-6 scroll-mt-24">
+      <div id="how-it-works" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-5 sm:p-8 space-y-6 scroll-mt-24 w-full max-w-full overflow-hidden">
         <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="p-3 rounded-2xl bg-brand-50 dark:bg-brand-950/60 text-brand-600">
             <Cpu className="w-6 h-6" />
@@ -652,7 +655,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
       </div>
 
       {/* SECTION 2: WHY PRESENTATION EVALUATOR IS NEEDED */}
-      <div id="why-presentation-evaluator" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-8 space-y-6 scroll-mt-24">
+      <div id="why-presentation-evaluator" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-5 sm:p-8 space-y-6 scroll-mt-24 w-full max-w-full overflow-hidden">
         <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600">
             <Target className="w-6 h-6" />
@@ -729,7 +732,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
       </div>
 
       {/* SECTION 3: WHO CAN USE IT */}
-      <div id="who-can-use-it" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-8 space-y-6 scroll-mt-24">
+      <div id="who-can-use-it" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-xs p-5 sm:p-8 space-y-6 scroll-mt-24 w-full max-w-full overflow-hidden">
         <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
           <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
             <Users className="w-6 h-6" />
