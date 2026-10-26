@@ -1,4 +1,5 @@
 import { EvaluationData } from '../types';
+import { generateDynamicSlideEvaluations } from './slideAnalyzer';
 
 interface DynamicUploadPayload {
   title: string;
@@ -259,6 +260,14 @@ export function generateDynamicEvaluation(payload: DynamicUploadPayload): Evalua
       }
       return tr;
     })(),
+    slides: generateDynamicSlideEvaluations(
+      payload.title,
+      payload.fileName,
+      durationSeconds,
+      overallScore,
+      null,
+      null
+    ),
     summary: `Dynamic evaluation for "${payload.title}" (${payload.fileName}, ${payload.fileSize}). Delivery duration: ${formattedDuration}, overall speech cadence: ${cadence} WPM with ${totalFillers} total filler words detected.`
   };
 }

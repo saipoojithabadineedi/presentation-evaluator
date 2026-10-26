@@ -4,6 +4,7 @@ import { initialEvaluations, initialReports, defaultSettings } from '../utils/mo
 import { startAIAnalysisApi } from '../services/api';
 import { generateDynamicEvaluation } from '../utils/dynamicEvaluation';
 import { extractRealAudioMetrics, buildAccurateEvaluationData } from '../utils/audioAnalyzer';
+import { detectVideoSlides } from '../utils/videoSlideDetector';
 import { analyzePresentationWithGeminiLLM, transcribeAudioWithGeminiLLM } from '../services/geminiService';
 import { saveMediaFileToDB, getMediaFileFromDB } from '../utils/mediaStore';
 import { useAuth } from './AuthContext';
@@ -234,19 +235,20 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           );
         }
 
-        await new Promise(r => setTimeout(r, 600));
         setProcessingStep(2);
-        setProcessingStatusText('Analyzing speech velocity, rhythm & cadence...');
+        setProcessingStatusText('Detecting presentation slide transitions & visual composition...');
+        const detectedSlides = await detectVideoSlides(payload.fileObject, realMetrics.durationSeconds);
+        const slideCount = detectedSlides.length;
 
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 400));
         setProcessingStep(3);
-        setProcessingStatusText('Detecting conversational fillers, pauses & vocal clarity...');
+        setProcessingStatusText(`Analyzed ${slideCount} slides: detecting cadence, pauses & vocal clarity...`);
 
         // Create a stable blob URL that lives for the entire tab session
         const mediaUrl = URL.createObjectURL(payload.fileObject);
 
         setProcessingStep(4);
-        setProcessingStatusText('Invoking Google Gemini AI presentation evaluation engine...');
+        setProcessingStatusText(`Invoking Google Gemini AI presentation engine for all ${slideCount} slides...`);
 
         const llmResult = await analyzePresentationWithGeminiLLM({
           title: payload.title,
@@ -257,11 +259,12 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           wpm: realMetrics.calculatedWpm,
           clarityScore: realMetrics.clarityScore,
           fillerCount: realMetrics.detectedFillerCount,
-          silenceRatioPercent: realMetrics.silenceRatioPercent
+          silenceRatioPercent: realMetrics.silenceRatioPercent,
+          slideCount: slideCount
         });
 
         setProcessingStep(5);
-        setProcessingStatusText('Synthesizing speech segments & executive recommendations...');
+        setProcessingStatusText(`Synthesizing visual evaluations & recommendations for ${slideCount} slides...`);
 
         const liveTranscript = (payload.fileObject as any)?._liveTranscript;
         const scriptTranscript = (payload.fileObject as any)?._scriptTranscript;
@@ -289,7 +292,8 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           realMetrics,
           llmResult,
           mediaUrl,
-          finalTranscript
+          finalTranscript,
+          detectedSlides
         );
 
         // Store in both registries so playback always resolves

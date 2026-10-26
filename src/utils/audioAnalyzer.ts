@@ -1,5 +1,7 @@
 import { EvaluationData } from '../types';
 import { GeminiLLMAnalysisResponse } from '../services/geminiService';
+import { generateDynamicSlideEvaluations } from './slideAnalyzer';
+import { DetectedSlideMetadata } from './videoSlideDetector';
 
 export interface AudioAnalysisResult {
   hasVoice: boolean;
@@ -321,7 +323,8 @@ export function buildAccurateEvaluationData(
   metrics: AudioAnalysisResult,
   llmResult?: GeminiLLMAnalysisResponse | null,
   mediaUrl?: string,
-  geminiTranscript?: import('../types').TranscriptSegment[] | null
+  geminiTranscript?: import('../types').TranscriptSegment[] | null,
+  detectedSlides?: DetectedSlideMetadata[] | null
 ): EvaluationData {
   const mins = Math.floor(metrics.durationSeconds / 60);
   const secs = metrics.durationSeconds % 60;
@@ -453,52 +456,20 @@ export function buildAccurateEvaluationData(
   // Generate slide evaluations for video & slides
   let slides: import('../types').SlideEvaluation[] | undefined = undefined;
   if (fileType === 'video' || fileType === 'slides') {
-    slides = [
-      {
-        slideNumber: 1,
-        title: 'Title & Introduction',
-        score: Math.min(98, overallScore + 2),
-        readabilityScore: 94,
-        visualBalanceScore: 92,
-        bulletsCount: 3,
-        suggestions: ['Clean header typography', 'Clear title contrast'],
-        strengths: ['Clean header typography with strong visual hierarchy', 'High contrast palette easily legible from distance'],
-        improvements: ['Maintain 2:1 scale ratio between title and subtitle for enhanced emphasis']
-      },
-      {
-        slideNumber: 2,
-        title: 'Core Problem & Analysis',
-        score: Math.min(98, overallScore - 1),
-        readabilityScore: 89,
-        visualBalanceScore: 88,
-        bulletsCount: 4,
-        suggestions: ['Good data presentation', 'Consider highlighting key metric callouts'],
-        strengths: ['Structured problem decomposition with distinct focal areas', 'Concise bullet points with clear active phrasing'],
-        improvements: ['Highlight critical statistics using accent callout cards or badges']
-      },
-      {
-        slideNumber: 3,
-        title: 'Proposed Solution & Architecture',
-        score: Math.min(98, overallScore + 1),
-        readabilityScore: 92,
-        visualBalanceScore: 90,
-        bulletsCount: 4,
-        suggestions: ['Effective visual layout', 'Well-structured bullet hierarchy'],
-        strengths: ['Effective layout balancing diagram architecture and bullet points', 'Consistent visual alignment and iconography'],
-        improvements: ['Reduce auxiliary body text density to keep focus directly on the architecture']
-      },
-      {
-        slideNumber: 4,
-        title: 'Results, Impact & Next Steps',
-        score: Math.min(98, overallScore),
-        readabilityScore: 91,
-        visualBalanceScore: 89,
-        bulletsCount: 3,
-        suggestions: ['Strong concluding summary', 'Clear call to action'],
-        strengths: ['Decisive summary reinforcing core presentation takeaways', 'Well-organized roadmap milestones with clear deliverables'],
-        improvements: ['Add a prominent contact badge or clear next-step call to action']
-      }
-    ];
+    if (llmResult?.slides && Array.isArray(llmResult.slides) && llmResult.slides.length > 0) {
+      console.log(`[SLIDE BREAKDOWN] Using Gemini AI LLM slide evaluations (${llmResult.slides.length} slides)!`);
+      slides = llmResult.slides;
+    } else {
+      console.log('[SLIDE BREAKDOWN] Generating dynamic topic-specific slide evaluations...');
+      slides = generateDynamicSlideEvaluations(
+        title,
+        fileName,
+        metrics.durationSeconds,
+        overallScore,
+        detectedSlides,
+        geminiTranscript
+      );
+    }
   }
 
   // Generate transcript segments (Use Gemini LLM transcript if available, otherwise generate topic-aware voice transcript)
