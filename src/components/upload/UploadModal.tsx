@@ -10,7 +10,8 @@ import {
   Check, 
   StopCircle, 
   ArrowRight,
-  Play
+  Play,
+  AlertTriangle
 } from 'lucide-react';
 import { useEvaluation } from '../../context/EvaluationContext';
 
@@ -23,6 +24,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
 
   const [activeTab, setActiveTab] = useState<'upload' | 'record' | 'samples'>('upload');
   const [presentationTitle, setPresentationTitle] = useState('New Rehearsal Session');
+  const [uploadError, setUploadError] = useState('');
   const [selectedFile, setSelectedFile] = useState<{ name: string; size: string; type: 'video' | 'audio' | 'slides'; durationSec?: number; rawFile?: File } | null>(null);
   
   // Microphone recording state
@@ -36,12 +38,17 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const type: 'video' | 'audio' | 'slides' = file.type.includes('video') 
-        ? 'video' 
-        : file.type.includes('pdf') || file.name.endsWith('.pptx') 
-        ? 'slides' 
-        : 'audio';
-      
+      const isVideo = file.type.includes('video') || ['.mp4', '.mov', '.webm'].some(ext => file.name.toLowerCase().endsWith(ext));
+      const isAudio = file.type.includes('audio') || ['.mp3', '.wav', '.m4a', '.ogg'].some(ext => file.name.toLowerCase().endsWith(ext));
+
+      if (!isVideo && !isAudio) {
+        setUploadError('Only video (MP4, MOV, WEBM) and audio (MP3, WAV, M4A) presentation files are supported.');
+        e.target.value = '';
+        return;
+      }
+
+      setUploadError('');
+      const type: 'video' | 'audio' = isVideo ? 'video' : 'audio';
       const sizeMb = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
       setSelectedFile({ name: file.name, size: sizeMb, type, rawFile: file });
       setPresentationTitle(file.name.replace(/\.[^/.]+$/, ""));
@@ -238,16 +245,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
       });
     }
 
-    await startAIAnalysis({
-      title: finalTitle,
-      fileType: finalFileType,
-      fileName: finalFileName,
-      fileSize: finalFileSize,
-      durationSeconds: finalDurationSec,
-      fileObject: rawFile
-    });
-    
-    onEvaluationComplete();
+    try {
+      setUploadError('');
+      await startAIAnalysis({
+        title: finalTitle,
+        fileType: finalFileType,
+        fileName: finalFileName,
+        fileSize: finalFileSize,
+        durationSeconds: finalDurationSec,
+        fileObject: rawFile
+      });
+      
+      onEvaluationComplete();
+    } catch (err: any) {
+      console.warn('Analysis rejected:', err);
+      setUploadError(err?.message || 'No presentation speech detected. Please upload a recording where you are speaking.');
+    }
   };
 
   return (
@@ -279,6 +292,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({ onEvaluationComplete }
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Validation Error Banner */}
+        {uploadError && (
+          <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center gap-2.5 animate-in fade-in">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
+            <span>{uploadError}</span>
+          </div>
+        )}
 
         {/* Input: Presentation Title */}
         <div>

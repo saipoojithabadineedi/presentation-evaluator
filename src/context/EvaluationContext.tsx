@@ -216,122 +216,129 @@ export const EvaluationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setIsUploadModalOpen(false);
     setIsProcessingModalOpen(true);
     setProcessingStep(1);
-    setProcessingStatusText('Ingesting audio stream & generating neural transcript...');
+    setProcessingStatusText('Ingesting presentation media stream & checking voice presence...');
 
-    await new Promise(r => setTimeout(r, 900));
-    setProcessingStep(2);
-    setProcessingStatusText('Analyzing cadence, speech velocity & WPM distribution...');
+    try {
+      let newEval: EvaluationData;
 
-    await new Promise(r => setTimeout(r, 900));
-    setProcessingStep(3);
-    setProcessingStatusText('Detecting conversational fillers, pauses & tone inflection...');
+      // Check if raw File object is provided for Web Audio API PCM analysis
+      if (payload.fileObject) {
+        const realMetrics = await extractRealAudioMetrics(payload.fileObject);
 
-    await new Promise(r => setTimeout(r, 900));
-    setProcessingStep(4);
-    setProcessingStatusText('Evaluating slide density, visual hierarchy & clarity scores...');
+        // Strictly reject silent, audio-free, or non-presentation files
+        if (!realMetrics.hasVoice) {
+          setIsProcessingModalOpen(false);
+          throw new Error(
+            realMetrics.errorMessage ||
+            'No presentation speech detected in this file. The recording appears to be silent or contains only background noise without spoken words. Please upload a video where you are speaking.'
+          );
+        }
 
-    await new Promise(r => setTimeout(r, 800));
-    setProcessingStep(5);
-    setProcessingStatusText('Synthesizing executive takeaways & recommendations...');
+        await new Promise(r => setTimeout(r, 600));
+        setProcessingStep(2);
+        setProcessingStatusText('Analyzing speech velocity, rhythm & cadence...');
 
-    await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 600));
+        setProcessingStep(3);
+        setProcessingStatusText('Detecting conversational fillers, pauses & vocal clarity...');
 
-    let newEval: EvaluationData;
+        // Create a stable blob URL that lives for the entire tab session
+        const mediaUrl = URL.createObjectURL(payload.fileObject);
 
-    // Check if raw File object is provided for Web Audio API PCM analysis
-    if (payload.fileObject) {
-      setProcessingStatusText('Decoding Web Audio API PCM frames & audio energy...');
-      const realMetrics = await extractRealAudioMetrics(payload.fileObject);
+        setProcessingStep(4);
+        setProcessingStatusText('Invoking Google Gemini AI presentation evaluation engine...');
 
-      // Create a stable blob URL that lives for the entire tab session
-      const mediaUrl = URL.createObjectURL(payload.fileObject);
+        const llmResult = await analyzePresentationWithGeminiLLM({
+          title: payload.title,
+          fileType: payload.fileType,
+          fileName: payload.fileName,
+          fileSize: payload.fileSize,
+          durationSeconds: realMetrics.durationSeconds,
+          wpm: realMetrics.calculatedWpm,
+          clarityScore: realMetrics.clarityScore,
+          fillerCount: realMetrics.detectedFillerCount,
+          silenceRatioPercent: realMetrics.silenceRatioPercent
+        });
 
-      setProcessingStatusText('Invoking Google Gemini LLM neural evaluation engine...');
-      const llmResult = await analyzePresentationWithGeminiLLM({
+        setProcessingStep(5);
+        setProcessingStatusText('Synthesizing speech segments & executive recommendations...');
+
+        const liveTranscript = (payload.fileObject as any)?._liveTranscript;
+        const scriptTranscript = (payload.fileObject as any)?._scriptTranscript;
+
+        let finalTranscript: TranscriptSegment[] | null = null;
+        if (liveTranscript && Array.isArray(liveTranscript) && liveTranscript.length > 0) {
+          console.log('[EVALUATION] Using real-time live microphone voice-to-text transcript!');
+          finalTranscript = liveTranscript;
+        } else if (scriptTranscript && Array.isArray(scriptTranscript) && scriptTranscript.length > 0) {
+          console.log('[EVALUATION] Using user-provided presentation speech script!');
+          finalTranscript = scriptTranscript;
+        } else {
+          finalTranscript = await transcribeAudioWithGeminiLLM(
+            payload.fileObject,
+            payload.title,
+            realMetrics.durationSeconds
+          );
+        }
+
+        newEval = buildAccurateEvaluationData(
+          payload.title,
+          payload.fileType,
+          payload.fileName,
+          payload.fileSize,
+          realMetrics,
+          llmResult,
+          mediaUrl,
+          finalTranscript
+        );
+
+        // Store in both registries so playback always resolves
+        mediaBlobRegistry.set(newEval.id, payload.fileObject);
+        mediaBlobUrlRegistry.set(newEval.id, mediaUrl);
+
+        // Save to IndexedDB so playback works even after page refresh
+        saveMediaFileToDB(newEval.id, payload.fileObject).catch(err => {
+          console.warn('Failed to store media in IndexedDB:', err);
+        });
+      } else {
+        newEval = generateDynamicEvaluation(payload);
+      }
+
+      // Attempt backend sync with actual presentation performance metrics
+      startAIAnalysisApi({
         title: payload.title,
         fileType: payload.fileType,
         fileName: payload.fileName,
         fileSize: payload.fileSize,
-        durationSeconds: realMetrics.durationSeconds,
-        wpm: realMetrics.calculatedWpm,
-        clarityScore: realMetrics.clarityScore,
-        fillerCount: realMetrics.detectedFillerCount,
-        silenceRatioPercent: realMetrics.silenceRatioPercent
+        durationSeconds: newEval.durationSeconds,
+        wpm: newEval.averageCadence,
+        clarityScore: newEval.metrics.clarity,
+        fillerWordCount: newEval.fillerWordCount,
+        fillerWordRate: newEval.fillerWordRate,
+        deliveryScore: newEval.overallScore
       });
 
-      setProcessingStatusText('Analyzing vocal dynamics & speech cadence metrics...');
-      const liveTranscript = (payload.fileObject as any)?._liveTranscript;
-      const scriptTranscript = (payload.fileObject as any)?._scriptTranscript;
+      setEvaluations(prev => [newEval, ...prev]);
+      setActiveEvaluation(newEval);
+      setIsProcessingModalOpen(false);
 
-      let finalTranscript: TranscriptSegment[] | null = null;
-      if (liveTranscript && Array.isArray(liveTranscript) && liveTranscript.length > 0) {
-        console.log('[EVALUATION] Using real-time live microphone voice-to-text transcript!');
-        finalTranscript = liveTranscript;
-      } else if (scriptTranscript && Array.isArray(scriptTranscript) && scriptTranscript.length > 0) {
-        console.log('[EVALUATION] Using user-provided presentation speech script!');
-        finalTranscript = scriptTranscript;
-      } else {
-        finalTranscript = await transcribeAudioWithGeminiLLM(
-          payload.fileObject,
-          payload.title,
-          realMetrics.durationSeconds
-        );
+      // Trigger browser desktop notification if permission is granted
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('🎉 Presentation Evaluation Ready', {
+            body: `"${newEval.title}" scored ${newEval.overallScore}% (${newEval.averageCadence} WPM cadence). Tap to view detailed insights.`,
+            icon: '/favicon.ico'
+          });
+        } catch (err) {
+          console.warn('Could not dispatch browser notification:', err);
+        }
       }
 
-      newEval = buildAccurateEvaluationData(
-        payload.title,
-        payload.fileType,
-        payload.fileName,
-        payload.fileSize,
-        realMetrics,
-        llmResult,
-        mediaUrl,
-        finalTranscript
-      );
-
-      // Store in both registries so playback always resolves
-      mediaBlobRegistry.set(newEval.id, payload.fileObject);
-      mediaBlobUrlRegistry.set(newEval.id, mediaUrl);
-
-      // Save to IndexedDB so playback works even after page refresh
-      saveMediaFileToDB(newEval.id, payload.fileObject).catch(err => {
-        console.warn('Failed to store media in IndexedDB:', err);
-      });
-    } else {
-      newEval = generateDynamicEvaluation(payload);
+      return newEval;
+    } catch (err) {
+      setIsProcessingModalOpen(false);
+      throw err;
     }
-
-    // Attempt backend sync with actual presentation performance metrics
-    startAIAnalysisApi({
-      title: payload.title,
-      fileType: payload.fileType,
-      fileName: payload.fileName,
-      fileSize: payload.fileSize,
-      durationSeconds: newEval.durationSeconds,
-      wpm: newEval.averageCadence,
-      clarityScore: newEval.metrics.clarity,
-      fillerWordCount: newEval.fillerWordCount,
-      fillerWordRate: newEval.fillerWordRate,
-      deliveryScore: newEval.overallScore
-    });
-
-    setEvaluations(prev => [newEval, ...prev]);
-    setActiveEvaluation(newEval);
-    setIsProcessingModalOpen(false);
-
-    // Trigger browser desktop notification if permission is granted
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification('🎉 Presentation Evaluation Ready', {
-          body: `"${newEval.title}" scored ${newEval.overallScore}% (${newEval.averageCadence} WPM cadence). Tap to view detailed insights.`,
-          icon: '/favicon.ico'
-        });
-      } catch (err) {
-        console.warn('Could not dispatch browser notification:', err);
-      }
-    }
-
-    return newEval;
   };
 
   const updateEvaluationTranscript = (evaluationId: string, transcript: TranscriptSegment[]) => {

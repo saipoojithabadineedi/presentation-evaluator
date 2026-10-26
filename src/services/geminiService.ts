@@ -49,6 +49,12 @@ export function setGeminiApiKey(key: string): void {
 export async function analyzePresentationWithGeminiLLM(
   req: GeminiLLMAnalysisRequest
 ): Promise<GeminiLLMAnalysisResponse | null> {
+  // Strictly abort if there is no speech cadence or duration is too short
+  if (!req.durationSeconds || req.durationSeconds < 3 || req.wpm <= 0) {
+    console.warn('[LLM INTEGRATION] Aborting Gemini presentation analysis: no valid speech cadence or velocity detected.');
+    return null;
+  }
+
   const apiKey = getGeminiApiKey();
 
   if (!apiKey) {

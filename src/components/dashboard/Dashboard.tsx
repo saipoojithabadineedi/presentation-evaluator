@@ -322,17 +322,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
     const finalDurationSec = fileToAnalyze.durationSec || 15;
     const rawFile = fileToAnalyze.rawFile;
 
-    await startAIAnalysis({
-      title: finalTitle,
-      fileType: finalFileType,
-      fileName: finalFileName,
-      fileSize: finalFileSize,
-      durationSeconds: finalDurationSec,
-      fileObject: rawFile
-    });
+    try {
+      await startAIAnalysis({
+        title: finalTitle,
+        fileType: finalFileType,
+        fileName: finalFileName,
+        fileSize: finalFileSize,
+        durationSeconds: finalDurationSec,
+        fileObject: rawFile
+      });
 
-    // Directly transitions to "Result of the uploaded file"
-    setCurrentView('evaluation');
+      // Directly transitions to "Result of the uploaded file" only upon successful validation & analysis
+      setCurrentView('evaluation');
+    } catch (err: any) {
+      console.warn('AI Analysis rejected or failed:', err);
+      setUploadError(err?.message || 'No presentation speech detected. Please upload a video where you are speaking.');
+    }
   };
 
   return (
