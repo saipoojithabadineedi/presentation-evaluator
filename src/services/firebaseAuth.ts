@@ -4,7 +4,9 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithPopup, 
-  signOut as firebaseSignOut
+  signOut as firebaseSignOut,
+  setPersistence,
+  browserSessionPersistence
 } from 'firebase/auth';
 
 const env = (import.meta as any).env || {};
@@ -22,6 +24,14 @@ const firebaseConfig = {
 // Initialize Firebase App instance
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
+
+// Use session-based persistence so closing the browser/clicking links afresh requires re-login
+try {
+  setPersistence(auth, browserSessionPersistence).catch(() => {});
+} catch {
+  // Safe fallback
+}
+
 export const googleProvider = new GoogleAuthProvider();
 
 // Custom Google OAuth Scopes & Parameters

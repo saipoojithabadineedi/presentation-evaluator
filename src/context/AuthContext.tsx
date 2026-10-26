@@ -48,10 +48,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return [defaultRegisteredUser];
   });
 
-  // Active logged-in user
+  // Active logged-in user (session-based with automatic timeout)
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('pe_auth_user');
-    if (saved) {
+    // 1. Purge any legacy persistent localStorage auth key so clicking links afresh requires re-login
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('pe_auth_user');
+    }
+
+    // 2. Only restore active login from the current browser session if not expired
+    const saved = sessionStorage.getItem('pe_auth_user');
+    const sessionTimeStr = sessionStorage.getItem('pe_auth_session_time');
+
+    if (saved && sessionTimeStr) {
+      const sessionTime = parseInt(sessionTimeStr, 10);
+      const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30-minute session inactivity timeout
+
+      if (Date.now() - sessionTime > SESSION_TIMEOUT_MS) {
+        sessionStorage.removeItem('pe_auth_user');
+        sessionStorage.removeItem('pe_auth_session_time');
+        sessionStorage.removeItem('pe_current_view');
+        return null;
+      }
+
       try {
         const parsed = JSON.parse(saved);
         if (parsed && parsed.email) {
@@ -61,6 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             parsed.name = savedFullName.trim();
           }
         }
+        sessionStorage.setItem('pe_auth_session_time', Date.now().toString());
         return parsed;
       } catch {
         return null;
@@ -73,12 +92,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('pe_registered_users', JSON.stringify(registeredUsers));
   }, [registeredUsers]);
 
+  // Persist session only in sessionStorage (never in permanent localStorage)
   useEffect(() => {
+    localStorage.removeItem('pe_auth_user'); // Guarantee removal from permanent localStorage
     if (user) {
-      localStorage.setItem('pe_auth_user', JSON.stringify(user));
+      sessionStorage.setItem('pe_auth_user', JSON.stringify(user));
+      sessionStorage.setItem('pe_auth_session_time', Date.now().toString());
     } else {
-      localStorage.removeItem('pe_auth_user');
+      sessionStorage.removeItem('pe_auth_user');
+      sessionStorage.removeItem('pe_auth_session_time');
+      sessionStorage.removeItem('pe_current_view');
     }
+  }, [user]);
+
+  // Inactivity timeout monitor: auto-logout after 30 minutes of inactivity
+  useEffect(() => {
+    if (!user) return;
+
+    const refreshActivity = () => {
+      sessionStorage.setItem('pe_auth_session_time', Date.now().toString());
+    };
+
+    const interval = setInterval(() => {
+      const sessionTimeStr = sessionStorage.getItem('pe_auth_session_time');
+      if (sessionTimeStr) {
+        const sessionTime = parseInt(sessionTimeStr, 10);
+        const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+        if (Date.now() - sessionTime > SESSION_TIMEOUT_MS) {
+          logout();
+        }
+      }
+    }, 60 * 1000);
+
+    window.addEventListener('click', refreshActivity);
+    window.addEventListener('keydown', refreshActivity);
+    window.addEventListener('touchstart', refreshActivity);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('click', refreshActivity);
+      window.removeEventListener('keydown', refreshActivity);
+      window.removeEventListener('touchstart', refreshActivity);
+    };
   }, [user]);
 
   const [toastState, setToastState] = useState<{ isOpen: boolean; message: string; type: 'login' | 'logout' }>({
@@ -251,6 +306,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signOutFirebase();
     setUser(null);
     localStorage.removeItem('pe_auth_user');
+    sessionStorage.removeItem('pe_auth_user');
+    sessionStorage.removeItem('pe_auth_session_time');
+    sessionStorage.removeItem('pe_current_view');
     setToastState({
       isOpen: true,
       message: '👋 Logged out successfully. See you next time!',

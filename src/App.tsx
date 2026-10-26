@@ -31,7 +31,12 @@ const MainAppContent: React.FC = () => {
   }, []);
 
   const [currentView, setCurrentView] = useState<AppView>(() => {
-    const savedUser = localStorage.getItem('pe_auth_user');
+    // Purge legacy persistent localStorage key so visiting links afresh requires login
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('pe_auth_user');
+    }
+
+    const savedUser = sessionStorage.getItem('pe_auth_user');
     const isUserLoggedIn = !!savedUser;
     const savedView = sessionStorage.getItem('pe_current_view') as AppView;
 

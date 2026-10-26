@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEvaluation } from '../../context/EvaluationContext';
-import { AppView } from '../../types';
+import { AppView, TranscriptSegment } from '../../types';
 
 interface DashboardProps {
   setCurrentView: (view: AppView) => void;
@@ -58,10 +58,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
+  const [liveTranscriptText, setLiveTranscriptText] = useState('');
   const timerRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const liveTranscriptSegmentsRef = useRef<TranscriptSegment[]>([]);
+  const recognitionRef = useRef<any>(null);
+  const recordSecondsRef = useRef(0);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -104,52 +108,166 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
     setUploadError('');
   };
 
-  const toggleRecording = async () => {
-    if (isRecording) {
-      if (timerRef.current) clearInterval(timerRef.current);
+  // Helper to cleanly stop recording, flush audio chunks, and produce a valid audio File
+  const stopRecordingAsync = (): Promise<{ rawFile: File; durationSec: number } | null> => {
+    return new Promise((resolve) => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       setIsRecording(false);
 
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+        recognitionRef.current = null;
+      }
+
+      const duration = recordSecondsRef.current > 0 ? recordSecondsRef.current : 10;
+
+      const finishAndCreateFile = () => {
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const rawFile = new File([audioBlob], `Live_Speech_${Date.now()}.webm`, { type: 'audio/webm' });
+          if (liveTranscriptSegmentsRef.current.length > 0) {
+            (rawFile as any)._liveTranscript = [...liveTranscriptSegmentsRef.current];
+          }
+          resolve({ rawFile, durationSec: duration });
+        } catch (e) {
+          console.warn('Error creating audio file from chunks:', e);
+          resolve(null);
+        }
+      };
+
+      if (!mediaRecorderRef.current || mediaRecorderRef.current.state === 'inactive') {
+        if (audioChunksRef.current.length > 0) {
+          finishAndCreateFile();
+        } else {
+          resolve(null);
+        }
+        return;
+      }
+
+      mediaRecorderRef.current.onstop = () => {
+        finishAndCreateFile();
+      };
+
+      try {
         mediaRecorderRef.current.stop();
         mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+      } catch (err) {
+        console.warn('Error stopping media recorder:', err);
+        finishAndCreateFile();
+      }
+    });
+  };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      const recorded = await stopRecordingAsync();
+      if (recorded && recorded.rawFile) {
+        setSelectedFile({
+          name: recorded.rawFile.name,
+          size: `${(recorded.rawFile.size / (1024 * 1024)).toFixed(1)} MB`,
+          type: 'audio',
+          durationSec: recorded.durationSec,
+          rawFile: recorded.rawFile
+        });
+        setPresentationTitle(`Live Speech Rehearsal (${recorded.durationSec}s)`);
+        setUploadError('');
       }
     } else {
       setRecordSeconds(0);
+      recordSecondsRef.current = 0;
       setIsRecording(true);
       audioChunksRef.current = [];
+      liveTranscriptSegmentsRef.current = [];
+      setLiveTranscriptText('');
+      setUploadError('');
+
+      // Web Speech Recognition for real-time speech-to-text
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = 'en-US';
+
+          let lastFinalIdx = 0;
+          recognition.onresult = (event: any) => {
+            let fullText = '';
+            for (let i = 0; i < event.results.length; i++) {
+              const transcriptPart = event.results[i][0].transcript;
+              fullText += transcriptPart + ' ';
+
+              if (event.results[i].isFinal && i >= lastFinalIdx) {
+                lastFinalIdx = i + 1;
+                const currentSec = Math.max(1, recordSecondsRef.current);
+                const startSec = Math.max(0, currentSec - 5);
+                const mins = Math.floor(startSec / 60);
+                const secs = (startSec % 60).toString().padStart(2, '0');
+                const endMins = Math.floor(currentSec / 60);
+                const endSecs = (currentSec % 60).toString().padStart(2, '0');
+
+                const textTrimmed = transcriptPart.trim();
+                const lower = textTrimmed.toLowerCase();
+                const fillerMatches = lower.match(/\b(um|uh|like|actually|you know|so)\b/gi) || [];
+
+                liveTranscriptSegmentsRef.current.push({
+                  id: `live-seg-${liveTranscriptSegmentsRef.current.length + 1}`,
+                  startTime: `${mins}:${secs}`,
+                  endTime: `${endMins}:${endSecs}`,
+                  seconds: startSec,
+                  speaker: 'Presenter',
+                  text: textTrimmed,
+                  hasFiller: fillerMatches.length > 0,
+                  fillerWords: fillerMatches.length > 0 ? Array.from(new Set(fillerMatches.map((f: string) => f.toLowerCase()))) : undefined,
+                  wpm: Math.max(75, Math.min(180, Math.round(textTrimmed.split(/\s+/).length / (Math.max(1, currentSec - startSec) / 60)))),
+                  tone: 'confident'
+                });
+              }
+            }
+            setLiveTranscriptText(fullText.trim());
+          };
+
+          recognition.onerror = (e: any) => {
+            console.warn('SpeechRecognition error:', e);
+          };
+
+          recognition.start();
+          recognitionRef.current = recognition;
+        } catch (e) {
+          console.warn('Could not start Speech Recognition:', e);
+        }
+      }
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const mediaRecorder = new MediaRecorder(stream);
 
         mediaRecorder.ondataavailable = (e) => {
-          if (e.data.size > 0) {
+          if (e.data && e.data.size > 0) {
             audioChunksRef.current.push(e.data);
           }
         };
 
-        mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const rawFile = new File([audioBlob], `Live_Rehearsal_${Date.now()}.webm`, { type: 'audio/webm' });
-          setSelectedFile({
-            name: rawFile.name,
-            size: `${(audioBlob.size / (1024 * 1024)).toFixed(1)} MB`,
-            type: 'audio',
-            durationSec: recordSeconds || 15,
-            rawFile: rawFile
-          });
-          setPresentationTitle(`Live Speech Rehearsal (${recordSeconds}s)`);
-          setUploadError('');
-        };
-
-        mediaRecorder.start();
+        mediaRecorder.start(250); // timeslice every 250ms
         mediaRecorderRef.current = mediaRecorder;
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Microphone permission not granted or unavailable:', err);
+        setIsRecording(false);
+        setUploadError('Microphone access denied. Please allow microphone permissions in your browser to record.');
+        return;
       }
 
       timerRef.current = setInterval(() => {
-        setRecordSeconds(prev => prev + 1);
+        setRecordSeconds(prev => {
+          const next = prev + 1;
+          recordSecondsRef.current = next;
+          return next;
+        });
       }, 1000);
     }
   };
@@ -161,19 +279,48 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
   };
 
   const handleAIAnalyzeClick = async () => {
-    // Point 1: Check if video/file is uploaded
-    if (!selectedFile) {
-      setUploadError('Video is not uploaded! Please upload the file of a video.');
+    let fileToAnalyze = selectedFile;
+
+    // If user is actively recording in Live Mic mode, automatically stop the recorder,
+    // package the recorded voice audio into a File, and immediately analyze it!
+    if (isRecording) {
+      const recorded = await stopRecordingAsync();
+      if (recorded && recorded.rawFile) {
+        const sizeMb = (recorded.rawFile.size / (1024 * 1024)).toFixed(1) + ' MB';
+        const fileObj = {
+          name: recorded.rawFile.name,
+          size: sizeMb,
+          type: 'audio' as const,
+          durationSec: recorded.durationSec,
+          rawFile: recorded.rawFile
+        };
+        setSelectedFile(fileObj);
+        fileToAnalyze = fileObj;
+        if (!presentationTitle.trim()) {
+          setPresentationTitle(`Live Speech Rehearsal (${recorded.durationSec}s)`);
+        }
+      }
+    }
+
+    // Verify presentation media is present
+    if (!fileToAnalyze) {
+      if (activeUploadTab === 'record') {
+        setUploadError('Please click the microphone button to start recording your speech before analyzing.');
+      } else if (activeUploadTab === 'samples') {
+        setUploadError('Please select a sample preset before analyzing.');
+      } else {
+        setUploadError('Please upload a presentation video or audio file to analyze.');
+      }
       return;
     }
 
     setUploadError('');
-    const finalTitle = presentationTitle.trim() || 'New Presentation Rehearsal';
-    const finalFileType = selectedFile.type;
-    const finalFileSize = selectedFile.size;
-    const finalFileName = selectedFile.name;
-    const finalDurationSec = selectedFile.durationSec;
-    const rawFile = selectedFile.rawFile;
+    const finalTitle = presentationTitle.trim() || (activeUploadTab === 'record' ? `Live Speech Rehearsal (${fileToAnalyze.durationSec || 15}s)` : 'New Presentation Rehearsal');
+    const finalFileType = fileToAnalyze.type;
+    const finalFileSize = fileToAnalyze.size;
+    const finalFileName = fileToAnalyze.name;
+    const finalDurationSec = fileToAnalyze.durationSec || 15;
+    const rawFile = fileToAnalyze.rawFile;
 
     await startAIAnalysis({
       title: finalTitle,
@@ -336,25 +483,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
 
           {/* Upload Mode 2: Live Mic Recording */}
           {activeUploadTab === 'record' && (
-            <div className="border border-slate-200 dark:border-slate-700 rounded-3xl p-8 text-center bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center">
-              <div className="relative mb-4">
+            <div className="border border-slate-200 dark:border-slate-700 rounded-3xl p-6 sm:p-10 text-center bg-slate-50/50 dark:bg-slate-800/30 flex flex-col items-center justify-center space-y-4">
+              <div className="relative">
                 <button
+                  type="button"
                   onClick={toggleRecording}
-                  className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-xl ${
+                  className={`w-20 h-20 rounded-full flex items-center justify-center transition-all shadow-xl cursor-pointer ${
                     isRecording 
-                      ? 'bg-rose-500 text-white animate-pulse shadow-rose-500/40' 
-                      : 'bg-brand-500 text-white hover:bg-brand-600 shadow-brand-500/40'
+                      ? 'bg-rose-500 text-white animate-pulse shadow-rose-500/40 ring-4 ring-rose-500/20' 
+                      : 'bg-brand-500 text-white hover:bg-brand-600 shadow-brand-500/40 hover:scale-105'
                   }`}
+                  title={isRecording ? 'Click to stop recording' : 'Click to start recording'}
                 >
                   {isRecording ? <StopCircle className="w-9 h-9" /> : <Mic className="w-9 h-9" />}
                 </button>
               </div>
-              <div className="text-3xl font-mono font-black text-slate-900 dark:text-white mb-1">
+
+              <div className="text-3xl font-mono font-black text-slate-900 dark:text-white">
                 {formatTimer(recordSeconds)}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isRecording ? '🔴 Live Recording in progress... speak clearly into your mic' : 'Click the mic icon to start live presentation recording'}
+
+              <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 max-w-md">
+                {isRecording 
+                  ? '🔴 Live recording in progress... speak clearly into your mic (click "Analyze" below or stop when done)' 
+                  : selectedFile?.type === 'audio' && selectedFile.rawFile
+                    ? `✓ Voice recording captured (${selectedFile.durationSec || recordSeconds}s)! Click "Analyze Presentation" below to evaluate your speech.`
+                    : 'Click the mic icon to start live presentation recording'}
               </p>
+
+              {/* Real-time Spoken Text Preview while recording */}
+              {isRecording && liveTranscriptText && (
+                <div className="max-w-md w-full p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700 text-left text-xs text-slate-700 dark:text-slate-200 shadow-xs animate-in fade-in">
+                  <div className="text-[10px] font-bold text-brand-600 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
+                    <span>Live Voice Speech Recognized:</span>
+                  </div>
+                  <p className="italic text-slate-600 dark:text-slate-300 leading-relaxed">
+                    "{liveTranscriptText}"
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -435,15 +603,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ setCurrentView, onOpenSide
           {/* CORE CTA: "AI Analyze Presentation" BUTTON */}
           <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="text-xs text-slate-500">
-              Selected Presentation: <span className="font-bold text-slate-800 dark:text-slate-200">{selectedFile?.name || 'No file uploaded'}</span>
+              Selected Presentation:{' '}
+              <span className="font-bold text-slate-800 dark:text-slate-200">
+                {isRecording
+                  ? `🔴 Recording Live Speech (${formatTimer(recordSeconds)})`
+                  : selectedFile?.name || (activeUploadTab === 'record' ? 'No voice recorded yet' : 'No file uploaded')}
+              </span>
             </div>
 
             <button
+              type="button"
               onClick={handleAIAnalyzeClick}
-              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-brand-500/30 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]"
+              className="w-full sm:w-auto px-10 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-extrabold text-sm sm:text-base shadow-xl shadow-brand-500/30 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] cursor-pointer"
             >
               <Sparkles className="w-5 h-5 animate-pulse" />
-              <span>Analyze Presentation</span>
+              <span>{isRecording ? 'Finish & Analyze Voice' : 'Analyze Presentation'}</span>
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
