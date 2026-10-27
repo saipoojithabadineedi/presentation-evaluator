@@ -16,6 +16,8 @@
 
 ## 📑 Table of Contents
 
+- [Problem Statement](#-problem-statement)
+- [The Solution](#-the-solution)
 - [Executive Overview](#-executive-overview)
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
@@ -32,6 +34,30 @@
 - [API Reference](#-api-reference)
 - [Deployment](#-deployment)
 - [Authors & Acknowledgments](#-authors--acknowledgments)
+
+---
+
+## 📌 Problem Statement
+
+Public speaking, student project defenses, business pitches, and technical conference presentations are essential skills for career advancement. However, mastering presentation delivery remains a persistent challenge due to critical industry gaps:
+
+1. **Inaccessible & Expensive Coaching**: Professional speech coaches and presentation workshops typically cost hundreds of dollars per hour, making expert feedback inaccessible to students and early-stage professionals.
+2. **Text-Only Tools Miss Delivery**: Conventional tools only evaluate written grammar or spelling. They completely overlook **how** a person presents—such as speech pace, nervous hesitation, filler word habits (`um`, `like`), and voice modulation.
+3. **Subjective & Unstructured Feedback**: Practicing in front of a mirror or peers yields vague, subjective impressions with zero quantitative data or performance benchmarks.
+4. **Disconnected Slide Auditing**: Most evaluation workflows separate speech from visual slides, leading to text-heavy slides, poor typography contrast, and disconnected verbal narratives.
+5. **AI Hallucinations on Voiceless Media**: Generic AI platforms often evaluate silent or muted video uploads without verifying if human speech actually occurred, generating misleading, hallucinated scores.
+
+---
+
+## 💡 The Solution: Presentation Evaluator
+
+**Presentation Evaluator** is an automated multimodal AI presentation coach and slide visual auditor that delivers instant, objective, and quantitative delivery analytics directly in the browser:
+
+- **Client-Side Audio Signal Processing**: Uses the native **Web Audio API** to decode raw PCM audio frames in browser memory, measuring real-time Words-Per-Minute (WPM) cadence, pause ratios, and vocal energy without expensive server-side transcode latency.
+- **Voice Activity & Anti-Hallucination Guard**: Employs RMS volume energy thresholding and syllabic peak modulation to verify active speech, instantly rejecting silent, muted, or non-presentation media before AI scoring.
+- **Computer Vision Slide Detection**: Automatically samples video frames using an off-screen HTML5 Canvas to detect scene transitions, dynamically count all slides, and compute local visual readability and balance metrics.
+- **Multimodal AI Coaching (Google Gemini 1.5 Flash)**: Generates bespoke, presentation-specific slide evaluations with unique titles, "What Went Well" strengths, and "What to Improve" coaching roadmaps tailored to the exact presentation topic.
+- **Certified Executive PDF Reports**: Exports multi-page, vector-sharp audit reports (`jsPDF`) complete with performance badges, filler breakdowns, and certified audit stamps.
 
 ---
 
