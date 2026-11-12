@@ -83,6 +83,24 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
     setTimeout(() => setSuccessMessage(''), 8000);
   };
 
+  const handleForgotPasswordClick = () => {
+    setErrorMessage('');
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (cleanEmail) {
+      const isRegistered = registeredUsers && registeredUsers.some(
+        (u: any) => u.email && u.email.trim().toLowerCase() === cleanEmail
+      );
+
+      if (!isRegistered) {
+        setErrorMessage('This email is not registered with Presentation Evaluator. Please register first.');
+        return;
+      }
+    }
+
+    setIsForgotModalOpen(true);
+  };
+
   return (
     <div className="min-h-[calc(100vh-80px)] w-full flex items-center justify-center p-3 sm:p-6 lg:p-8 bg-[#eef4f0] dark:bg-slate-950 transition-colors">
       
@@ -180,9 +198,26 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
 
               {/* Error Alert */}
               {errorMessage && (
-                <div className="mb-4 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>{errorMessage}</span>
+                <div className="mb-4 p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-semibold space-y-2 animate-in fade-in">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </div>
+                  {errorMessage.includes('register') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (email.trim()) {
+                          localStorage.setItem('pe_prefill_register_email', email.trim());
+                        }
+                        setCurrentView('register');
+                      }}
+                      className="w-full py-2 px-3 rounded-lg bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                    >
+                      <span>Create New Account / Register</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -269,7 +304,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
 
                   <button
                     type="button"
-                    onClick={() => setIsForgotModalOpen(true)}
+                    onClick={handleForgotPasswordClick}
                     className="text-xs font-bold text-[#059669] dark:text-emerald-400 hover:underline"
                   >
                     Forgot Password?
@@ -311,6 +346,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
         isOpen={isForgotModalOpen}
         onClose={() => setIsForgotModalOpen(false)}
         onSuccess={handleForgotPasswordSuccess}
+        initialEmail={email.trim()}
         onSwitchToRegister={() => {
           setIsForgotModalOpen(false);
           setCurrentView('register');

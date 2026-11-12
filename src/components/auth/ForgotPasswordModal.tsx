@@ -8,13 +8,15 @@ interface ForgotPasswordModalProps {
   onClose: () => void;
   onSuccess: (resetCredential: string) => void;
   onSwitchToRegister?: () => void;
+  initialEmail?: string;
 }
 
 export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  onSwitchToRegister
+  onSwitchToRegister,
+  initialEmail
 }) => {
   const { updateLocalUserPassword, registeredUsers } = useAuth();
   
@@ -47,7 +49,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setStep(1);
-      setEmail('');
+      setEmail(initialEmail || '');
       setOtpDigits(['', '', '', '', '', '']);
       setResetToken('');
       setNewPassword('');
@@ -60,7 +62,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setOtpExpiryTime(300);
       setResendCooldown(60);
     }
-  }, [isOpen]);
+  }, [isOpen, initialEmail]);
 
   // Handle Expiration & Cooldown timers on Step 2
   useEffect(() => {
@@ -109,10 +111,16 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       return;
     }
 
-    // Check if email is recognized in registered users list
+    // Strict validation: Only registered emails can request password reset
     const isLocallyRegistered = registeredUsers.some(
       (u: any) => u.email && u.email.trim().toLowerCase() === cleanEmail
     );
+
+    if (!isLocallyRegistered) {
+      setIsNotRegistered(true);
+      setError('This email is not registered with Presentation Evaluator. Please register first.');
+      return;
+    }
 
     setIsLoading(true);
 
@@ -215,6 +223,13 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     const isLocallyRegistered = registeredUsers.some(
       (u: any) => u.email && u.email.trim().toLowerCase() === cleanEmail
     );
+
+    if (!isLocallyRegistered) {
+      setIsNotRegistered(true);
+      setError('This email is not registered with Presentation Evaluator. Please register first.');
+      setStep(1);
+      return;
+    }
 
     setIsLoading(true);
 
