@@ -311,6 +311,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ setCurrentView }) => {
         isOpen={isForgotModalOpen}
         onClose={() => setIsForgotModalOpen(false)}
         onSuccess={handleForgotPasswordSuccess}
+        onSwitchToRegister={() => {
+          setIsForgotModalOpen(false);
+          setCurrentView('register');
+        }}
       />
     </div>
   );

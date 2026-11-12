@@ -10,7 +10,14 @@ interface RegisterFormProps {
 export const RegisterForm: React.FC<RegisterFormProps> = ({ setCurrentView }) => {
   const { register } = useAuth();
   const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => {
+    const prefill = localStorage.getItem('pe_prefill_register_email');
+    if (prefill) {
+      localStorage.removeItem('pe_prefill_register_email');
+      return prefill;
+    }
+    return '';
+  });
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

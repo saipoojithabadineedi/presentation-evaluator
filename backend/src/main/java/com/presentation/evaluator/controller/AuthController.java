@@ -40,6 +40,9 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         ApiResponse response = authService.forgotPassword(request);
+        if (!response.isSuccess()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
         return ResponseEntity.ok(response);
     }
 

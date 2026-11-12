@@ -7,14 +7,16 @@ interface ForgotPasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (resetCredential: string) => void;
+  onSwitchToRegister?: () => void;
 }
 
 export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  onSwitchToRegister
 }) => {
-  const { updateLocalUserPassword } = useAuth();
+  const { updateLocalUserPassword, registeredUsers } = useAuth();
   
   // Step flow: 1 = Enter Email, 2 = Verify OTP, 3 = Reset Password, 4 = Success
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
@@ -29,6 +31,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
   // Status & Timers
   const [error, setError] = useState('');
+  const [isNotRegistered, setIsNotRegistered] = useState(false);
   const [successInfo, setSuccessInfo] = useState('');
   const [instantCodeNotice, setInstantCodeNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +53,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       setNewPassword('');
       setConfirmPassword('');
       setError('');
+      setIsNotRegistered(false);
       setSuccessInfo('');
       setInstantCodeNotice(null);
       setIsLoading(false);
@@ -91,66 +95,96 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
     });
   };
 
-  // Step 1: Send OTP request to backend (with automatic resilient fallback)
+  // Step 1: Send OTP request to backend (only for registered emails)
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccessInfo('');
     setInstantCodeNotice(null);
+    setIsNotRegistered(false);
 
-    const cleanEmail = email.trim();
+    const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !/^[A-Za-z0-9+_.-]+@(.+)$/.test(cleanEmail)) {
       setError('Please enter a valid registered Email Address.');
       return;
     }
 
+    // Check if email is recognized in registered users list
+    const isLocallyRegistered = registeredUsers.some(
+      (u: any) => u.email && u.email.trim().toLowerCase() === cleanEmail
+    );
+
     setIsLoading(true);
 
     try {
       let res: any = null;
+      let backendErr: any = null;
+
       try {
         res = await requestPasswordResetApi(cleanEmail);
-      } catch (backendErr) {
-        console.warn('Backend reset API unreachable or sleeping:', backendErr);
+      } catch (err: any) {
+        backendErr = err;
+        console.warn('Backend reset API notice:', err);
       }
 
-      let codeToDeliver: string | null = null;
+      // 1. If backend explicitly reported user is not registered:
+      if (backendErr && (backendErr.status === 404 || backendErr.isUnregistered || (backendErr.message && (backendErr.message.toLowerCase().includes('not registered') || backendErr.message.toLowerCase().includes('please register'))))) {
+        setIsNotRegistered(true);
+        setError(backendErr.message || 'This email is not registered with Presentation Evaluator. Please register first.');
+        setIsLoading(false);
+        return;
+      }
 
+      // 2. If backend succeeded:
       if (res && res.success) {
         setSuccessInfo(res.message || `Verification code sent to ${cleanEmail}`);
         if (res.otp) {
-          codeToDeliver = res.otp;
           setInstantCodeNotice(`🔑 Verification Code: ${res.otp}`);
+          dispatchRealEmail(cleanEmail, res.otp);
         } else {
           setInstantCodeNotice(null);
         }
-      } else {
-        // Fallback for deployed environments when backend is sleeping or unreachable
-        const offlineOtp = Math.floor(100000 + Math.random() * 900000).toString();
-        codeToDeliver = offlineOtp;
-        localStorage.setItem(`pe_reset_otp_${cleanEmail.toLowerCase()}`, JSON.stringify({
-          otp: offlineOtp,
-          expiresAt: Date.now() + 5 * 60 * 1000
-        }));
-        setSuccessInfo(`Verification code dispatched for ${cleanEmail}!`);
-        setInstantCodeNotice(`🔑 Verification Code: ${offlineOtp}`);
 
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-          try {
-            new Notification('🔐 Password Reset Verification Code', {
-              body: `Your verification code is: ${offlineOtp}`,
-              icon: '/favicon.ico'
-            });
-          } catch (e) {
-            console.warn(e);
-          }
+        setOtpExpiryTime(300);
+        setResendCooldown(60);
+        setOtpDigits(['', '', '', '', '', '']);
+        setStep(2);
+        setTimeout(() => {
+          otpInputRefs.current[0]?.focus();
+        }, 100);
+        return;
+      }
+
+      // 3. If backend was unreachable or sleeping:
+      // Only permit fallback verification code if the email is confirmed registered locally!
+      if (!isLocallyRegistered) {
+        setIsNotRegistered(true);
+        setError('This email is not registered with Presentation Evaluator. Please register first.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Fallback for verified registered user when backend cloud container is sleeping
+      const offlineOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      localStorage.setItem(`pe_reset_otp_${cleanEmail}`, JSON.stringify({
+        otp: offlineOtp,
+        expiresAt: Date.now() + 5 * 60 * 1000
+      }));
+      setSuccessInfo(`Verification code dispatched for ${cleanEmail}!`);
+      setInstantCodeNotice(`🔑 Verification Code: ${offlineOtp}`);
+
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification('🔐 Password Reset Verification Code', {
+            body: `Your verification code is: ${offlineOtp}`,
+            icon: '/favicon.ico'
+          });
+        } catch (e) {
+          console.warn(e);
         }
       }
 
-      // Send real email via Vercel serverless function (works for ANY recipient email)
-      if (codeToDeliver) {
-        dispatchRealEmail(cleanEmail, codeToDeliver);
-      }
+      dispatchRealEmail(cleanEmail, offlineOtp);
 
       setOtpExpiryTime(300);
       setResendCooldown(60);
@@ -160,25 +194,46 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         otpInputRefs.current[0]?.focus();
       }, 100);
     } catch (err: any) {
-      setError(err.message || 'Failed to request verification code.');
+      if (err.status === 404 || err.isUnregistered || (err.message && (err.message.toLowerCase().includes('not registered') || err.message.toLowerCase().includes('please register')))) {
+        setIsNotRegistered(true);
+        setError(err.message || 'This email is not registered with Presentation Evaluator. Please register first.');
+      } else {
+        setError(err.message || 'Failed to request verification code.');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Resend OTP handler
+  // Resend OTP handler (only for registered emails)
   const handleResendOtp = async () => {
     if (resendCooldown > 0 || isLoading) return;
     setError('');
     setSuccessInfo('');
+    const cleanEmail = email.trim().toLowerCase();
+
+    const isLocallyRegistered = registeredUsers.some(
+      (u: any) => u.email && u.email.trim().toLowerCase() === cleanEmail
+    );
+
     setIsLoading(true);
 
     try {
       let res: any = null;
+      let backendErr: any = null;
       try {
-        res = await requestPasswordResetApi(email.trim());
-      } catch (backendErr) {
-        console.warn('Backend resend API unreachable or sleeping:', backendErr);
+        res = await requestPasswordResetApi(cleanEmail);
+      } catch (err: any) {
+        backendErr = err;
+        console.warn('Backend resend API notice:', err);
+      }
+
+      if (backendErr && (backendErr.status === 404 || backendErr.isUnregistered || (backendErr.message && (backendErr.message.toLowerCase().includes('not registered') || backendErr.message.toLowerCase().includes('please register'))))) {
+        setIsNotRegistered(true);
+        setError(backendErr.message || 'This email is not registered. Please register first.');
+        setStep(1);
+        setIsLoading(false);
+        return;
       }
 
       let resendCode: string | null = null;
@@ -192,9 +247,17 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           setInstantCodeNotice(null);
         }
       } else {
+        if (!isLocallyRegistered) {
+          setIsNotRegistered(true);
+          setError('This email is not registered. Please register first.');
+          setStep(1);
+          setIsLoading(false);
+          return;
+        }
+
         const offlineOtp = Math.floor(100000 + Math.random() * 900000).toString();
         resendCode = offlineOtp;
-        localStorage.setItem(`pe_reset_otp_${email.trim().toLowerCase()}`, JSON.stringify({
+        localStorage.setItem(`pe_reset_otp_${cleanEmail}`, JSON.stringify({
           otp: offlineOtp,
           expiresAt: Date.now() + 5 * 60 * 1000
         }));
@@ -204,7 +267,7 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
       // Send real email via Vercel serverless function (works for ANY recipient email)
       if (resendCode) {
-        dispatchRealEmail(email.trim(), resendCode);
+        dispatchRealEmail(cleanEmail, resendCode);
       }
 
       setOtpExpiryTime(300);
@@ -409,8 +472,57 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           </button>
         </div>
 
+        {/* Account Not Registered Alert & Action */}
+        {isNotRegistered && (
+          <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 space-y-3 animate-in fade-in duration-200">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Email Not Registered
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  The email <strong className="font-semibold text-slate-900 dark:text-white">{email.trim()}</strong> is not registered with Presentation Evaluator. Please register first to create an account.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-1 flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (email.trim()) {
+                    localStorage.setItem('pe_prefill_register_email', email.trim());
+                  }
+                  onClose();
+                  if (onSwitchToRegister) {
+                    onSwitchToRegister();
+                  }
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#059669] hover:bg-[#047857] active:bg-[#065f46] text-white font-bold text-xs shadow-md shadow-[#059669]/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                <span>Register New Account</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsNotRegistered(false);
+                  setError('');
+                }}
+                className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-colors cursor-pointer"
+              >
+                Try Another Email
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Error Alert */}
-        {error && (
+        {error && !isNotRegistered && (
           <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-medium flex items-center gap-2 animate-in fade-in">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
@@ -449,7 +561,11 @@ export const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                   type="email"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (isNotRegistered) setIsNotRegistered(false);
+                    if (error) setError('');
+                  }}
                   placeholder="Enter your email address"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                 />

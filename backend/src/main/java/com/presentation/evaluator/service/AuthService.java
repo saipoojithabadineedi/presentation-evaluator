@@ -109,17 +109,14 @@ public class AuthService {
         String email = request.getEmail().trim().toLowerCase();
         Optional<UserEntity> userOpt = userRepository.findByEmail(email);
 
-        UserEntity user = userOpt.orElseGet(() -> {
-            UserEntity newUser = UserEntity.builder()
-                    .id("usr-" + UUID.randomUUID())
-                    .email(email)
-                    .name(email.split("@")[0])
-                    .password(passwordEncoder.encode(UUID.randomUUID().toString()))
-                    .tier("Developing speaker tier")
-                    .avatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80")
+        if (userOpt.isEmpty()) {
+            return ApiResponse.builder()
+                    .success(false)
+                    .message("This email is not registered with Presentation Evaluator. Please register first.")
                     .build();
-            return userRepository.save(newUser);
-        });
+        }
+
+        UserEntity user = userOpt.get();
 
         // Invalidate existing active OTPs for this user
         List<PasswordResetOtpEntity> activeOtps = otpRepository.findByUserIdAndUsedFalse(user.getId());

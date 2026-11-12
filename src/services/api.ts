@@ -75,12 +75,19 @@ export async function requestPasswordResetApi(email: string) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(data.message || 'Failed to request verification code.');
+      const errorMsg = data.message || 'This email is not registered with Presentation Evaluator. Please register first.';
+      const err: any = new Error(errorMsg);
+      err.status = res.status;
+      err.isUnregistered = res.status === 404 || errorMsg.toLowerCase().includes('not registered') || errorMsg.toLowerCase().includes('please register');
+      throw err;
     }
     return data;
   } catch (err: any) {
+    if (err.status === 404 || err.isUnregistered || (err.message && (err.message.toLowerCase().includes('not registered') || err.message.toLowerCase().includes('please register')))) {
+      throw err;
+    }
     handleNetworkError(err, 'Failed to request verification code.');
   }
 }
